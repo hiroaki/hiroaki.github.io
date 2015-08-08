@@ -1,0 +1,403 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>DrawerCSS - What hwat?</title>
+  <meta name="author" content="hiroaki">
+
+  
+  <meta name="description" content="進捗は捗々しくないながらも maps.gpx はまだまだ改修しておる最中ですが、そんな中、いろいろなクラスを設計したり実装したり、している部分のうちには、その部分単独でも独立したライブラリとして仕上げられるものは、仕上げているつもりで、そうしたものは別のリポジトリにして管理しているものもあります。 &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://hiroaki.github.io/blog/2015/0808/drawercss">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="What hwat?" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/lib/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href='http://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet' type='text/css'>
+<link href='http://fonts.googleapis.com/css?family=Fjalla+One' rel='stylesheet' type='text/css'>
+  
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-299060-4']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+
+
+</head>
+
+<body   class="collapse-sidebar sidebar-footer" >
+  <header role="banner">
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="https://www.google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:hiroaki.github.io" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+  <li><a href="/about">About</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+  
+    
+      <h1 class="entry-title">DrawerCSS</h1>
+    
+  
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2015-08-08T00:44:00+09:00" pubdate data-updated="true"></time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>進捗は捗々しくないながらも <a href="https://github.com/hiroaki/maps.gpx">maps.gpx</a> はまだまだ改修しておる最中ですが、そんな中、いろいろなクラスを設計したり実装したり、している部分のうちには、その部分単独でも独立したライブラリとして仕上げられるものは、仕上げているつもりで、そうしたものは別のリポジトリにして管理しているものもあります。今回はそのひとつ DrawerCSS と名付けてしまったそれについて、紹介します。</p>
+
+<p><a href="https://github.com/hiroaki/DrawerCSS">DrawerCSS</a></p>
+
+<p>これはひとことで云えば、 HTML ページ（任意のブロック要素）に Drawer （ドロワー、引き出し）を簡単につけるための JavaScript のクラスです。名前に CSS と付けているのは、 CSS3 の機能を用いた実装だからです。</p>
+
+<p>しかしながら、これを使おうとする際には CSS を記述する必要はありません。このクラスのインスタンスが自律的に CSS を操作して、しかるべき動作をするようになっています。（尤も、 CSS を記述する際の制約はあります。）</p>
+
+<p>百聞は一見に如かず、今回はデモを用意したので、そちらを参照してみてください。「コンテンツ」部分をクリックすると開閉します。また HTML ソースを覗いてみてください。</p>
+
+<p><a href="http://hiroaki.github.io/projects/drawercss/sample.html">DrawerCSS demo - basic</a></p>
+
+<!-- more -->
+
+
+<h2>経緯</h2>
+
+<p>かつて、といってもつい最近までのことですが、ドロワーを実装しようとした時には jQuery Mobile (jqm) を利用していました。ドロワーの動きに初めて触れたのがそれだったがためですが、ほかにライブラリがないかなと探した時にも、──いくつか試してみたのですが、どうも動きがいただけないものばかりで、結局 jqm を利用することになってました。</p>
+
+<p>しかしながら jqm は、なんというか、誤解を恐れず言って仕舞えば、じぶんにとって &ldquo;オワコン&rdquo; なものであり、またドロワー以外の部分は必要がないにもかかわらず、 jqm をロードするがためにほかのライブラリと影響し合ってしまったりするので、できれば使いたくありませんでした。</p>
+
+<p>それからしばらく時を経て。いま maps.gpx を拡張していくにあたり、再び、使いやすくて動きがクールなドロワーはないものかと探してみたところ、じぶんはようやく CSS だけでドロワーを実装できるということを知ったのでした。</p>
+
+<p>で、話がまた長くなるのでこれ以上は省きますが、 Web 検索の上位に出てくる幾つかは試してみたものの、結局は納得のいくものが得られなかったため、では自作にチャレンジしてみようと相成ったのでした。</p>
+
+<h2>特徴</h2>
+
+<p>コンセプトとしては、やはり「シンプル」ということに尽きます。そのためにも、この DrawerCSS の JavaScript ソースファイル <code>drawer-css.js</code> 以外に必要なものはありません。</p>
+
+<p>そのソースの特徴のほうなのですが、まあこれは、見よう見まね、 CSS についての確たる知識も無い中トライ＆エラーでやっているので、エレガンスとは程遠いかもしれませんが、おかげで見通しがよく理解がしやすいかとも思います。これはだいじなことなのですが、数ヶ月先のじぶんが、ソースだけを見て思い出せるものでなければなりません。</p>
+
+<p>そして機能の特徴のほうですが、──正直なところ世にあるドロワーのライブラリよりは少ないです。たとえば開いたドロワーのエッジに影をつけたりとかいうのは、今後頑張ってみるかもしれませんが、いまはありません。</p>
+
+<p>ただ一点だけ、ほかに無い？特徴があり、それは、任意のブロック要素についてドロワーを付けられるという点です。一般的にドロワーというと、ヴューポートのサイズでそれを動かしますが、 DrawerCSS は、ベースとなるブロック要素を指定して、そのブロック要素の枠組み（タテ・ヨコ）の中で、ドロワーを開閉することができます。</p>
+
+<h2>デモンストレーション</h2>
+
+<p>もちろん、任意のブロック要素ならば、ビューポートのタテ・ヨコの幅全体サイズでのドロワーもできます。これは次のデモを参照してください：</p>
+
+<p><a href="http://hiroaki.github.io/projects/drawercss/sample-map-fullscreen.html">DrawerCSS demo - fullscreen</a></p>
+
+<p>このデモでは別の意味もあって、 Google Maps API は、その要素のスタイルを、なんらかの状態に変化さているかもしれませんが、それとは衝突することなく、この DrawerCSS が使えることを示しています。</p>
+
+<p>そもそも DrawerCSS は maps.gpx の制作中から派生しているものなので、 Google Maps API に影響を及ぼすようでは使い物にはなりません。そのことから、地図付きのデモ、というかテスト・ページになっています。</p>
+
+<p>また地図はフルスクリーンではないかもしれないので、その場合でも意図したとおりに動作するかをチェックするためのデモが次です：</p>
+
+<p><a href="http://hiroaki.github.io/projects/drawercss/sample-map.html">DrawerCSS demo - map</a></p>
+
+<p>いずれのデモも地図をクリックすることで開閉します。</p>
+
+<p>そして、現在のバージョンでサポートしているオプションの値を、さまざまに変更しながらその効果を試すことができるようにしたページが次です。 API ドキュメントと併せて見てみてください：</p>
+
+<p><a href="http://hiroaki.github.io/projects/drawercss/sample-advanced.html">DrawerCSS demo - advanced</a></p>
+
+<h2>使い方</h2>
+
+<p>クラス <code>DrawerCSS</code> の API は<a href="https://github.com/hiroaki/DrawerCSS">プロジェクトのページ</a>にある README を参照してください。</p>
+
+<p>尤もそこの英語文はちょっと怪しいので、ここに解説を述べることにして、 DrawerCSS の紹介を終えることにしたいと思います。</p>
+
+<h3>HTML とスタイル</h3>
+
+<p>DrawerCSS が操作対象とする要素には、主体となる要素と、ドロワーとなる要素とがあります。前者を base 、後者を drawer と呼ぶことにしています。</p>
+
+<p>drawer 要素はページのどこに記述しても構いません。クラス <code>DrawerCSS</code> のインスタンスを作成すると、暗黙のうちにしかるべき位置へ移動させられます。（実は、要素を書かなくても構わないのですが、そのことについては割愛します。）</p>
+
+<p>そして、それらを包むべくブロック要素（コンテナ）があるはずです。もし、無いと思っても、 BODY 要素があります。そのコンテナのサイズを決めてください。そのサイズに base 要素と drawer 要素は影響されます。もし、 BODY 要素がコンテナならば、そのサイズはタテ・ヨコ共に 100% とします（注意：その際は HTML 要素についても 100% を記述することが必要かもしれません）。</p>
+
+<p>具体例は、これまでに示した各デモ・ページのソースを見てみてください。</p>
+
+<h3>スクリプト</h3>
+
+<p>クラス <code>DrawerCSS</code> のコンストラクタに、 base 要素と drawer 要素それぞれの ID を渡して、インスタンスを作成します。</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>var dr = new DrawerCSS('base-id', 'drawer-id');</span></code></pre></td></tr></table></div></figure>
+
+
+<h4>オプション</h4>
+
+<p>三番目の引数にハッシュ型のオプションを渡すと、効果をカスタマイズできます。</p>
+
+<p>すべてのオプションのデフォルト値を明示的に指定すると次のようになります：</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>var dr = new DrawerCSS('base-id', 'drawer-id', {
+</span><span class='line'>  side: 'LEFT',
+</span><span class='line'>  span: '80%',
+</span><span class='line'>  effect: 'slide',
+</span><span class='line'>  duration: 0.3,
+</span><span class='line'>  delay: 0.0,
+</span><span class='line'>  timingFunction: 'ease-in-out'
+</span><span class='line'>  });</span></code></pre></td></tr></table></div></figure>
+
+
+<h5>side</h5>
+
+<p>ドロワーの位置はオプション <code>side</code> に、 <code>TOP</code> 、 <code>RIGHT</code> 、 <code>BOTTOM</code> 、 <code>LEFT</code> のうちいずれかを指定します。</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>var dr = new DrawerCSS('base-id', 'drawer-id', { side: 'BOTTOM' });</span></code></pre></td></tr></table></div></figure>
+
+
+<h5>span</h5>
+
+<p>開き具合（ drawer 要素の幅）はオプション <code>span</code> です。値はピクセル px やパーセンテージ % などといった、 CSS のサイズを表現するときの単位で指定します。</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>var dr = new DrawerCSS('base-id', 'drawer-id', { span: '200px' });</span></code></pre></td></tr></table></div></figure>
+
+
+<h5>effect</h5>
+
+<p>開き方のオプション <code>effect</code> には、現在は２種類あります。</p>
+
+<p>デフォルトの値 <code>slide</code> は、ドロワーが開いた時に、 base 要素を押し出すような形でアニメーションします。このとき、 base 要素のサイズは変化せず、コンテナからはみ出す形になります。</p>
+
+<p>そして値 <code>compress</code> は、 base 要素がコンテナからはみ出すことはなく、かわりにサイズが縮められます。</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>var dr = new DrawerCSS('base-id', 'drawer-id', { effect: 'compress' });</span></code></pre></td></tr></table></div></figure>
+
+
+<p>なお、はみ出すぶぶんについては、 base 要素の CSS プロパティ <code>overflow</code> にセットする値で振る舞い（見え方）を変えることができます。具体的には <code>scroll</code> や <code>hidden</code> などを、ページのデザインに応じてセットしておきます。</p>
+
+<h5>アニメーションに関係するオプション</h5>
+
+<p>ドロワーの開閉時のアニメーションのパラメータについては、 <code>delay</code>、<code>duration</code> および <code>timingFunction</code> があります。これらについては、 CSS の transition のことなので、 CSS のドキュメントを参照してください。</p>
+
+<h4>インスタンス・メソッド</h4>
+
+<p>ドロワーの開閉は、インスタンスを作成したのち、インスタンス・メソッド <code>open()</code> 、 <code>close()</code> および <code>toggle()</code> で行います。いずれも受け取る引数はありません：</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>dr.toggle();</span></code></pre></td></tr></table></div></figure>
+
+
+<p>メソッド <code>toggle()</code> を使った場合、その結果、ドロワーが開いた状態になった場合は <code>true</code> を、そうでなければ <code>false</code> を返します。</p>
+
+<p>その他いくつかのメソッドがありますが、主なものはこれで十分かと思います。詳しくは API ドキュメントを参照してください。</p>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">hiroaki</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2015-08-08T00:44:00+09:00" pubdate data-updated="true"></time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/javascript/'>javascript</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="http://twitter.com/share" class="twitter-share-button" data-url="http://hiroaki.github.io/blog/2015/0808/drawercss/" data-via="hwatattama" data-counturl="http://hiroaki.github.io/blog/2015/0808/drawercss/" >Tweet</a>
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2015/0721/maps-dot-gpx-a-dot-k-a-gpx-casual-viewer/" title="Previous Post: maps.gpx a.k.a. GPX Casual Viewer v3">&laquo; maps.gpx a.k.a. GPX Casual Viewer v3</a>
+      
+      
+    </p>
+  </footer>
+</article>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2015/0808/drawercss/">DrawerCSS</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2015/0721/maps-dot-gpx-a-dot-k-a-gpx-casual-viewer/">maps.gpx a.k.a. GPX Casual Viewer v3</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2015/0429/gpx-casual-viewer-v3/">GPX Casual Viewer v3</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2015/0205/mime-expander-v0-dot-02-is-released/">MIME::Expander 0.02 is released</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/1227/install-shared-mime-info-on-os-x-yosemite/">Install shared-mime-info on OS X Yosemite</a>
+      </li>
+    
+  </ul>
+</section>
+
+<section>
+  <h1>GitHub Repos</h1>
+  <ul id="gh_repos">
+    <li class="loading">Status updating...</li>
+  </ul>
+  
+  <a href="https://github.com/hiroaki">@hiroaki</a> on GitHub
+  
+  <script type="text/javascript">
+    $(document).ready(function(){
+        if (!window.jXHR){
+            var jxhr = document.createElement('script');
+            jxhr.type = 'text/javascript';
+            jxhr.src = '/javascripts/libs/jXHR.js';
+            var s = document.getElementsByTagName('script')[0];
+            s.parentNode.insertBefore(jxhr, s);
+        }
+
+        github.showRepos({
+            user: 'hiroaki',
+            count: 0,
+            skip_forks: true,
+            target: '#gh_repos'
+        });
+    });
+  </script>
+  <script src="/javascripts/github.js" type="text/javascript"> </script>
+</section>
+
+
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2015 - hiroaki <br/>
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a>, customized with <a href="https://github.com/mjhea0/whiterspace">whiterspace</a>.</span>
+</p>
+
+</footer>
+  
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = 'http://platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>

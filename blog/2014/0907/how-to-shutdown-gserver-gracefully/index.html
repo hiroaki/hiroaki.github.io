@@ -1,0 +1,380 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>How to shutdown GServer gracefully? - What hwat?</title>
+  <meta name="author" content="hiroaki">
+
+  
+  <meta name="description" content="Ruby の標準添付ライブラリに gserver というのがあって、これを用いれば頗る簡単に TCP サーバを書くことが出来、こりゃいいね、って思いながら使ってみたのですけれども、サーバの停止の手続きについてちょっと悩むことがありました。 いざサーバの停止を行おうとするとき、 &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://hiroaki.github.io/blog/2014/0907/how-to-shutdown-gserver-gracefully">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="What hwat?" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/lib/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href='http://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet' type='text/css'>
+<link href='http://fonts.googleapis.com/css?family=Fjalla+One' rel='stylesheet' type='text/css'>
+  
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-299060-4']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+
+
+</head>
+
+<body   class="collapse-sidebar sidebar-footer" >
+  <header role="banner">
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="https://www.google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:hiroaki.github.io" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+  <li><a href="/about">About</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+  
+    
+      <h1 class="entry-title">How to shutdown GServer gracefully?</h1>
+    
+  
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-09-07T21:34:00+09:00" pubdate data-updated="true"></time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>Ruby の標準添付ライブラリに <a href="http://docs.ruby-lang.org/ja/2.1.0/library/gserver.html">gserver</a> というのがあって、これを用いれば頗る簡単に TCP サーバを書くことが出来、こりゃいいね、って思いながら使ってみたのですけれども、サーバの停止の手続きについてちょっと悩むことがありました。</p>
+
+<p>いざサーバの停止を行おうとするとき、まだ接続中のクライアントが居たらば、その終了を待ってから、サーバは停止してほしいのは誰しも考える所です（「優雅なシャットダウン」 &ldquo;Graceful shutdown&rdquo; ）。<code>GServer</code> クラスのインタフェースとしては <code>#shutdown</code> メソッドが、それらしいことを行うはずなのですが、実際はそう上手くは問屋が卸しませんでした。</p>
+
+<!-- more -->
+
+
+<p>承前の通り簡単な内容なのでまずは書いたコード全容を貼ります。処理内容はいわゆる echo サーバです。このサーバを（フォアグラウンドで）起動したら、 <code>Ctrl+c</code> （ INT シグナル）で、優雅なシャットダウンをさせようとしています。ちなみにクライアントは、サーバに空行を送ることで接続を終了します。</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>require 'gserver'
+</span><span class='line'>
+</span><span class='line'>class EchoServer &lt; GServer
+</span><span class='line'>  
+</span><span class='line'>  def initialize(port=10001, host='127.0.0.1', *args)
+</span><span class='line'>    super(port, host, *args)
+</span><span class='line'>    self.audit = true
+</span><span class='line'>    trap :INT, proc {
+</span><span class='line'>      self.shutdown
+</span><span class='line'>    }
+</span><span class='line'>  end
+</span><span class='line'>
+</span><span class='line'>  def serve(io)
+</span><span class='line'>    loop do
+</span><span class='line'>      if IO.select([io], nil, nil, 0.1)
+</span><span class='line'>        data = io.gets
+</span><span class='line'>        break if data.nil? || data =~ /^[\r\n]*$/
+</span><span class='line'>        io.puts("echo: #{data}")
+</span><span class='line'>      end
+</span><span class='line'>    end
+</span><span class='line'>    io.close
+</span><span class='line'>  end
+</span><span class='line'>
+</span><span class='line'>end
+</span><span class='line'>
+</span><span class='line'>STDERR.sync
+</span><span class='line'>STDOUT.sync
+</span><span class='line'>server = EchoServer.new
+</span><span class='line'>server.start
+</span><span class='line'>server.join</span></code></pre></td></tr></table></div></figure>
+
+
+<p>いざこれを実行し、別端末からクライアントとして接続します。 echo の動作はうまくいきます。空行を送ることでいったん接続を切り、改めて、今度はクライアントを接続中にしたまま、サーバに INT シグナルを送ってみます。クライアントが接続中なので、まだ終了しません。思惑どおりです。</p>
+
+<p>しかし、そのクライアントを切断させますと、どうでしょうか。サーバの動作ログにはクライアントが切断した旨が出力されますが、サーバは止まりません。おや？　と思いました。また、この状態で、再びクライアントから接続を試みると、繋がってしまいます。これもおや？　と思いました。サーバはまだ接続を受け付けてしまっていますから、忙しいサイトでは休む間もないことでしょう。いちおう、すべてのクライアントが接続を終了させると、サーバも終了しましたが。</p>
+
+<p>何がいけないのでしょうか？</p>
+
+<p><code>GServer</code> クラスのソースにあたってみると、 <code>#sutdown</code> メソッドはたんにフラグを立てるだけの様で、実際の停止の手続きは別にありました。サーバのメインの処理は、新たなクライアントの接続を待つ無限ループです。無限ループは、フラグが立っていることで抜け、そして終了の手続きへと進む、といった風に読めます。サーバがループの中で、 ACCEPT 状態、つまり新たなクライアントの接続を待っている間は、文字通りその地点で待っているので、フラグをチェックする所へ来ないのです。事実、気がつけば rdoc での <code>#shutdown</code> の説明には &ldquo;Schedule a shutdown for the server&rdquo; と書いてありました。まさしく。端的に表していますが、ではどうしたら、優雅なシャットダウンを実現できるでしょうか。</p>
+
+<p>このからくりからひとつ思いつく解決方法は、 <code>#sutdown</code> メソッドを実行したで、新たなクライアントを作り、接続し、そして切断することです。</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>trap :INT, proc {
+</span><span class='line'>  self.shutdown
+</span><span class='line'>  TCPSocket.open(host,port).close
+</span><span class='line'>}</span></code></pre></td></tr></table></div></figure>
+
+
+<p>こうすることで、新たな接続を受け付けたサーバは、ループを一回進め、次のループへのチェックへ制御がやってきます。すると事前の <code>#shutdown</code> メソッドによりフラグが立っているので、ループを抜け、サーバのスレッドは子スレッドの終了を迎える体制に入ります。また同時に、このときは既にサーバは ACCEPT をしていない状態ですから、クライアントからの新しい接続は、期待どおり拒否されることになります。</p>
+
+<p>そこまで行けば、あとは接続中の幾つかのクライアント（子スレッド）がそれぞれ自身の処理を終えて接続を切り次第 <code>server.join</code> のところに集まってくるのを待っているだけです。そうしてすべての子スレッドが集まることでサーバも目出たく、優雅に、終了することが出来ます。</p>
+
+<p>実際にやってみますと、思いどおりにいきました。しかしいまひとつ、釈然としません。なにか方法はないものかと、もう少し探ってみることにしました。</p>
+
+<p><code>GServer</code> のソースをじっと見つめていると、 <code>#start</code> メソッドによって内部で生成される <code>TCPServer</code> のインスタンス（サーバ・スレッド）が <code>#accept</code> メソッドでクライアントの接続を待っています。このメソッドはスレッドの流れをブロックします。</p>
+
+<p>ここがポイントであることには間違いないので、このブロック状態を解く手だてがあればよさそうなのですが、そのような使命を直接的に背負った機能は、どの API にも見つけられませんでした。その理由を知るには、そもそも TCP 的にどのようにそれを実行するのか（するべきなのか）についてまず知らないといけないと考え、それから関係各所を回ってみたのですが（ via Google ）、しかしじぶんが開いたそれらしい様々などのドキュメントにも ACCEPT 状態を無理矢理？解く方法は明示されていませんでした（明示されていることを見つけられませんでした）。</p>
+
+<p>そんな中で、試しに、無理矢理サーバのソケットを閉じてはどうだろうと思い至ります。 <code>GServer</code> のインスタンスの中にサーバソケットを持っている <code>TCPServer</code> のインスタンスがあるので、それを摑み取って <code>#close</code> を送ってみることにしました。いうなれば、間接的に ACCEPT 状態のブロックを解くことを期待する魂胆です。</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>trap :INT, proc {
+</span><span class='line'>  self.shutdown
+</span><span class='line'>  self.instance_variable_get(:@tcpServer).close
+</span><span class='line'>}</span></code></pre></td></tr></table></div></figure>
+
+
+<p>この方法はどうやら上手くいったようです。 INT シグナルを trap したサーバは、 ACCEPT をやめたと見えて、新しいクライアントを受け付けなくなりました。一方で、接続中のクライアントが既にあった場合は、そのコネクションが切られるまで、待っていました。そして、すべてのクライアントが接続を終了したとき、はじめてサーバも終了しました。いい案配です。</p>
+
+<p>さて、こうしてみると、 <code>Gserver#shutdown</code> の後に、クライアント接続を一回虚しく空振りさせるよりも、 <code>TCPServer#close</code> を発行する方がスマートなように思えます。ただし、それが正攻法ならば。──言うまでもなくこれはアクセス手段が意図的に公開されていないインスタンスを摑み取っている時点で正攻法ではありません。そして一方 <code>TCPServer#close</code> も確信があってやっていることではないので、これでいいのかと不安は残ります。そのような不安を抱えてまでも <code>TCPServer#close</code> するメリットは、虚しいかなあまりないようです。従って、理屈的に正攻法である空振りクライアントを実装するほうが、不格好でも、良いものだと判断するほかありません。とはいえ、いちおう、一定の成果は得られた気がします。──顛末はここまでです。</p>
+
+<p>結局のところ、優雅なシャットダウンのために、空振りクライアント接続をするといったいまひとつ優雅ではない実装を行う、ということでじぶんの悩みはそこに落とさざるを得なかったという話は終わりなのですが、さてしかし、今回の主役であるその <code>GServer</code> クラスのほう、こちらこのへんの動きは（優雅なシャットダウンは新たなクライアントが接続しに来ないと始まらないこと）
+、そもそも設計の想定のうちなのでしょうか。──必然的に湧いて来るこの次なる疑問については、でも、またの機会にしたいと思います。長くなりました。</p>
+
+<p>追記：その後、こんなチケットを見つけました。同じことを言っているのでしょうか？　ただ、それから二年以上動きがないようです。さて。</p>
+
+<p><a href="https://bugs.ruby-lang.org/issues/6369">Bug #6369: GServer blocking after shutdown called - ruby-trunk - Ruby Issue Tracking System</a></p>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">hiroaki</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-09-07T21:34:00+09:00" pubdate data-updated="true"></time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/gserver/'>gserver</a>, <a class='category' href='/blog/categories/ruby/'>ruby</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="http://twitter.com/share" class="twitter-share-button" data-url="http://hiroaki.github.io/blog/2014/0907/how-to-shutdown-gserver-gracefully/" data-via="hwatattama" data-counturl="http://hiroaki.github.io/blog/2014/0907/how-to-shutdown-gserver-gracefully/" >Tweet</a>
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2013/1104/released-net-nicovideo-v0-dot-28/" title="Previous Post: Net::NicoVideo 0.28 is released">&laquo; Net::NicoVideo 0.28 is released</a>
+      
+      
+        <a class="basic-alignment right" href="/blog/2014/1005/gserver-can-exceed-the-max-connections/" title="Next Post: GServer can exceed the max connections">GServer can exceed the max connections &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2015/0808/drawercss/">DrawerCSS</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2015/0721/maps-dot-gpx-a-dot-k-a-gpx-casual-viewer/">maps.gpx a.k.a. GPX Casual Viewer v3</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2015/0429/gpx-casual-viewer-v3/">GPX Casual Viewer v3</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2015/0205/mime-expander-v0-dot-02-is-released/">MIME::Expander 0.02 is released</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/1227/install-shared-mime-info-on-os-x-yosemite/">Install shared-mime-info on OS X Yosemite</a>
+      </li>
+    
+  </ul>
+</section>
+
+<section>
+  <h1>GitHub Repos</h1>
+  <ul id="gh_repos">
+    <li class="loading">Status updating...</li>
+  </ul>
+  
+  <a href="https://github.com/hiroaki">@hiroaki</a> on GitHub
+  
+  <script type="text/javascript">
+    $(document).ready(function(){
+        if (!window.jXHR){
+            var jxhr = document.createElement('script');
+            jxhr.type = 'text/javascript';
+            jxhr.src = '/javascripts/libs/jXHR.js';
+            var s = document.getElementsByTagName('script')[0];
+            s.parentNode.insertBefore(jxhr, s);
+        }
+
+        github.showRepos({
+            user: 'hiroaki',
+            count: 0,
+            skip_forks: true,
+            target: '#gh_repos'
+        });
+    });
+  </script>
+  <script src="/javascripts/github.js" type="text/javascript"> </script>
+</section>
+
+
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2015 - hiroaki <br/>
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a>, customized with <a href="https://github.com/mjhea0/whiterspace">whiterspace</a>.</span>
+</p>
+
+</footer>
+  
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = 'http://platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>

@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: net::nicovideo | What hwat?]]></title>
+  <link href="http://hiroaki.github.io/blog/categories/net-nicovideo/atom.xml" rel="self"/>
+  <link href="http://hiroaki.github.io/"/>
+  <updated>2015-08-09T01:53:03+09:00</updated>
+  <id>http://hiroaki.github.io/</id>
+  <author>
+    <name><![CDATA[hiroaki]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Net::NicoVideo 0.28 is released]]></title>
+    <link href="http://hiroaki.github.io/blog/2013/1104/released-net-nicovideo-v0-dot-28/"/>
+    <updated>2013-11-04T17:19:00+09:00</updated>
+    <id>http://hiroaki.github.io/blog/2013/1104/released-net-nicovideo-v0-dot-28</id>
+    <content type="html"><![CDATA[<p>Perl でニコニコ動画のサイトへアクセスするためのモジュール Net::NicoVideo をアップデートしました。（バージョン 0.28 です）</p>
+
+<p><a href="http://search.cpan.org/dist/Net-NicoVideo/">http://search.cpan.org/dist/Net-NicoVideo/</a></p>
+
+<!-- more -->
+
+
+<p>なんでもサイトのバージョンがこれまでの &ldquo;原宿&rdquo; から &ldquo;GINZA&rdquo; に変わるとのことで、これでモジュールも使えなくなってしまうんだろうな、書き直しだな、<del>面倒</del>大変だな、と早合点して半ば諦めかけていましたが、結局の所 &ldquo;GINZA&rdquo; といっても動画を観るページの &ldquo;ガワ&rdquo; にちょっと手が入っただけのことのようで、 Net::NicoVideo （をはじめとして、市井にひろがる数多のプログラム）が実装しているアクセスの手続き、仕組み、たとえばタグ検索で RSS を得るだとか thumbinfo を fetch して parse するだとかの仕組みは、従来どおり通じるようです。</p>
+
+<p>しかし、これはまったくじぶんがいけないのですが、肝心の動画を観るページの解析の実装が安易すぎたため、脆くもそのページの解析に失敗してしまっていました。もう少し注意していれば、モジュールに手入れは不要なくらいな些細な所でした。それを、このバージョンで修復しています。</p>
+
+<p>尤も、いくつか TODO にしていた内部の実装にも手を入れて、少しは見通し易くなったとも思います。それは Net::NicoVideo::Response と Net::NicoVideo::Content のところですが、いままでコンテンツの内容も Response が扱っていましたが、 Content のほうにあるべきなので、移しました。ただし、フロントエンドの Net::NicoVideo のインスタンスを扱うクライアントは気にしなくていい所です。</p>
+
+<p>それから samples フォルダの中のスクリプトも見直しました。──テストの t が乏しいかわりに、この samples にあるスクリプトを全部動かしてテストはしています。本来 t のほうを充実させるべきなのですが、なかなか捗りません。</p>
+]]></content>
+  </entry>
+  
+</feed>

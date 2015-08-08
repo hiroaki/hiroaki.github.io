@@ -1,0 +1,1171 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[What hwat?]]></title>
+  <link href="http://hiroaki.github.io/atom.xml" rel="self"/>
+  <link href="http://hiroaki.github.io/"/>
+  <updated>2015-08-09T01:53:03+09:00</updated>
+  <id>http://hiroaki.github.io/</id>
+  <author>
+    <name><![CDATA[hiroaki]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    
+    <title type="html"><![CDATA[DrawerCSS]]></title>
+    <link href="http://hiroaki.github.io/blog/2015/0808/drawercss/"/>
+    
+    <updated>2015-08-08T00:44:00+09:00</updated>
+    <id>http://hiroaki.github.io/blog/2015/0808/drawercss</id>
+    
+    <content type="html"><![CDATA[<p>進捗は捗々しくないながらも <a href="https://github.com/hiroaki/maps.gpx">maps.gpx</a> はまだまだ改修しておる最中ですが、そんな中、いろいろなクラスを設計したり実装したり、している部分のうちには、その部分単独でも独立したライブラリとして仕上げられるものは、仕上げているつもりで、そうしたものは別のリポジトリにして管理しているものもあります。今回はそのひとつ DrawerCSS と名付けてしまったそれについて、紹介します。</p>
+
+<p><a href="https://github.com/hiroaki/DrawerCSS">DrawerCSS</a></p>
+
+<p>これはひとことで云えば、 HTML ページ（任意のブロック要素）に Drawer （ドロワー、引き出し）を簡単につけるための JavaScript のクラスです。名前に CSS と付けているのは、 CSS3 の機能を用いた実装だからです。</p>
+
+<p>しかしながら、これを使おうとする際には CSS を記述する必要はありません。このクラスのインスタンスが自律的に CSS を操作して、しかるべき動作をするようになっています。（尤も、 CSS を記述する際の制約はあります。）</p>
+
+<p>百聞は一見に如かず、今回はデモを用意したので、そちらを参照してみてください。「コンテンツ」部分をクリックすると開閉します。また HTML ソースを覗いてみてください。</p>
+
+<p><a href="http://hiroaki.github.io/projects/drawercss/sample.html">DrawerCSS demo - basic</a></p>
+
+<!-- more -->
+
+
+<h2>経緯</h2>
+
+<p>かつて、といってもつい最近までのことですが、ドロワーを実装しようとした時には jQuery Mobile (jqm) を利用していました。ドロワーの動きに初めて触れたのがそれだったがためですが、ほかにライブラリがないかなと探した時にも、──いくつか試してみたのですが、どうも動きがいただけないものばかりで、結局 jqm を利用することになってました。</p>
+
+<p>しかしながら jqm は、なんというか、誤解を恐れず言って仕舞えば、じぶんにとって &ldquo;オワコン&rdquo; なものであり、またドロワー以外の部分は必要がないにもかかわらず、 jqm をロードするがためにほかのライブラリと影響し合ってしまったりするので、できれば使いたくありませんでした。</p>
+
+<p>それからしばらく時を経て。いま maps.gpx を拡張していくにあたり、再び、使いやすくて動きがクールなドロワーはないものかと探してみたところ、じぶんはようやく CSS だけでドロワーを実装できるということを知ったのでした。</p>
+
+<p>で、話がまた長くなるのでこれ以上は省きますが、 Web 検索の上位に出てくる幾つかは試してみたものの、結局は納得のいくものが得られなかったため、では自作にチャレンジしてみようと相成ったのでした。</p>
+
+<h2>特徴</h2>
+
+<p>コンセプトとしては、やはり「シンプル」ということに尽きます。そのためにも、この DrawerCSS の JavaScript ソースファイル <code>drawer-css.js</code> 以外に必要なものはありません。</p>
+
+<p>そのソースの特徴のほうなのですが、まあこれは、見よう見まね、 CSS についての確たる知識も無い中トライ＆エラーでやっているので、エレガンスとは程遠いかもしれませんが、おかげで見通しがよく理解がしやすいかとも思います。これはだいじなことなのですが、数ヶ月先のじぶんが、ソースだけを見て思い出せるものでなければなりません。</p>
+
+<p>そして機能の特徴のほうですが、──正直なところ世にあるドロワーのライブラリよりは少ないです。たとえば開いたドロワーのエッジに影をつけたりとかいうのは、今後頑張ってみるかもしれませんが、いまはありません。</p>
+
+<p>ただ一点だけ、ほかに無い？特徴があり、それは、任意のブロック要素についてドロワーを付けられるという点です。一般的にドロワーというと、ヴューポートのサイズでそれを動かしますが、 DrawerCSS は、ベースとなるブロック要素を指定して、そのブロック要素の枠組み（タテ・ヨコ）の中で、ドロワーを開閉することができます。</p>
+
+<h2>デモンストレーション</h2>
+
+<p>もちろん、任意のブロック要素ならば、ビューポートのタテ・ヨコの幅全体サイズでのドロワーもできます。これは次のデモを参照してください：</p>
+
+<p><a href="http://hiroaki.github.io/projects/drawercss/sample-map-fullscreen.html">DrawerCSS demo - fullscreen</a></p>
+
+<p>このデモでは別の意味もあって、 Google Maps API は、その要素のスタイルを、なんらかの状態に変化さているかもしれませんが、それとは衝突することなく、この DrawerCSS が使えることを示しています。</p>
+
+<p>そもそも DrawerCSS は maps.gpx の制作中から派生しているものなので、 Google Maps API に影響を及ぼすようでは使い物にはなりません。そのことから、地図付きのデモ、というかテスト・ページになっています。</p>
+
+<p>また地図はフルスクリーンではないかもしれないので、その場合でも意図したとおりに動作するかをチェックするためのデモが次です：</p>
+
+<p><a href="http://hiroaki.github.io/projects/drawercss/sample-map.html">DrawerCSS demo - map</a></p>
+
+<p>いずれのデモも地図をクリックすることで開閉します。</p>
+
+<p>そして、現在のバージョンでサポートしているオプションの値を、さまざまに変更しながらその効果を試すことができるようにしたページが次です。 API ドキュメントと併せて見てみてください：</p>
+
+<p><a href="http://hiroaki.github.io/projects/drawercss/sample-advanced.html">DrawerCSS demo - advanced</a></p>
+
+<h2>使い方</h2>
+
+<p>クラス <code>DrawerCSS</code> の API は<a href="https://github.com/hiroaki/DrawerCSS">プロジェクトのページ</a>にある README を参照してください。</p>
+
+<p>尤もそこの英語文はちょっと怪しいので、ここに解説を述べることにして、 DrawerCSS の紹介を終えることにしたいと思います。</p>
+
+<h3>HTML とスタイル</h3>
+
+<p>DrawerCSS が操作対象とする要素には、主体となる要素と、ドロワーとなる要素とがあります。前者を base 、後者を drawer と呼ぶことにしています。</p>
+
+<p>drawer 要素はページのどこに記述しても構いません。クラス <code>DrawerCSS</code> のインスタンスを作成すると、暗黙のうちにしかるべき位置へ移動させられます。（実は、要素を書かなくても構わないのですが、そのことについては割愛します。）</p>
+
+<p>そして、それらを包むべくブロック要素（コンテナ）があるはずです。もし、無いと思っても、 BODY 要素があります。そのコンテナのサイズを決めてください。そのサイズに base 要素と drawer 要素は影響されます。もし、 BODY 要素がコンテナならば、そのサイズはタテ・ヨコ共に 100% とします（注意：その際は HTML 要素についても 100% を記述することが必要かもしれません）。</p>
+
+<p>具体例は、これまでに示した各デモ・ページのソースを見てみてください。</p>
+
+<h3>スクリプト</h3>
+
+<p>クラス <code>DrawerCSS</code> のコンストラクタに、 base 要素と drawer 要素それぞれの ID を渡して、インスタンスを作成します。</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>var dr = new DrawerCSS('base-id', 'drawer-id');</span></code></pre></td></tr></table></div></figure>
+
+
+<h4>オプション</h4>
+
+<p>三番目の引数にハッシュ型のオプションを渡すと、効果をカスタマイズできます。</p>
+
+<p>すべてのオプションのデフォルト値を明示的に指定すると次のようになります：</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>var dr = new DrawerCSS('base-id', 'drawer-id', {
+</span><span class='line'>  side: 'LEFT',
+</span><span class='line'>  span: '80%',
+</span><span class='line'>  effect: 'slide',
+</span><span class='line'>  duration: 0.3,
+</span><span class='line'>  delay: 0.0,
+</span><span class='line'>  timingFunction: 'ease-in-out'
+</span><span class='line'>  });</span></code></pre></td></tr></table></div></figure>
+
+
+<h5>side</h5>
+
+<p>ドロワーの位置はオプション <code>side</code> に、 <code>TOP</code> 、 <code>RIGHT</code> 、 <code>BOTTOM</code> 、 <code>LEFT</code> のうちいずれかを指定します。</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>var dr = new DrawerCSS('base-id', 'drawer-id', { side: 'BOTTOM' });</span></code></pre></td></tr></table></div></figure>
+
+
+<h5>span</h5>
+
+<p>開き具合（ drawer 要素の幅）はオプション <code>span</code> です。値はピクセル px やパーセンテージ % などといった、 CSS のサイズを表現するときの単位で指定します。</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>var dr = new DrawerCSS('base-id', 'drawer-id', { span: '200px' });</span></code></pre></td></tr></table></div></figure>
+
+
+<h5>effect</h5>
+
+<p>開き方のオプション <code>effect</code> には、現在は２種類あります。</p>
+
+<p>デフォルトの値 <code>slide</code> は、ドロワーが開いた時に、 base 要素を押し出すような形でアニメーションします。このとき、 base 要素のサイズは変化せず、コンテナからはみ出す形になります。</p>
+
+<p>そして値 <code>compress</code> は、 base 要素がコンテナからはみ出すことはなく、かわりにサイズが縮められます。</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>var dr = new DrawerCSS('base-id', 'drawer-id', { effect: 'compress' });</span></code></pre></td></tr></table></div></figure>
+
+
+<p>なお、はみ出すぶぶんについては、 base 要素の CSS プロパティ <code>overflow</code> にセットする値で振る舞い（見え方）を変えることができます。具体的には <code>scroll</code> や <code>hidden</code> などを、ページのデザインに応じてセットしておきます。</p>
+
+<h5>アニメーションに関係するオプション</h5>
+
+<p>ドロワーの開閉時のアニメーションのパラメータについては、 <code>delay</code>、<code>duration</code> および <code>timingFunction</code> があります。これらについては、 CSS の transition のことなので、 CSS のドキュメントを参照してください。</p>
+
+<h4>インスタンス・メソッド</h4>
+
+<p>ドロワーの開閉は、インスタンスを作成したのち、インスタンス・メソッド <code>open()</code> 、 <code>close()</code> および <code>toggle()</code> で行います。いずれも受け取る引数はありません：</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>dr.toggle();</span></code></pre></td></tr></table></div></figure>
+
+
+<p>メソッド <code>toggle()</code> を使った場合、その結果、ドロワーが開いた状態になった場合は <code>true</code> を、そうでなければ <code>false</code> を返します。</p>
+
+<p>その他いくつかのメソッドがありますが、主なものはこれで十分かと思います。詳しくは API ドキュメントを参照してください。</p>
+]]></content>
+    
+  </entry>
+  
+  <entry>
+    
+    <title type="html"><![CDATA[maps.gpx a.k.a. GPX Casual Viewer v3]]></title>
+    <link href="http://hiroaki.github.io/blog/2015/0721/maps-dot-gpx-a-dot-k-a-gpx-casual-viewer/"/>
+    
+    <updated>2015-07-21T21:43:00+09:00</updated>
+    <id>http://hiroaki.github.io/blog/2015/0721/maps-dot-gpx-a-dot-k-a-gpx-casual-viewer</id>
+    
+    <content type="html"><![CDATA[<p>Also known as &hellip; と格好つけなくても、ほとんど知られることのない GPX Casual Viewer v3 は、バージョン v2.3.0 から名称を maps.gpx と変えました。</p>
+
+<p><a href="https://github.com/hiroaki/maps.gpx">https://github.com/hiroaki/maps.gpx</a></p>
+
+<p>理由は簡単で、ビューワー viewer にとどまらない構想があるからです。──将来的にはエディタ editor としても使えるものに仕上げる希望があります。と、他人事のような言い回しになりましたが、もちろん Github に公開しているからには、じぶん以外の某によって、それが達成されてもいいわけですから、幅広い解釈ができる表現をあえて選んでいるということでもあります。</p>
+
+<!-- more -->
+
+
+<h2>変更点</h2>
+
+<p>さて寝言は大概にして、名称変更した maps.gpx の最初のリリースは、 GPX Casual Viewer v3 の v2.3.0 相当の機能でもって、名前空間 <code>GPXCasualViewer</code> が <code>MapsGPX</code> に変わっただけのものになります。また maps.gpx のバージョンはその地点を v3.0.0 として、同時にここからはセマンティック・バージョニングを宣言しようかと思います。</p>
+
+<p>ときに、<a href="http://hiroaki.github.io/blog/2015/0429/gpx-casual-viewer-v3/">前回記事にした</a>  GPX Casual Viewer v3 のとき（ v2.2.0 ）から v2.3.0 への変更点ですが、機能の変更はあまりなく、内部的な話が主なものになっています。詳しくは割愛ですが、外部の JavaScript ファイルを、明示しなくてもよいようになっています。 API を使って、独自の HTML ページ（アプリケーション）を作りたい人にとっては、手続きが簡素化されていることが、わかることでしょう。 <code>viewer.html</code> のソースへのリンクを貼っておきますので、前のバージョンと見比べてみてください。</p>
+
+<p><a href="https://github.com/hiroaki/maps.gpx/blob/v3.0.0/viewer.html">https://github.com/hiroaki/maps.gpx/blob/v3.0.0/viewer.html</a></p>
+
+<p>新機能のほうもすこしあります。</p>
+
+<h3>標高グラフ</h3>
+
+<p>ひとつの目玉は、標高グラフを表示できるようにしたことです。が、あまり上出来ではないので、また今後も手が入っていくことと思います。</p>
+
+<p><img src="http://blog.hwat.jp/assets/2015/07/21/figure4.png" width="640" height="525" title="figure #1" alt="figure #4"></p>
+
+<p>右下にジグザグのアイコンがあります。これはトグルスイッチで、グラフを表示する領域を画面下部に出し入れします。</p>
+
+<p><strong>開いた状態で</strong>、ポリラインをクリックすると、そのトラックの情報から標高グラフを描画します。</p>
+
+<h3>現在位置</h3>
+
+<p>あと、現在地点を取得してポイントできるようにしました。それらしいアイコンが右下にありますが、それです。ブラウザの設定で、位置情報サービスの利用を許可して、お楽しみいただければと思います。</p>
+
+<p><img src="http://blog.hwat.jp/assets/2015/07/21/figure1.png" width="600" height="417" title="figure #1" alt="figure #1"></p>
+
+<p>アイコン画像の中心が赤いとき、現在地点を地図の中心に追跡します。</p>
+
+<p>この状態から、同じボタンをクリックするか、または地図をドラッグすると、次のように、アイコン画像の中心が青くなります。青から、さらにクリックすると、位置情報の取得を終了し、始めの状態に戻ります。</p>
+
+<p><img src="http://blog.hwat.jp/assets/2015/07/21/figure2.png" width="600" height="417" title="figure #1" alt="figure #2"></p>
+
+<p>また、測位できない状態のときは、次のように、それっぽいアイコンになります。ブラウザの設定で、位置情報の利用を許可していない場合や、許可していても、なんらかの原因で測位ができていない状態を表しています。</p>
+
+<p><img src="http://blog.hwat.jp/assets/2015/07/21/figure3.png" width="600" height="417" title="figure #1" alt="figure #3"></p>
+]]></content>
+    
+  </entry>
+  
+  <entry>
+    
+    <title type="html"><![CDATA[GPX Casual Viewer v3]]></title>
+    <link href="http://hiroaki.github.io/blog/2015/0429/gpx-casual-viewer-v3/"/>
+    
+    <updated>2015-04-29T19:00:00+09:00</updated>
+    <id>http://hiroaki.github.io/blog/2015/0429/gpx-casual-viewer-v3</id>
+    
+    <content type="html"><![CDATA[<p>最近取り掛かっている日曜プログラミングの話です。</p>
+
+<p>GPS 位置情報データのポピュラーなフォーマットである GPX 形式のデータを、 Google Maps API を用いて地図にオーバーレイし、 GPS 位置情報を視覚的に閲覧するビューワーを HTML と JavaScript で作っているので、それについて紹介したいと思います。名付けて <del>GPX Casual Viewer v3</del> （名称変更しました。次の記事を参照してください： <a href="http://hiroaki.github.io/blog/2015/0721/maps-dot-gpx-a-dot-k-a-gpx-casual-viewer/">maps.gpx a.k.a. GPX Casual Viewer v3</a> また以下では <code>GPX Casual Viewer v3</code> を <code>maps.gpx</code> と読み替えてください） 。</p>
+
+<p><img src="http://blog.hwat.jp/assets/2015/04/29/figure1.png" width="600" height="452" title="figure #1" alt="sample view figure #1"></p>
+
+<!-- more -->
+
+
+<h2>歴史</h2>
+
+<p>実を言うと、その最初の取り組みはかれこれ何年も前になります。 Google Maps API が世に始めた頃（いつでしたっけ？）。当時はまだ API バージョン 2 でしたが、そのころからこつこつ弄ってはいたのでした。</p>
+
+<p>その成果はじぶんのホームページで公開していたので、いちぶのマニアックな方々（失礼がありましたらお詫びいたします）の目に止まって、使って頂いたりもしていたのですが、しばらくして互換性のない上位の API バージョン 3 が主流になってからというものは、いつかバージョンアップして書き換えようと思いつつも、結局ほったらかしになっていました。</p>
+
+<p>尤も、簡単な閲覧機能だけ API バージョン 3 で実装し直して、個人的に旅の軌跡を眺めてニヤニヤするぶんには、使ってはいたのですが、見方を変えればそれだけで済んでしまっていたので、がっつり作り直すモチベーションが盛り上がることもなく、気がつけばこのように思い出話をするように、いまに至っている次第でした。</p>
+
+<h2>モチベーション</h2>
+
+<p>それがなぜに再び筆を取ろう、いえ、コードを書き直そうかと思ったかといえば、特に大きな理由はないのですが、小さな理由のひとつは、じぶんの JavaScript 技能の維持のために、なにかしら常に書いていたほうがよいな、ということがありました。使わないと、失われてしまいますからね。でもそれは二の次かもしれません。</p>
+
+<p>それから、さきほど、個人的にニヤニヤするための仮の実装があると言いましたが、それが実は使いづらくて、こう治せればいいのになあという部分が常に目についてはストレスに感じていたことがありました。</p>
+
+<p>具体的に例えば、視覚化したい GPX ファイルが、デスクトップ上にあったとします。それを Google Maps API を用いた地図上にオーバーレイしようとしたとき、次の手順を踏む必要がありました。ちょっと細かいですが、そこにストレスの元があるのです：</p>
+
+<ol>
+<li>Google Maps API で実装した地図の HTML ファイルをブラウザで開きます。</li>
+<li>GPX ファイルの URL <code>file:///Users/hiroaki/デスクトップ/data.gpx</code> をクリップボードに取得します（これがちょう★面倒）</li>
+<li>ブラウザのロケーション欄にカーソルを持って行きます（せまい領域にマウスカーソルを合わせないといけない）</li>
+<li>ロケーションの URL の末尾にクエリストリングを、「キーボードを叩いて」加えます <code>?url=</code></li>
+<li>さらに続けて、クリップボードに入れた URL 文字列をペーストします（ああ、イライラする！）</li>
+<li>エンターキーをヒットします。</li>
+<li>オーバレイされた GPS 情報を観て、ニヤニヤします。</li>
+</ol>
+
+
+<p>これは、こうあるべきです：</p>
+
+<ol>
+<li>Google Maps API で実装した地図の HTML ファイルをブラウザで開きます。</li>
+<li>GPX ファイルを、デスクトップからブラウザへドロップします。</li>
+<li>オーバレイされた GPS 情報を観て、ニヤニヤします。</li>
+</ol>
+
+
+<p>ただ、こうすっきりとした手際に仕上げるには、当時の目では困難に見えました。しかし、いまになってみれば、昨今 HTML5 周辺の整備状況が整ってきたという新しい事情があります。──気がつけば、になってしまうのですが、そのへんの技術を用いることで、この理想の形を簡単に実現できる見通しが明らかになっていました。</p>
+
+<p>そう、時代の流れに取り残され気味になっていたことに、気が付いたとも言えるでしょうか。それは最初の理由にも繋がることなのですが、気付きながらも具体的にコードとして書いたことはありませんでしたから、ではなにか取り組むべき課題がないかと考えたときには、その対象がすでに定まっていたも同然、そうした経緯や状況がしぜんと導いて、その適当な課題としてぴったりとあったということが、再開し始めとなった所以となったのでした。</p>
+
+<p>個人的な話ですから、大した理由ではないと言われればそれまでですけれども、そういう個人的な理由はさておき、しかしながらその成果は、僭越ながらも、どなたかのお役にも立てるものではないかしらんと、ちょっと気持ちが大きくなっていたこともあったので、その勢いでここで紹介することにしました。</p>
+
+<p>使い方は上に書いたように３ステップするだけですので、繰り返しません。ここでは主たる機能を紹介します。その前にダウンロードから。</p>
+
+<h2>ダウンロード</h2>
+
+<p>ZIP ファイルにまとまったものが、ここからダウンロードできます：</p>
+
+<p><del><a href="https://github.com/hiroaki/gpx-casual-viewer/releases">https://github.com/hiroaki/gpx-casual-viewer/releases</a></del></p>
+
+<p><a href="https://github.com/hiroaki/maps.gpx/releases">https://github.com/hiroaki/maps.gpx/releases</a></p>
+
+<p>もし Github に馴染みがありましたら、クローンして <code>master</code> をチェックアウトしてください。</p>
+
+<h2>構成</h2>
+
+<p>なお <code>GPX Casual Viewer v3</code> は Google Maps API を用いて HTML ページ上の地図をどうにかするための機能を提供する JavaScript ライブラリ <code>gpx-casual-viewer.js</code> のことを云いまして、それを利用しながら HTML + JavaScript でもってアプリケーションを組み立てていけるように設計されているものです。</p>
+
+<p>つまり純粋なる <code>GPX Casual Viewer v3</code> の利用はプログラミングが必要ですが、ホームページやブログをちょこっと改造したことがあれば、手間はさほどでもないと思います、というより、手間のなるべくかからないようにじぶんなりに考えながら、作成しているものであります。</p>
+
+<p>とはいえ、ただ単に GPX データを閲覧したいだけならば、プログラミングなどはしたくありません。そうしたニーズに対しては、あらかじめ組み立て済みとして用意してある HTML ファイルを、ブラウザで開くだけで、使うことができます。それが <code>viewer.html</code> です。</p>
+
+<p>そして、それはひとつの利用例にすぎません。利用例、それは、ドラッグ＆ドロップで入力するユーザ・インタフェースを備えたビューワーに仕立てた例です。</p>
+
+<p>以下の紹介はひとつの例として組み立て済みの HTML ページ（アプリケーション） <code>viewer.html</code> について、ということになります。</p>
+
+<h2>機能</h2>
+
+<p>ダウンロードした ZIP ファイルを展開したら、中に <code>viewer.html</code> がありますので、最新のブラウザで開いてください。もちろん Internet Exploler ではダメです。</p>
+
+<p>画面いっぱいに、まっさらな地図が表示されます。</p>
+
+<h3>GPX ファイルを入力し、地図にオーバレイします</h3>
+
+<p>GPX ファイルを地図のあるウィンドウにドロップします。</p>
+
+<p>これにより、ひらたく言えば、 GPS のトラック（軌跡）データをポリライン、ピン（地点）データをマーカーとして描画します。 GPS データをどんな機器やアプリで取得したかによって用語は異なるかもしれません。とにかく、歩いた・走った軌跡と、どこかでマークしておいた地点のデータを、 Google Maps 上に視覚化します。</p>
+
+<p>ちなみに GPS データの形式が GPX フォーマットとなったとき、 GPX フォーマットの用語としてはそれぞれ「トラック」と「ウェイポイント」と言います。</p>
+
+<p>ところで、 GPX ファイルの入力の仕方は、じつは幾つかあって、それがこのライブラリの特徴でもあるのですが、ここでは割愛しています。が、もし、任意の GPX データを視覚化した地図を、ご自身のホームページやブログに貼り付けて活用してみたいとお考えであれば、  <code>README-ja.md</code> に書いた説明書きを参照してください。そこには <code>GPX Casual Viewer v3</code> の API の記述があります。</p>
+
+<p>もともと <code>GPX Casual Viewer v3</code> は、そうしたウィジェット（貼り付け、エンベッド）のためのフレームワークとして開発してきたという経緯もあり、本来そちらが主たるインタフェースになっています。</p>
+
+<p>それはさておき、とにかく、手っ取り早く入力するには、ドラッグ＆ドロップするだけです。そして、複数の GPX ファイルを同時にドロップすることもでき、それらを同時に地図上に描画することができます。</p>
+
+<p><img src="http://blog.hwat.jp/assets/2015/04/29/figure2.png" width="640" height="353" title="figure #2" alt="sample view figure #2"></p>
+
+<p><img src="http://blog.hwat.jp/assets/2015/04/29/figure3.png" width="640" height="353" title="figure #3" alt="sample view figure #3"></p>
+
+<h3>位置情報付き JPEG 画像ファイルを入力し、地図上に示します</h3>
+
+<p>これは GPX ファイルとは関係がない、オマケの機能なのですが、重宝するので組み込んでいます。</p>
+
+<p>GPS 搭載の携帯端末のカメラ（もちろん、スマートフォンなどのカメラがポピュラーでしょう）、それで撮影した写真には、位置情報が内包されている場合があります（専門的には、「 EXIF に GPS タグが付随している場合」）。私が使っている iPhone 6 で撮影した画像には当てはまります。そうした JPEG 画像を、地図にドロップすると、その位置を示します。もちろん、複数の画像ファイルをいっぺんにドロップしても構いません。</p>
+
+<div>
+<iframe width="420" height="315" src="https://www.youtube.com/embed/r4oQJXrbadk" frameborder="0" allowfullscreen></iframe>
+</div>
+
+
+<p>また、カメラが GPS 非搭載であったり、撮影時に測位が失敗していたがために、位置情報が入っていない画像となっていることがあり、その撮影場所がわからなくて惜しいと思う場面があるかもしれません。そのとき同時に、 GPS ログを取得していたら、その GPX データを先に投入し、それから画像を追加投入してみてください。</p>
+
+<p><code>viewer.html</code> は画像ファイルの撮影日時の情報を読み取り、先に投入されている GPS データに記録されている日時の情報と照らし合わせることで、だいたいこのへんという位置を示すことができます。</p>
+
+<h3>地点の情報、また任意の２点間の関係を計算し、示します</h3>
+
+<p>トラック（歩いた・走った軌跡）の線上のある地点の情報を、その地点をクリックすることにより、 Google Maps のフキダシとして表示します。</p>
+
+<p>そしてトラック上の２点間の関係情報とは、ある始点Ｐから、任意の点Ｑの、道なりの距離と、かかった時間（ついでに平均速度 km/h ）を表示するものです。
+これは、あたりまえのようなことですが、数多ある閲覧ツールの中には、このあたりまえのことができないものが、しばしあるので、ひとつの特徴として記しておきます。</p>
+
+<p>これは操作が分かりづらいかもしれませんし、ゆえにそれを説明するのも難しい、しかしながら一目瞭然なので、動画にしてみました。</p>
+
+<div>
+<iframe width="560" height="315" src="https://www.youtube.com/embed/dAEpMltRyy0" frameborder="0" allowfullscreen></iframe>
+</div>
+
+
+<p>最初のフキダシは起点を記します。左上のラジオボタンで、起点としています。</p>
+
+<p>そして次に開いたフキダシまでの距離を計算します。このフキダシはトラック上を移動でき、その操作はキーボードの矢印キーです。シフトキーを押しながら操作すると、現在操作中のフキダシが中央になるように画面をパンします。</p>
+
+<h2>今後について</h2>
+
+<p>いまのところは、主だった機能はこれだけです。大したものではないかもしれませんが、最大の目標であったそのユーザ体験の改善としては、いい結果にできたのでは、ないでしょうか（、どうでしょうか）。</p>
+
+<p><code>GPX Casual Viewer v3</code> の今後については、まだ追加したい機能もあることはあるので、まだしばらくは、この取り組みを続けていくつもりで、なにかあれば記事にしたいと考えています。</p>
+
+<p>不具合の発見や、機能の要望などありましたら、プロジェクトのページから Issue を作成していただければと思います。ただ、目下のところまだまだプロトタイプ色が強く、内部仕様が安定せず、インタフェースやデータ形式も含め、コードがころころ書き変わるので、そのへんにかかる API の齟齬や機能の不都合についてはご容赦ください。</p>
+]]></content>
+    
+  </entry>
+  
+  <entry>
+    
+    <title type="html"><![CDATA[MIME::Expander 0.02 is released]]></title>
+    <link href="http://hiroaki.github.io/blog/2015/0205/mime-expander-v0-dot-02-is-released/"/>
+    
+    <updated>2015-02-05T21:50:00+09:00</updated>
+    <id>http://hiroaki.github.io/blog/2015/0205/mime-expander-v0-dot-02-is-released</id>
+    
+    <content type="html"><![CDATA[<p>Perl でメールを扱うときには、じぶんはたいてい <a href="http://search.cpan.org/dist/Email-MIME/">Email::MIME</a> を利用します。これだけで間に合っているので、ほかとの比較もべつにしていないのですが、特に添付ファイル付きのメールを扱う時に、各パートに簡単にアクセスできるのが重宝します。</p>
+
+<p>さて、ときに、そうして取り出した添付ファイル、専門用語的には MIME パートと言うでしょうか、現実的には、それらは圧縮されたアーカイブだったりするのが常ではないでしょうか。すると、各パートを取り出したあとに、それらを展開（解凍）しなければなりません。しなければならない、ということは必ずしもありませんが、まあ、展開しますよね。</p>
+
+<p>そのいつものひと手間をも惜しむらく、あるとき、モジュールにするべく取り組んだのですが、その成果が <a href="http://search.cpan.org/dist/MIME-Expander/">MIME::Expander</a> というユーティリティ・モジュールになりました。これをちょっとだけ紹介します。</p>
+
+<!-- more -->
+
+
+<p>POD に書いた英語は翻訳サイトに掛けたでたらめなものなので、あまり読んでほしくないのですが、そこにはいろいろのメソッドがざっと並んではいるものの、使うのは <code>walk</code> メソッドになります。</p>
+
+<p>その動きは基本的に <code>Email::MIME</code> の <code>walk_parts</code> メソッドのようなイメージになります。 <code>walk_parts</code> メソッドは、自身のメッセージの各パートをめぐり、パートごとにコールバック・ルーチンを走らせます。</p>
+
+<p>例えば、 <code>A.txt</code> と <code>B.txt</code> 二つがアーカイブされた <code>C.zip</code> という添付ファイルがひとつ付いた、 <code>D.eml</code> というメッセージがあるとします。</p>
+
+<p><code>D.eml</code> を、 <code>Email::MIME</code> の <code>walk_parts</code> メソッドで処理すると、コールバックには本体の <code>D.eml</code> 自体のパートと、いわゆる添付ファイルである <code>C.zip</code> を持ったパートが渡ってくるので、実装者はそらが ZIP アーカイブであることを確認し、展開しなければなりません。しなければならない、ということは必ずしもありませんが、まあ。</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>my $em = Email::MIME-&gt;new("D.eml");
+</span><span class='line'>$em-&gt;walk_parts(sub {
+</span><span class='line'>  my $part = shift;
+</span><span class='line'>  if( $part-&gt;content_type =~ m[application/(x-)?zip(-compressed)?]i ){
+</span><span class='line'>    # ZIP に違いない
+</span><span class='line'>    my $uzip = IO::Uncompress::Unzip-&gt;new(...);
+</span><span class='line'>    $unzip-&gt;...;
+</span><span class='line'>    ...
+</span><span class='line'>    ...
+</span><span class='line'>  }
+</span><span class='line'>});</span></code></pre></td></tr></table></div></figure>
+
+
+<p><code>MIME::Expander</code> の <code>walk</code> メソッドではその手間を省きます。</p>
+
+<p>その callback ルーチンには、 <code>A.txt</code> と <code>B.txt</code> と、それぞれを持った単体のパートが渡ってきます（加えて <code>D.eml</code> 自体のパート）。 <code>C.zip</code> のパート自体は用無しなので、渡ってきません。</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>my $me = MIME::Expander-&gt;new;
+</span><span class='line'>$me-&gt;walk("D.eml", sub {
+</span><span class='line'>  my $part = shift; # is an instance of Email::MIME
+</span><span class='line'>  $part-&gt;body;      # A.txt, B.txt, D.eml
+</span><span class='line'>  ...
+</span><span class='line'>});</span></code></pre></td></tr></table></div></figure>
+
+
+<p>このように、<code>MIME::Expander</code> ではひとつのパートをコールバックへ渡す前に、展開可能であれば、それを展開し、幾つかのファイルになったそれぞれを、単体の <code>Email::MIME</code> パートに包んで、それらをコールバックに渡します。</p>
+
+<p>現在は、つぎのアーカイブ形式を自動的に展開します。</p>
+
+<ul>
+<li>application/bzip2</li>
+<li>application/gzip</li>
+<li>application/tar</li>
+<li>application/zip</li>
+<li>message/rfc822</li>
+<li>multipart/mixed</li>
+</ul>
+
+
+<p>末尾の二つはアーカイブではありませんが、似たようなものなので（？）同じように取り扱います。また、入れ子になったアーカイブも、アーカイブでなくなるまで再帰的に展開しようとします。そしてもし、たとえば ZIP ファイルそのものが欲しい時は、オプションを指定することによって、 ZIP は展開しない、といった動きもできるように、しました。</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>my $me = MIME::Expander-&gt;new({ expects =&gt; ['application/zip'] });</span></code></pre></td></tr></table></div></figure>
+
+
+<p>ほかにもオプションはありますが、些細なことなので端折ります──。</p>
+
+<p>さて、こうしていちおうは形になって、じぶんがふだん扱う範囲ではうまく動いているのですが、しかし白状すると、内部で行っている MIME タイプの判定にちょっと不安があります。</p>
+
+<p>ファイル・タイプの判定自体は外部の Perl モジュール（現在は <a href="http://search.cpan.org/dist/File-MMagic/">File::MMagic</a> ）に任せているのではありますが、ほかいくつかの異なる判定モジュール（ <a href="http://search.cpan.org/dist/File-MimeInfo/">File::MimeInfo</a> と <a href="http://search.cpan.org/dist/File-LibMagic/">File::LibMagic</a> と）で異なる結果が得られたりするんです。たとえば上にさりげなさそうに例示しました Content-type を正規表現で判定しているところがあるのですが、そのとおり一口に ZIP といっても <code>application/zip</code> だったり <code>application/x-zip</code> だったり、はたまた <code>application/x-zip-compressed</code> だったり&hellip; 。まったく違うとまでは至らずとも、こうした些細な違いがちらほらあります。</p>
+
+<p>MIME の仕様をしっかり理解できていないせいであるという自省はありながらも、じっさいどうなの？　という猜疑心もちょっとあったりします。今後、そのあたりを整理できるとよいのですが、──願わくば、このあたりの事情に明るい諸先生方の目に触れることによって、「これじゃいかん」といったご指摘をいただけたらなと思う所存であります。</p>
+
+<p>オチも含めてお粗末ではありますが <a href="http://search.cpan.org/dist/MIME-Expander/">MIME::Expander</a> の紹介でした。</p>
+]]></content>
+    
+  </entry>
+  
+  <entry>
+    
+    <title type="html"><![CDATA[Install shared-mime-info on OS X Yosemite]]></title>
+    <link href="http://hiroaki.github.io/blog/2014/1227/install-shared-mime-info-on-os-x-yosemite/"/>
+    
+    <updated>2014-12-27T21:02:00+09:00</updated>
+    <id>http://hiroaki.github.io/blog/2014/1227/install-shared-mime-info-on-os-x-yosemite</id>
+    
+    <content type="html"><![CDATA[<p>任意のファイルの種類が何であるかを特定したいとき、その拡張子で判断してしまうようなお人好しでない限り、話はそう簡単ではありません。</p>
+
+<!-- more -->
+
+
+<p>簡単ではないので理由は端折りますが、実装するには Perl ではモジュール <a href="http://search.cpan.org/dist/File-MimeInfo/">File-MimeInfo</a> を用いるところへ落ち着くと思われます。 Ruby だと <a href="https://rubygems.org/gems/mimemagic">mimemagic</a> かしら。</p>
+
+<p>しかしそれらが有効に働くには、 <a href="http://freedesktop.org/wiki/Software/shared-mime-info/">shared-mime-info</a> というパッケージが、そこに入っていなければなりません（追記： <code>mimemagic</code> では不要でした。 gem のライブラリに Magic データを持っていました）。それは何かというと──冒頭の一文を引用します：</p>
+
+<blockquote><p>The shared-mime-info package contains the core database of common types and the update-mime-database command used to extend it.</p></blockquote>
+
+<p>つまり、ファイルの種類のデータベースですね。</p>
+
+<p>ところで、じぶんの環境は OS X (Yosemite) であります。先に言って仕舞えば、ここには <code>shared-mime-info</code> はありません。したがって、たとえば Perl のそのモジュールをインストールして、こんなふうに実行したところで、むなしい結果を得ることとなります（なりました）。</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>$ perl -MFile::MimeInfo -E 'say mimetype(shift)' ~/Desktop/IMG_4494.PNG 
+</span><span class='line'>WARNING: You don't seem to have a mime-info database. The
+</span><span class='line'>shared-mime-info package is available from http://freedesktop.org/ .
+</span><span class='line'>application/octet-stream
+</span><span class='line'>$ </span></code></pre></td></tr></table></div></figure>
+
+
+<p>打ち明けると、逆にこのことから、ああ <code>shared-mime-info</code> というのが別途必要なんだなということに気づいたのですけれども、さて、ではインストールしよう、となるのは自然な成り行きになるのですが、しかしこれが結構ハマってしまったので、こうしてメモして残そうと思うに至った次第です。</p>
+
+<p>しかしお断りですが、それは局所的・限定的なプロブレムに対する対処療法の一種で、前向きに捉えればある意味「旬」なものではありますが、おそらくほとんどのひとには役に立つものではありませんし、じぶんの環境ですら腐りやすい、そういう内容になっていますので、どうか悪しからず。</p>
+
+<p>──その手順は、試行錯誤してインストールに成功した時までの走り書きメモをまとめて、バッチ・スクリプトにして、 Gist に置きました。スクリプトと言うと偉そうですが、見ると分かるとおり、チェックとか、エラー処理とかまったくしていないので、これをそのまま使うのはどうかと思います。ので、見るだけにして実行はしないでください。</p>
+
+<p><a href="https://gist.github.com/hiroaki/655b2e22b24fc0bdc05f">install-shared-mime-info.sh</a></p>
+
+<p>ハマリ・ポイント（ hummerly point &hellip; ）は、本丸 <code>shared-mime-info</code> のビルドです。</p>
+
+<p><code>configure</code> 自体は成功裏に終わったので、では続いて <code>make</code> とするのですがこんなエラーに遭遇しました。要約すると、コマンド <code>xgettext</code> がないぜ、と言われています：</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>$ PKG_CONFIG=$PREFIX/bin/pkg-config PKG_CONFIG_PATH=$PREFIX/lib/pkgconfig ./configure --prefix=$PREFIX
+</span><span class='line'>$ make
+</span><span class='line'>  GEN      create-pot
+</span><span class='line'>INTLTOOL_EXTRACT="$PREFIX/bin/intltool-extract" XGETTEXT=":" srcdir=. $PREFIX/bin/intltool-update --gettext-package shared-mime-info --pot
+</span><span class='line'>Can't exec ":": No such file or directory at $PREFIX/bin/intltool-update line 713.
+</span><span class='line'>Use of uninitialized value $version in pattern match (m//) at $PREFIX/bin/intltool-update line 714.
+</span><span class='line'> *** GNU xgettext is not found on this system!
+</span><span class='line'> *** Without it, intltool-update can not extract strings.
+</span><span class='line'>...
+</span><span class='line'>...
+</span><span class='line'>make[1]: *** [check] Error 1
+</span><span class='line'>make: *** [check-recursive] Error 1
+</span><span class='line'>$ </span></code></pre></td></tr></table></div></figure>
+
+
+<p>このメッセージから直接は読み取れませんが、 <code>intltool</code> をインストールした際に入ったコマンド <code>intltool-update</code> が Perl スクリプトなのでその中を見ることができたのでそれ見てみると、 <code>intltool-update</code> を実行する際に <code>xgettext</code> の情報を正しく渡していない <code>Makefile</code> が悪いとわかります。そして <code>Makefile</code> が悪いなら、それを生成する <code>configure</code> に問題がある、と捜査の手は進みます。</p>
+
+<p>記憶を過去に辿ってみれば、 <code>configure</code> を実行したときには、コマンド <code>xgettext</code> が見つかっている旨が表示されているのですが（実際 <code>PATH</code> も通っています）、しかし現実として生成された <code>Makefile</code> の中では、（それが見つかっていなかったときの意味だろうと思うのですが、） <code>:</code> という何もしないコマンドとして記録されていました。従って、 <code>intltool-update</code> はそれを <code>xgettext</code> とみなして実行したので、 <code>Can't exec ":": No such file or directory</code> というエラーメッセージになり、なるほど辻褄が合うようです。──合ったところで、解決には繋がっていませんが、ちょっと気持ちがすっきりしました。</p>
+
+<p>結局どうしたかというと、 <code>intltool-update</code> を手動で実行しました。これが、どういうことなのかは知りませんが、とりあえずインストールするのが目的になっているので、知らないまま先に進めます。</p>
+
+<p>具体的には、実行されてエラーになったコマンドラインから <code>XGETTEXT=":"</code> のところを削ってしまえば、コマンド・サーチ・パスにある <code>xgettext</code> コマンドが <code>intltool-update</code> 内部から使われる手筈になっていましたので、そうしました。ちなみに、その場で実行したら <code>po</code> ディレクトリに移ってやりなさいという親切なメッセージが出てきたので、それに従い。そして、 <code>make</code> の続きをやり直します。</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>$ cd po
+</span><span class='line'>$ INTLTOOL_EXTRACT="$PREFIX/bin/intltool-extract" srcdir=. $PREFIX/bin/intltool-update --gettext-package shared-mime-info --pot
+</span><span class='line'>$ cd ..
+</span><span class='line'>$ make
+</span><span class='line'>$ make install</span></code></pre></td></tr></table></div></figure>
+
+
+<p>望むらくば <code>configure</code> スクリプトを見直したりするべきなのかもしれませんが、それを追求するのはまた別の話になります。今回はただ、ファイルの種類を特定したいのが目的であるのですから、ツールのビルドの問題に対しては、これで十分のような気がします。尤も、その手腕を持たないじぶんの言い訳なのではありますが、次に示すように、望むべく結果を得ることができたのですから、その場しのぎにしては良い案配ではないでしょうか：</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>$ XDG_DATA_DIRS=$PREFIX/share perl -mFile::MimeInfo::Magic=magic -E 'say magic(shift)' ~/Desktop/IMG_4494.PNG
+</span><span class='line'>image/png
+</span><span class='line'>$ </span></code></pre></td></tr></table></div></figure>
+
+
+<p>以上のように、じぶんの場合、任意のファイルの種類が何であるかを特定したいとき、話はそう簡単なことではなかった、という話でした。</p>
+]]></content>
+    
+  </entry>
+  
+  <entry>
+    
+    <title type="html"><![CDATA[Real-time Monitor with Sinatra]]></title>
+    <link href="http://hiroaki.github.io/blog/2014/1216/real-time-monitor-with-sinatra/"/>
+    
+    <updated>2014-12-16T00:06:00+09:00</updated>
+    <id>http://hiroaki.github.io/blog/2014/1216/real-time-monitor-with-sinatra</id>
+    
+    <content type="html"><![CDATA[<p>あるとき、とある現場で、任意のホスト上の何かリソースの現在値を、リアルタイムでモニタリングしたい旨の相談を受けたので、これは &ldquo;real-time web&rdquo; の出番だと閃いて、そのキャッチ・コピーを掲げる Perl の Web フレームワーク Mojolicious でやってみようと取り掛かることにしました。と、書き出したところですが、しまいには Ruby の Sinatra で実装したものを紹介するだけのところで話は終わります。</p>
+
+<!-- more -->
+
+
+<p></p>
+
+<p>ツールはいずれにしても、まずロジックがありきです。──仕組はホスト上のあるコマンド、ここではサンプルとしてロード・アベレージ（ <code>uptime</code> コマンド）にしましたがなんでもいいです、その現在値をリアルタイムに＝１秒とかのスパンで定期的に取得して、都度クライアントにプッシュするような具合でしょう。そんんふうにざっとした想像はできたものの、しかし実際に組み立てたことはこれまでありませんでしたから、じぶんにとってはちょうど手頃な課題ではありました。</p>
+
+<p>冒頭に述べた通り、 Mojolicious が &ldquo;real-time web&rdquo; を売り文句にしていることを覚えていたので、手始めに最初は <a href="http://mojolicio.us/perldoc/Mojolicious/Guides/Cookbook#REAL-TIME-WEB">Mojolicious のドキュメント</a> を頼りに開いて、ストリーミングというキーワードを探しました。そして、サーバ・プッシュとしてのファースト・ステップはさほど難なく、形を見ることができました。──そこにあるサンプルをコピペしただけでしたから：</p>
+
+<p><a href="http://mojolicio.us/perldoc/Mojolicious/Guides/Cookbook#EventSource-web-service">EventSource web service</a></p>
+
+<p>ただこのときじぶんは、サーバからのプッシュだから <code>WebSocket</code> を使うのかな？　と頼りなく考えていましたが、 <a href="http://dev.w3.org/html5/eventsource/">Server-Sent Events</a> なる技術を用いて、 HTTP だけで「プッシュ通知」を実現できるとのことを初めて知ることとなります。冒頭の一文を引用します：</p>
+
+<blockquote><p>This specification defines an API for opening an HTTP connection for receiving push notifications from a server in the form of DOM events.</p></blockquote>
+
+<p>「 HTTP 接続したサーバからプッシュ通知を DOM イベントとして受けるための仕様」とでも読みましょうか。今回は、仕組みが簡単そうに見えたこれを試してみることにしたのですが、その仕様は見た目どおりシンプルで、理解し易いものでした。</p>
+
+<p>その取り巻く技術がいったいどんなものかについては、上述 Mojolicious のたった数行のサンプルにヒントがすべてが詰まっているので、ここでは冗長に述べることはしませんが、アプリケーション実装者としてのポイントとしては、クライアント・サイドである HTML 5 の <code>EventSource</code> オブジェクトにあるように思います。と、言っても難しいことはありませんで、通知が来るので、それを受けたときに駆動するイベントハンドラでデータを使うだけ、でした。そしてサーバ・サイド側の要点としては、 <code>content-type</code> が <code>text/event-stream</code> であること。</p>
+
+<p>Mojolicious のサンプルでは、サーバ上でログファイルに行が追加された時にイベントが発行されて、その通知をクライアントの <code>EventSource</code> のインスタンスが受け、そのイベント・ハンドラがデータ、ここではログの行を、ページに表示するだけです。それはそれでリアルタイムなログ・モニタとなりそうですが、今回の件では、ロード・アベレージのリアルタイムな値をモニタしたいので、このサンプルを元に、改造していきます。</p>
+
+<p>改造の要点は、定期的に＝延々とループしながらロード・アベレージ（ <code>uptime</code> コマンドの結果）を取得するサービスが別に必要だというところです。クライアントからのリクエストが来るたびにそのサービスを起動しても同じ結果が得られるかもしれませんが、そうすると、リクエストの数だけ <code>uptime</code> を別々に実行してしまい、無駄です。ホスト上で同じタイミングで <code>uptime</code> したところで結果は同じでしょう。それどころかむしろ負荷が上がってしまって高めの値が出てしまう？　そういった懸念もありました。そこで、値を取得するサービスはただひとつだけ動かし、そのサービスが１秒ごとに更新し続ける結果を、任意のタイミングでやってくるすべてのリクエストが参照し（それはすなわちその時の最新値である）、それをクライアントへレスポンスする、といった実装にしようと思い至ります。</p>
+
+<p>──ところでずいぶん長らく書いてきてしまいましたが、 Sinatra はいつ出てくるのかというと、そろそろです。</p>
+
+<p>さて Perl で別プロセスを生もうと思った時、そのデータを、リクエストのプロセスから参照するにはどうするかという技術的な厄介に気づきます。プロセス間通信？　ファイルを経由する？　そういう面倒な&hellip; ことをするくらいならば、 Ruby の Thread を用いるのが手軽で良かろうと思うのです。（本当を言うと、 Mojolicious にも適当なやり方があるのかもしれませんが、すぐにはわからなかったのです。）</p>
+
+<p>そうして作ったプロトタイプがこれです。 Gist に置きました。</p>
+
+<p><a href="https://gist.github.com/hiroaki/ad55b38be8701f25eb93">https://gist.github.com/hiroaki/ad55b38be8701f25eb93</a></p>
+
+<p>動作デモのページを用意すれば、より良いのはわかっているつもりですが、メンテナンス対象が増えてしまうのが嫌なので、作りませんでした。興味ありましたら、コードを動かしてみてください。動作させるためには、 <code>sinatra</code> と <code>thin</code> 、ふたつの gem が必要です。──とはいえ、やはり絵があるとインパクトがあって、この記事にも幾ばくかの華やぎを添えるのも事実です。から、戯れですが動画に撮ったので、デモの代わりに YouTube に置いたその動画を貼っておきたいと思います。</p>
+
+<iframe width="560" height="315" src="http://www.youtube.com/embed/HdBtD-t4xg4?t=3m30s" frameborder="0" allowfullscreen></iframe>
+
+
+<p><a href="http://www.youtube.com/embed/HdBtD-t4xg4?t=3m30s">http://www.youtube.com/embed/HdBtD-t4xg4?t=3m30s</a></p>
+
+<p>さて、 Mojolicious で基本的な技術概要を得てダラダラと述べておきながら、結局 Sinatra で実装し、しかもそれについての解説はまったくしていません。一体何のつもりなのか、と訝しがられるのも無理はありません。でも、にわかに覚えたてのじぶんの解説などは、あまりためになりそうもありませんから、止しておこうと思います。くわしくは Sinatra の README ドキュメント、イントロダクションを見ていただくのが、よいかと思います。</p>
+
+<p><a href="http://www.sinatrarb.com/intro-ja.html#ストリーミングレスポンス(Streaming%20Responses)">Sinatra: README (Japanese) # ストリーミングレスポンス(Streaming Responses)</a></p>
+
+<p>そもそもは、これほど簡単にサーバ・プッシュができるんだ、ということを紹介してみようと思ったのが、この記事を書く動機になったことでした。なので、そこへ到達できたところで、この記事は〆たいと思います。おわり。</p>
+]]></content>
+    
+  </entry>
+  
+  <entry>
+    
+    <title type="html"><![CDATA[GServer can exceed the max connections]]></title>
+    <link href="http://hiroaki.github.io/blog/2014/1005/gserver-can-exceed-the-max-connections/"/>
+    
+    <updated>2014-10-05T22:54:00+09:00</updated>
+    <id>http://hiroaki.github.io/blog/2014/1005/gserver-can-exceed-the-max-connections</id>
+    
+    <content type="html"><![CDATA[<p>前回 Ruby の <code>gserver</code> のことについて書いた後、少しばかり調べを進めてみていたら、 Ruby 2.2 からは標準添付ではなくなるとの「事実」に遭遇してしまいました。いいライブラリだなと覚えた矢先でしたから、がっかりです。尤も、標準ではなくなるだけのことですから、使い続けることはできるでしょう。</p>
+
+<p>ただ標準添付から外される理由に、（１）テストも無い代物で、（２）ドキュメントどおりには振る舞わず（後述）、（３）だれもメンテナンスしていない状態である、ということが挙げられていて、それがために誰も使っていないから外す、とのことでした。加えてその提案がなされたのが３年前ということもあって、じぶんとしてはまったくモチベーションが下がってしまいました。</p>
+
+<p><a href="https://bugs.ruby-lang.org/issues/5480">Feature #5480: remove GServer from stdlib - ruby-trunk - Ruby Issue Tracking System</a></p>
+
+<!-- more -->
+
+
+<p></p>
+
+<p>確かに、テストがありませんでした。卵が先か鶏が先か、ゆえにメンテナがいないのも頷けます。そして誰も使っていないかというと、それはどうでしょうか。じぶんにとって、それはどうでもいいことでしたから、特に調べもしませんでしたが、ちょっと検索をかけてみた所では、サンプル以上のことを書いている記事は見つけられませんでした。しかし Ruby で TCP サーバを書く人がどれだけあるかと想像すると、あまりいないんじゃないかという根拠のない──あるとすれば偏見から、思われるので、サーバを書く人がいないから、メンテされるほどの課題が出て来なかったのかも知れない。と、前向きに？考えることにして、動作に問題がないならば、標準であろうがなかろうが、だれが使っていようが、だれも使っていなかろうが、便利ならば使えばいいのだという結論に至ります。</p>
+
+<p>そのコードは、 Perl ばかり書いて来たじぶんにとって馴染みの薄いスレッドを使っている所が特徴的なわりにすっきりしていてじつにシンプルです。みんなこれを使えばいいのにと、改めて思います。そうして使う人が増えれば、メンテナンスするひとも出てくることも期待できるでしょう。</p>
+
+<p>じぶんはある実務で SMTP サーバを書く必要が生じて、 <code>midi-smtp-server</code> という gem を選択して使い始めたのが <code>gserver</code> を知る切っ掛けでもあったのですが、いまのところ上手くいっています。インターネットに出ない閉じたネットワーク内で使う代物なので、細かい気遣いをすることはなかったのですが、いざというときに内部動作が理解しやすいことも、ライブラリの選択にあたっては重視していましたから、その内容がシンプルであることは心理面でも助けになりました。</p>
+
+<p>さて、そんな経緯もありながらしばらく <code>gserver</code> を扱っているのですが、自作の SMTP サーバのテストを書いている時に、最大コネクション数が設定値を超えてしまう現象に遭遇しました。それも再現性がなく、ときどきです。</p>
+
+<p>冒頭の、標準添付から外される理由の（２）として挙げられているのは、このことかなと思いました。</p>
+
+<p>ソースに当たってみると、最大コネクション数の管理とスレッドが連動しているところなど、なるほどこういうもんなんだなと鵜呑みにしてしまっていましたが、よくよく見ていると、クライアントの接続要求に応じて生成された子スレッドの中で現在の接続数を増やしているので、その処理が通るのが先か、または親スレッドが新たに接続要求に応じて現在の接続数をチェックするのが先かで、結果が違ってくるんじゃないかと思えて来ました。</p>
+
+<p>そこで、ものは試しに、修正を加えてみることにしました。</p>
+
+<p><a href="https://github.com/hiroaki/gserver/tree/tight-max-connection-limitation">hiroaki/gserver at tight-max-connection-limitation</a></p>
+
+<p>rspec を追加したコミットを先にして、修正前のオリジナルを試験してみますと、じぶんの手元のマシンでは 100 回試行すればそのうち数回は設定した最大接続数を超えた接続が行われ、テストが失敗しました。そして、追加の修正コミットのあとは、試行回数 1,000 にしても、最大接続数を超えることはなくなり、テストは成功ました。うまくいったようです。これもライブラリの内部がシンプルな構造であったためにできたことかもしれません。（ここで、できた、というのは、手を入れてみようと思うことができた、というところにかかっています。）</p>
+
+<p>ただし、パッチした影響で、ほかの機能の安全が守られているかどうかというのが判らないのが、不安の残る所です。こういうときに、テストがもともと無いのには、確かに困ります。現在のバージョンにテストがないということは、そのこと自体が将来の発展を妨げる一因となっていると、いえる事例かもしれません。</p>
+
+<p>ところでこのブランチ、フォーク元にプル・リクエストを出してみようかとも考えましたが、少なくとも誰かにレビューしてもらってからのほうがいいかと思って躊躇っていました。でもメンテされていないものにマージしてほしいとは言えません。 <code>gserver</code> は標準添付ということで心強く思ってたのですが、これまで述べて来たようにもともと頼りないライブラリだったとあれば、このままお蔵入りにするか、プライベートで使うだけの代物になるだろうと思います。しばらくは実務で使ってる実装の方でも、オリジナルの動向の方でも、様子を見守るスタンス、です。</p>
+
+<p>──見守るとは言いますが、 SMTP サーバを書くにあたって代わりになる、かつメンテナンスされているものがあれば、それを使って行きたいというのが本音ですけれども。みなさんは SMTP サーバを書く時に、どんなライブラリを使っているのでしょうか。</p>
+]]></content>
+    
+  </entry>
+  
+  <entry>
+    
+    <title type="html"><![CDATA[How to shutdown GServer gracefully?]]></title>
+    <link href="http://hiroaki.github.io/blog/2014/0907/how-to-shutdown-gserver-gracefully/"/>
+    
+    <updated>2014-09-07T21:34:00+09:00</updated>
+    <id>http://hiroaki.github.io/blog/2014/0907/how-to-shutdown-gserver-gracefully</id>
+    
+    <content type="html"><![CDATA[<p>Ruby の標準添付ライブラリに <a href="http://docs.ruby-lang.org/ja/2.1.0/library/gserver.html">gserver</a> というのがあって、これを用いれば頗る簡単に TCP サーバを書くことが出来、こりゃいいね、って思いながら使ってみたのですけれども、サーバの停止の手続きについてちょっと悩むことがありました。</p>
+
+<p>いざサーバの停止を行おうとするとき、まだ接続中のクライアントが居たらば、その終了を待ってから、サーバは停止してほしいのは誰しも考える所です（「優雅なシャットダウン」 &ldquo;Graceful shutdown&rdquo; ）。<code>GServer</code> クラスのインタフェースとしては <code>#shutdown</code> メソッドが、それらしいことを行うはずなのですが、実際はそう上手くは問屋が卸しませんでした。</p>
+
+<!-- more -->
+
+
+<p>承前の通り簡単な内容なのでまずは書いたコード全容を貼ります。処理内容はいわゆる echo サーバです。このサーバを（フォアグラウンドで）起動したら、 <code>Ctrl+c</code> （ INT シグナル）で、優雅なシャットダウンをさせようとしています。ちなみにクライアントは、サーバに空行を送ることで接続を終了します。</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>require 'gserver'
+</span><span class='line'>
+</span><span class='line'>class EchoServer &lt; GServer
+</span><span class='line'>  
+</span><span class='line'>  def initialize(port=10001, host='127.0.0.1', *args)
+</span><span class='line'>    super(port, host, *args)
+</span><span class='line'>    self.audit = true
+</span><span class='line'>    trap :INT, proc {
+</span><span class='line'>      self.shutdown
+</span><span class='line'>    }
+</span><span class='line'>  end
+</span><span class='line'>
+</span><span class='line'>  def serve(io)
+</span><span class='line'>    loop do
+</span><span class='line'>      if IO.select([io], nil, nil, 0.1)
+</span><span class='line'>        data = io.gets
+</span><span class='line'>        break if data.nil? || data =~ /^[\r\n]*$/
+</span><span class='line'>        io.puts("echo: #{data}")
+</span><span class='line'>      end
+</span><span class='line'>    end
+</span><span class='line'>    io.close
+</span><span class='line'>  end
+</span><span class='line'>
+</span><span class='line'>end
+</span><span class='line'>
+</span><span class='line'>STDERR.sync
+</span><span class='line'>STDOUT.sync
+</span><span class='line'>server = EchoServer.new
+</span><span class='line'>server.start
+</span><span class='line'>server.join</span></code></pre></td></tr></table></div></figure>
+
+
+<p>いざこれを実行し、別端末からクライアントとして接続します。 echo の動作はうまくいきます。空行を送ることでいったん接続を切り、改めて、今度はクライアントを接続中にしたまま、サーバに INT シグナルを送ってみます。クライアントが接続中なので、まだ終了しません。思惑どおりです。</p>
+
+<p>しかし、そのクライアントを切断させますと、どうでしょうか。サーバの動作ログにはクライアントが切断した旨が出力されますが、サーバは止まりません。おや？　と思いました。また、この状態で、再びクライアントから接続を試みると、繋がってしまいます。これもおや？　と思いました。サーバはまだ接続を受け付けてしまっていますから、忙しいサイトでは休む間もないことでしょう。いちおう、すべてのクライアントが接続を終了させると、サーバも終了しましたが。</p>
+
+<p>何がいけないのでしょうか？</p>
+
+<p><code>GServer</code> クラスのソースにあたってみると、 <code>#sutdown</code> メソッドはたんにフラグを立てるだけの様で、実際の停止の手続きは別にありました。サーバのメインの処理は、新たなクライアントの接続を待つ無限ループです。無限ループは、フラグが立っていることで抜け、そして終了の手続きへと進む、といった風に読めます。サーバがループの中で、 ACCEPT 状態、つまり新たなクライアントの接続を待っている間は、文字通りその地点で待っているので、フラグをチェックする所へ来ないのです。事実、気がつけば rdoc での <code>#shutdown</code> の説明には &ldquo;Schedule a shutdown for the server&rdquo; と書いてありました。まさしく。端的に表していますが、ではどうしたら、優雅なシャットダウンを実現できるでしょうか。</p>
+
+<p>このからくりからひとつ思いつく解決方法は、 <code>#sutdown</code> メソッドを実行したで、新たなクライアントを作り、接続し、そして切断することです。</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>trap :INT, proc {
+</span><span class='line'>  self.shutdown
+</span><span class='line'>  TCPSocket.open(host,port).close
+</span><span class='line'>}</span></code></pre></td></tr></table></div></figure>
+
+
+<p>こうすることで、新たな接続を受け付けたサーバは、ループを一回進め、次のループへのチェックへ制御がやってきます。すると事前の <code>#shutdown</code> メソッドによりフラグが立っているので、ループを抜け、サーバのスレッドは子スレッドの終了を迎える体制に入ります。また同時に、このときは既にサーバは ACCEPT をしていない状態ですから、クライアントからの新しい接続は、期待どおり拒否されることになります。</p>
+
+<p>そこまで行けば、あとは接続中の幾つかのクライアント（子スレッド）がそれぞれ自身の処理を終えて接続を切り次第 <code>server.join</code> のところに集まってくるのを待っているだけです。そうしてすべての子スレッドが集まることでサーバも目出たく、優雅に、終了することが出来ます。</p>
+
+<p>実際にやってみますと、思いどおりにいきました。しかしいまひとつ、釈然としません。なにか方法はないものかと、もう少し探ってみることにしました。</p>
+
+<p><code>GServer</code> のソースをじっと見つめていると、 <code>#start</code> メソッドによって内部で生成される <code>TCPServer</code> のインスタンス（サーバ・スレッド）が <code>#accept</code> メソッドでクライアントの接続を待っています。このメソッドはスレッドの流れをブロックします。</p>
+
+<p>ここがポイントであることには間違いないので、このブロック状態を解く手だてがあればよさそうなのですが、そのような使命を直接的に背負った機能は、どの API にも見つけられませんでした。その理由を知るには、そもそも TCP 的にどのようにそれを実行するのか（するべきなのか）についてまず知らないといけないと考え、それから関係各所を回ってみたのですが（ via Google ）、しかしじぶんが開いたそれらしい様々などのドキュメントにも ACCEPT 状態を無理矢理？解く方法は明示されていませんでした（明示されていることを見つけられませんでした）。</p>
+
+<p>そんな中で、試しに、無理矢理サーバのソケットを閉じてはどうだろうと思い至ります。 <code>GServer</code> のインスタンスの中にサーバソケットを持っている <code>TCPServer</code> のインスタンスがあるので、それを摑み取って <code>#close</code> を送ってみることにしました。いうなれば、間接的に ACCEPT 状態のブロックを解くことを期待する魂胆です。</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>trap :INT, proc {
+</span><span class='line'>  self.shutdown
+</span><span class='line'>  self.instance_variable_get(:@tcpServer).close
+</span><span class='line'>}</span></code></pre></td></tr></table></div></figure>
+
+
+<p>この方法はどうやら上手くいったようです。 INT シグナルを trap したサーバは、 ACCEPT をやめたと見えて、新しいクライアントを受け付けなくなりました。一方で、接続中のクライアントが既にあった場合は、そのコネクションが切られるまで、待っていました。そして、すべてのクライアントが接続を終了したとき、はじめてサーバも終了しました。いい案配です。</p>
+
+<p>さて、こうしてみると、 <code>Gserver#shutdown</code> の後に、クライアント接続を一回虚しく空振りさせるよりも、 <code>TCPServer#close</code> を発行する方がスマートなように思えます。ただし、それが正攻法ならば。──言うまでもなくこれはアクセス手段が意図的に公開されていないインスタンスを摑み取っている時点で正攻法ではありません。そして一方 <code>TCPServer#close</code> も確信があってやっていることではないので、これでいいのかと不安は残ります。そのような不安を抱えてまでも <code>TCPServer#close</code> するメリットは、虚しいかなあまりないようです。従って、理屈的に正攻法である空振りクライアントを実装するほうが、不格好でも、良いものだと判断するほかありません。とはいえ、いちおう、一定の成果は得られた気がします。──顛末はここまでです。</p>
+
+<p>結局のところ、優雅なシャットダウンのために、空振りクライアント接続をするといったいまひとつ優雅ではない実装を行う、ということでじぶんの悩みはそこに落とさざるを得なかったという話は終わりなのですが、さてしかし、今回の主役であるその <code>GServer</code> クラスのほう、こちらこのへんの動きは（優雅なシャットダウンは新たなクライアントが接続しに来ないと始まらないこと）
+、そもそも設計の想定のうちなのでしょうか。──必然的に湧いて来るこの次なる疑問については、でも、またの機会にしたいと思います。長くなりました。</p>
+
+<p>追記：その後、こんなチケットを見つけました。同じことを言っているのでしょうか？　ただ、それから二年以上動きがないようです。さて。</p>
+
+<p><a href="https://bugs.ruby-lang.org/issues/6369">Bug #6369: GServer blocking after shutdown called - ruby-trunk - Ruby Issue Tracking System</a></p>
+]]></content>
+    
+  </entry>
+  
+  <entry>
+    
+    <title type="html"><![CDATA[Net::NicoVideo 0.28 is released]]></title>
+    <link href="http://hiroaki.github.io/blog/2013/1104/released-net-nicovideo-v0-dot-28/"/>
+    
+    <updated>2013-11-04T17:19:00+09:00</updated>
+    <id>http://hiroaki.github.io/blog/2013/1104/released-net-nicovideo-v0-dot-28</id>
+    
+    <content type="html"><![CDATA[<p>Perl でニコニコ動画のサイトへアクセスするためのモジュール Net::NicoVideo をアップデートしました。（バージョン 0.28 です）</p>
+
+<p><a href="http://search.cpan.org/dist/Net-NicoVideo/">http://search.cpan.org/dist/Net-NicoVideo/</a></p>
+
+<!-- more -->
+
+
+<p>なんでもサイトのバージョンがこれまでの &ldquo;原宿&rdquo; から &ldquo;GINZA&rdquo; に変わるとのことで、これでモジュールも使えなくなってしまうんだろうな、書き直しだな、<del>面倒</del>大変だな、と早合点して半ば諦めかけていましたが、結局の所 &ldquo;GINZA&rdquo; といっても動画を観るページの &ldquo;ガワ&rdquo; にちょっと手が入っただけのことのようで、 Net::NicoVideo （をはじめとして、市井にひろがる数多のプログラム）が実装しているアクセスの手続き、仕組み、たとえばタグ検索で RSS を得るだとか thumbinfo を fetch して parse するだとかの仕組みは、従来どおり通じるようです。</p>
+
+<p>しかし、これはまったくじぶんがいけないのですが、肝心の動画を観るページの解析の実装が安易すぎたため、脆くもそのページの解析に失敗してしまっていました。もう少し注意していれば、モジュールに手入れは不要なくらいな些細な所でした。それを、このバージョンで修復しています。</p>
+
+<p>尤も、いくつか TODO にしていた内部の実装にも手を入れて、少しは見通し易くなったとも思います。それは Net::NicoVideo::Response と Net::NicoVideo::Content のところですが、いままでコンテンツの内容も Response が扱っていましたが、 Content のほうにあるべきなので、移しました。ただし、フロントエンドの Net::NicoVideo のインスタンスを扱うクライアントは気にしなくていい所です。</p>
+
+<p>それから samples フォルダの中のスクリプトも見直しました。──テストの t が乏しいかわりに、この samples にあるスクリプトを全部動かしてテストはしています。本来 t のほうを充実させるべきなのですが、なかなか捗りません。</p>
+]]></content>
+    
+  </entry>
+  
+  <entry>
+    
+    <title type="html"><![CDATA[The Carton bundles a carton]]></title>
+    <link href="http://hiroaki.github.io/blog/2013/0926/the-carton-bundled-a-carton/"/>
+    
+    <updated>2013-09-26T23:31:00+09:00</updated>
+    <id>http://hiroaki.github.io/blog/2013/0926/the-carton-bundled-a-carton</id>
+    
+    <content type="html"><![CDATA[<p>先日書きました Carton そのもののインストールについて、それ自身が依存するモジュールが多すぎて大変、という内容の記事でしたが、そのつぶやきを Carton 作者の @miyagawa 氏が拾って下さり、じぶんの不明を正して下さいました。</p>
+
+<p><code>carton bundle</code> を実行してバンドルされた（モジュールのソースが集められた） vendor ディレクトリの中には、 carton コマンド（スクリプト）が同梱されます！ vendor/bin ディレクトリを覗いてみて下さい。</p>
+
+<!-- more -->
+
+
+<p>そのスクリプトは Carton 配布とは違うものではあるのですが、これを使えば別途 Carton 配布を用意して＋ビルドして＋インストールしなくても、バンドルされたすべてのモジュールをインストールすることが出来ます。</p>
+
+<p>方やもう一件、 JPA の @lestrrat 氏からも CPAN のミラーをローカルホスト上に作るのはどうかという旨のコメントを頂きました。いつも使うモジュールを集めておいたり、リポジトリにさまざまな Perl のプロジェクトがあってモジュールの管理を一括したいようなときに、これも知っておくべき手段ではないでしょうか。</p>
+
+<p>ただ先日書いたじぶんの記事では明らかではありませんでしたが、実際の問題として、じぶんはお客さんのところに設置することを想定していました。</p>
+
+<p>そこは外界へのネットワークもなく、かつツールを置く自由に望みが薄い厳しいところです。挙げ句にじぶんは、モジュールのバージョンをインストール順に書き込んだバッチスクリプト作成という not good な方向を突っ走ってしまっていたのですが、そのような塞がった環境では、 Carton の &ldquo;bundle&rdquo; による機能がアドバンテージを遺憾なく発揮する事でしょう。</p>
+
+<p>詳細については @miyagawa 氏の記事が上がっていますので、そちらを参照下さればと思います。（もしかしたら迷える私のようなユーザのために書いて下さった？としたらまったく有難い事です。ありがとうございます）</p>
+
+<p><a href="http://weblog.bulknews.net/post/62299851941/miyagawa-cpan-module-bootstrap">miyagawa/cpan-module-bootstrap - Tatsuhiko Miyagawa&rsquo;s blog</a></p>
+
+<p>Carton ──時事ネタ的に言えば、なんておもてなしが行き届いていることでしょう。</p>
+
+<p>少し大袈裟な物言いかもしれませんが、 Carton は Perl の今後を左右しかねない革命的なツールだとじぶんは思っています。尤もその始まりは Ruby の Bundler の存在があってのことでもあったのかも知れませんが、それ同等の環境が整ったことは Perl にとって──一般的には廃れてしまったと認知されていることを否めない Perl にとって、これからもモダンであり実用可能であることの必要条件だったのではないでしょうか。逆に厳しい目で見れば、いままでそのような環境が整っていなかったのは不幸だったと思います。</p>
+
+<p>たとえばある言語をこれから初めて使ってみよう思うデベロッパ・ユーザが、（依存モジュールが多くて）何回も make しないと使えない環境下でそのモジュールが使えるようになるまでのストレスを想像できますでしょうか。本番環境に持って行った時にバージョンが違っていたらどうしようという心配は誰もしていないのでしょうか。 Ruby には Bundler がありました。</p>
+
+<p>でもこれからの Perl には Carton があるのです。</p>
+]]></content>
+    
+  </entry>
+  
+  <entry>
+    
+    <title type="html"><![CDATA[Install Carton without Carton?]]></title>
+    <link href="http://hiroaki.github.io/blog/2013/0921/install-carton-without-carton/"/>
+    
+    <updated>2013-09-21T22:04:00+09:00</updated>
+    <id>http://hiroaki.github.io/blog/2013/0921/install-carton-without-carton</id>
+    
+    <content type="html"><![CDATA[<p>ちょっと前に <a href="https://github.com/miyagawa/carton">Carton</a> もバージョン 1.0 がリリースとなり、 plenv や cpanm らを組み合わせた Perl の環境構築は、ひと昔前のそれと比べてずいぶん簡単になりました。</p>
+
+<p>昔話をするつもりはないのですが、大量のモジュールを使ったプロダクトをデプロイするときなど、 <code>perl Makefile.PL; make; make install</code> の定型文をそれはもう腱鞘炎になるほどタイプし続けては、それだけで半日つぶす事もままあったりもしました。このコマンド・セットをタイプする大会があったなら、じぶんはおそらく上位に入賞する事でしょう。</p>
+
+<!-- more -->
+
+
+<p>だいたいそんなことになる前に、そのようなルーチン・ワークはバッチ・スクリプトを組んでおくなりすればよかったのですが、──実際それを作った事もありましたが、開発中にいろいろなモジュールを試したりしている中で、そもそも、最終的にどのモジュール（と、そのバージョン）が必要で、それが依存しているモジュールはなんだったっけ？　となる事が多く、いったんそうなったが最後、依存関係を探して必要なモジュールをダウンロードして集めては、という茨の作業が始まるのが常でした。つまるところじぶんは、モジュールを管理する上手い方法を知らなかったし、編み出さなかった。</p>
+
+<p>Carton を使うとしても、必要なモジュールがどれかは管理しておかなければならないことに変わりはありませんが、 cpanfile というメモ帳に、「使うモジュール」だけを記しておけばそれでよく、そのモジュールが依存する他のモジュールまで気にしなくていいのが大きな得物です。それどころか cpanm とのコラボレーションで、ダウンロードからインストールまで、すべて面倒をみてくれます。腱鞘炎を心配する事もありません。</p>
+
+<p>そんな Carton のいい事尽くめなところは、あちこちの Perl ユーザが記事にしているので、ここでは繰り返すことはせず、興味を持たれた方はそれらを参照して頂ければと思います。</p>
+
+<p>──ただひとつ、どの記事にも記されていない秘密の？事柄に、じぶは気付きました。なので、それを記してみたいと思います。</p>
+
+<p>Carton は、いちどダウンロードしてインストールしたモジュールを &ldquo;bundle&rdquo; しておくことで、 CPAN ネットワークへ接続できない（ファイア・ウォール内などの）環境にもそれらを再構築できる素晴らしい機能を持っているのですが、さて、その機能を使うためには、 Carton がインストールされていなければなりません。</p>
+
+<p>Carton のインストール、 CPAN （モジュール配布サイト）へ繋ぐ事ができれば <code>cpanm Carton</code> とするだけで終わるのではありますが、それができない環境では、 Carton の配布を別途ダウンロードしてそれを対象の環境へアップロード、そして <code>perl Makefile.PL; make; make install</code> とタイプします。もし、依存するモジュールがあれば、先にそれをインストールしておかなければなりません。</p>
+
+<p>これが茨の道の始まりである事は Carton のおかげで過去のこととなった筈なのですが、あろうことか、 Carton 自身が必要とする依存モジュールが、あるわあるわで、終わってみれば、じぶんは Carton-v1.0.11 を含めて 36 個ものモジュールを手動でインストールしていたのでした（補足： Perl 5.18.1 のコアで）。ちょっと、多すぎます。Carton を利用するにあたって唯一ネガティブなところがここにありました。</p>
+
+<p><strong>Carton を Carton を使ってインストールできないでしょうか？</strong></p>
+
+<p>──もちろん、それから以後は Carton の恩恵にあやかるところが甚大ですから、これに怖じ気づいてインストールしない手はないのですが、願わくば、依存モジュールがもう少し減ってくれればとは思うのは正直な所です。</p>
+
+<p>Perl 5.18.1 の中に Carton-v1.0.11 をインストールするためには、つぎの順番でモジュールをインストールする必要がありました（じぶんの手元の環境で、バージョンは現時点での最新版）。</p>
+
+<ul>
+<li>App-FatPacker-0.009018</li>
+<li>App-cpanminus-1.7001</li>
+<li>Class-Data-Inheritable-0.08</li>
+<li>Devel-StackTrace-1.30</li>
+<li>Exception-Class-1.37</li>
+<li>File-pushd-1.005</li>
+<li>JSON-2.59</li>
+<li>Module-Build-0.4007</li>
+<li>Module-CPANfile-1.0002</li>
+<li>Module-Reader-0.002000</li>
+<li>Try-Tiny-0.18</li>
+<li>autodie-2.21</li>
+<li>Path-Tiny-0.033</li>
+<li>strictures-1.004004</li>
+<li>Module-Runtime-0.013</li>
+<li>Capture-Tiny-0.22</li>
+<li>Test-Pod-1.48</li>
+<li>Test-Fatal-0.012</li>
+<li>Role-Tiny-1.003002</li>
+<li>ExtUtils-Config-0.007</li>
+<li>ExtUtils-Helpers-0.021</li>
+<li>ExtUtils-InstallPaths-0.009</li>
+<li>Module-Build-Tiny-0.027</li>
+<li>Test-Tester-0.109</li>
+<li>Test-NoWarnings-1.04</li>
+<li>Test-Deep-0.110</li>
+<li>CPAN-Meta-Check-0.007</li>
+<li>Test-CheckDeps-0.007</li>
+<li>Test-Warnings-0.009</li>
+<li>Class-Method-Modifiers-2.06</li>
+<li>Sub-Exporter-Progressive-0.001010</li>
+<li>Devel-GlobalDestruction-0.11</li>
+<li>List-MoreUtils-0.33</li>
+<li>Dist-CheckConflicts-0.09</li>
+<li>Moo-1.003001</li>
+<li>Carton-v1.0.11</li>
+</ul>
+
+
+<p>じぶんは昔の苦い手首の思い出を繰り返すまいと、今回はちゃんと、モジュールをインストールする順番をメモしておきました。あとはこれをもとにバッチス・クリプトを書いて、これらを一発でインストールできるように整えておけば準備万端と言うものです。</p>
+
+<p>おそらく、このことに気付いた方もいるでしょうから、なにかほかにいい手だてがあるのかも知れません（追記：あります！）。もし知っていたら、教えて頂きたいと思うのですが、さもなくば、 Github にそのバッチ・スクリプトを置きましたので、いっしょにメンテナンスして頂ければと思います。</p>
+
+<p><del>perl-carton - <a href="https://github.com/hiroaki/perl-carton">https://github.com/hiroaki/perl-carton</a></del></p>
+
+<p>追記：ほかにいい手だてがありました。というより、じぶんが迂闊だっただけかもしれません。この記事を読んで<del>しまっていたら</del>くださったのならば、是非、次の記事も読まなければなりません！</p>
+
+<p><a href="http://hiroaki.github.io/blog/2013/0926/the-carton-bundled-a-carton/">The Carton Bundled a Carton</a></p>
+]]></content>
+    
+  </entry>
+  
+  <entry>
+    
+    <title type="html"><![CDATA[I hope that there is an alternative]]></title>
+    <link href="http://hiroaki.github.io/blog/2013/0804/i-hope-that-there-is-an-alternative/"/>
+    
+    <updated>2013-08-04T16:23:00+09:00</updated>
+    <id>http://hiroaki.github.io/blog/2013/0804/i-hope-that-there-is-an-alternative</id>
+    
+    <content type="html"><![CDATA[<p><a href="https://github.com/miyagawa/carton">Carton</a> を使った Perl モジュールのインストール時に、困ったことがまたあったので、記しておきたいと思います。概要を先に述べますと、 Makefile.PL 実行時にオプションを渡したいのだけれども、現在の Carton では渡せないので、代替手段があればそれを使う、なければ&hellip; 残念。ということです。</p>
+
+<p>バッド・ノウハウという言い方は好ましく思わないのですが、時間的・発生場所いずれにも局所的な問題をワークアラウンド（その場凌ぎ的）に回避するアイデアをひとくちにバッド・ノウハウと言うのならば、ほかにいい言い方も無いので観念するとして、またひとつ、バッド・ノウハウを披露することになるかと思います。</p>
+
+<!-- more -->
+
+
+<p>経緯はこうです。</p>
+
+<p><code>carton install</code> するべく、あるプロダクトに cpanfile を用意して、いざ実行しました。</p>
+
+<p>その中には、 <a href="http://search.cpan.org/dist/Imager-File-PNG/">Imager::File::PNG</a> が含まれていたのですが、それは <a href="http://www.libpng.org/pub/png/libpng.html">libpng</a> を要求します。そして libpng がシステムに入っていないことじぶんは知っていたので、システムデフォルトの lib 以外の場所にインストールはしておきました。ただし、そうした場合、 Makefile.PL 実行時に <code>--incpath</code> と <code>--libpath</code> を指定しなければなりません。</p>
+
+<p>なので、 <code>carton install</code> の実行中に Imager::File::PNG のインストールが失敗するのを見て、見込みどおりであることを確認し、安心して「さて、どうしたものか」と改めて思いました。</p>
+
+<p><code>carton install</code> のとき、 requires しているうちの任意のモジュールのビルドにオプション渡したいのだけれど&hellip; 。</p>
+
+<p>そのつぶやきは @miyagawa 氏が拾ってくださって、折り返しに &ldquo;that&rsquo;s a known issue&rdquo; とコメントを頂きました。このことから、将来的には、このような問題は何らかの形で解消されるものと期待されます。たぶん、 requires 行に、モジュール名、バージョンに続けてオプションが書けるようになるんじゃないでしょうか。当てずっぽうですが、そこにしか、モジュールとの関連を設定できる所がないからです。</p>
+
+<p>さて、失敗した Imager::File::PNG については、別途手動でビルドしてしまえば用は済むのですが、必要なモジュールを全自動でインストールしたいというのが Carton の意義でもあるわけです？から、なんとかして、全自動をかなえたい。 Carton （または cpanm ? ） が対応していないからには、ほかのアプローチを模索しなければなりません。</p>
+
+<p>そこでまずは <a href="http://cpansearch.perl.org/src/TONYC/Imager-File-PNG-0.89/Makefile.PL">Imager::File::PNG の Makefile.PL</a> を注意深く覗いてみることにします。 libpng の在処を探す場面があるはずです。それは中で require している Imager::Probe にありました。それに従い <a href="http://cpansearch.perl.org/src/TONYC/Imager-0.97/lib/Imager/Probe.pm">Imager::Probe のソース</a>を覗いてみると、見つけました。 <code>pkg-config</code> コマンドを呼び出しているようです。</p>
+
+<p><code>pkg-config</code> も、その機能を用いるために、システム標準の位置に無いライブラリについては、それを教えてやる必要があります。それは <a href="http://ja.wikipedia.org/wiki/Pkg-config">PKG_CONFIG_PATH</a> 環境変数で渡すことが出来ます。そして、別途インストールしておいた libpng にはそのPKG_CONFIG_PATH に相応しいディレクトリがありました。</p>
+
+<pre><code>$ export PKG_CONFIG_PATH=/path/to/libpng/lib/pkgconfig:$PKG_CONFIG_PATH
+$ carton install
+...
+</code></pre>
+
+<p>まとめると、 Imager::File::PNG のビルド時には、 Makefile.PL 実行時に <code>--incpath</code> と <code>--libpath</code> を渡すことの替わりに PKG_CONFIG_PATH をセットしておけばよいということでした。</p>
+
+<p>通常、 Carton を使わないビルド時や、そもそもシステムの lib に libpng がインストールされていれば、このような状況には出遭いません。実際 Imager::File::PNG の README には libpng の dev パッケージをインストールしなさいと書いてありましたから、それに従えばいいのです。 <code>pkg-config</code> のことはドキュメントにはありませんし、バージョンが変われば、その手は使えなくなるかもしれません。それがゆえに、 PKG_CONFIG_PATH を使う手がバッド・ノウハウと言える性質を備えています。</p>
+
+<p>けれども、ここで得る教訓があります。デベロッパは、自身のプロダクトを提供する場合、ユーザにカスタマイズする方法を複数用意しておくことが望ましいということです。コマンドライン・オプションだけからしかオプションを指定できないツールでは、コマンドラインが無い環境からはそれを実行できません。</p>
+
+<p>例に挙げた Imager::File::PNG の場合を見直してみますと、これは、たまたま <code>pkg-config</code> を使用していたがために、ユーザがコマンドライン・オプションを使わないことを選択できたわけであって、それ自身がコマンドライン・オプション以外の設定方法を提供しているわけではないので、いまいちと言えます。望むべくは、コマンドライン・オプション同等の設定を行う環境変数などを用意しておくべきなのだと、思います。 libpng をシステムの lib にインストールしたくない（または、できない！）状況も十分あり得るのですから。</p>
+]]></content>
+    
+  </entry>
+  
+  <entry>
+    
+    <title type="html"><![CDATA[build AtomicParsley on CentOS 5]]></title>
+    <link href="http://hiroaki.github.io/blog/2013/0727/build-atomicparsley-on-centos/"/>
+    
+    <updated>2013-07-27T20:53:00+09:00</updated>
+    <id>http://hiroaki.github.io/blog/2013/0727/build-atomicparsley-on-centos</id>
+    
+    <content type="html"><![CDATA[<p><a href="http://atomicparsley.sourceforge.net">AtomicParsley</a> は MPEG-4 メディア・ファイルのメタ情報を編集するためのツール。一般的認知度を気にして誤解を恐れず大雑把に言えば、 mp3 ファイルにアーティスト情報やタイトルなどを記す ID3 タグにあたるそれを、 MPEG-4 ファイルに対して編集できるというもの。別な言い方をすると、 iTunes で取り込んだ AAC フォーマットのオーディオ・ファイルに、「アーティスト」とか「タイトル」とか、 iTunes 上で編集できる項目を編集するツールです（ちなみに mp4 ビデオ・ファイルでも編集できます）。</p>
+
+<p>そして、それは iTunes 上からは編集できない項目も、編集できます。じぶんは「リリース日」を編集したくて、──たぶんそれはニッチな要求なのでしょう、それを実現するためには <a href="http://atomicparsley.sourceforge.net">AtomicParsley</a> 以外のツールを見つけることができませんでした。</p>
+
+<p>これをちょっと古い OS である CentOS 5 の上でビルドする、そのときのメモを記そうと思います。 Mac OS X 用にならば、バイナリがダウンロードできるので、そちらを持って来て任意の場所にコピーすればおわりです。</p>
+
+<!-- MORE -->
+
+
+<p>さて、開発がすでに長いこと止まっているように見えるそれは、モダンさを欠いているのか文化が異なっていたのか、ダウンロードした zip ファイルを展開したディレクトリを眺めても makefile ファイルや configure スクリプトなるものがなく、 README も INSTALL もありません。そのためいきなり迷いましたが、 build というファイルが目に留まりました。拡張子も無く不気味なファイルでしたが、中をチラっと見たところではこれがビルド用のシェルスクリプトのようなので、おもむろにこれを叩くことにします。が、エ
+ラーが出ました。次のような：</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>$ ./build
+</span><span class='line'>...
+</span><span class='line'>...
+</span><span class='line'>AtomicParsley.cpp:4467: error: invalid conversion from 'const char*' to 'char*'
+</span><span class='line'></span></code></pre></td></tr></table></div></figure>
+
+
+<p>その過程では、ほかの cpp ファイルや h ファイルに対しても似たような警告が出ていたように見えたのですが、それらは警告であって、オブジェクトファイルは生成されています。が、肝心の？ AtomicParsley.cpp だけ、エラーになって、オブジェクトファイルが生成されません。</p>
+
+<p>こんなニッチなツールのビルド情報なんてないよなあと、そのエラーメッセージをまるごと Google 先生に投げてみると、これは C++ と GCC の兼ね合いで、ゴニョゴニョ、結果、コンパイラ・オプションなどでちょこちょこっと回避する策はなく、ソースコードの改修が求められるようでした。</p>
+
+<p>たとえばこちらの記事が参考になります。</p>
+
+<p><a href="http://d.hatena.ne.jp/tmatsuu/20090717/1247835994">GCC 4.4時代のC++プログラミング（C++プログラマーの受難な日々の巻） - Dマイナー志向</a></p>
+
+<p>じぶんは C++ には馴染みが無いのですが、さいわいエラーの出た行は多くなかったので、ものはためしでもあります、その情報のとおりにパッチしてみたところ、コンパイルはエラーなく完了し、リンクも通ってめでたくバイナリが出来てしまいました。</p>
+
+<p><a href="https://gist.github.com/hiroaki/6095214">パッチ</a></p>
+
+<p>根本的な話としては、参考にあげた記事の言うように、ある書き方をしたソースが GCC 4.3 以前では問題なかったけれども GCC 4.4 以降でビルドしようとすると、エラーになってしまうことのようです。じぶんはコンパイラについても詳しくないのですが、一般的なこととして、ふるいアプリを新しいツールでビルドするときに、こういった問題が出てくるのはよくあることだなと思います。</p>
+
+<p>そうして折々こうした事態に出くわすたびに、プログラムを書く者の端くれとして、ソースコードのメンテナとして、だけではなくサーバ管理者などソフトウェアをインストールする立場のエンジニアとしても、サービスを提供し続けようとするとき、未来永きに亘ってそれをビルドする環境があるとは限らないだと、そのための用心を怠ってはならないと、思うのでありました。</p>
+
+<p>蛇足ですが、AAC ファイルに「リリース日」を埋め込むには、こんなふうにします：</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>$ AtomicParsley audio.m4a ¥
+</span><span class='line'>  --year 2008-08-25T06:46:22Z ¥
+</span><span class='line'>  --title Sweetiex2 ¥
+</span><span class='line'>  --artist 'Dixie Flatline'</span></code></pre></td></tr></table></div></figure>
+
+
+<p>できあがったファイルを iTunes に読み込ませて、確認してみます：</p>
+
+<p><img src="http://blog.hwat.jp/assets/2013/07/29/capture.png" alt="capture" /></p>
+
+<p>パッチあてたやつでもちゃんと使えるようですネ :-)</p>
+]]></content>
+    
+  </entry>
+  
+  <entry>
+    
+    <title type="html"><![CDATA[Hello Octopress - Build Ruby 2.0 on Mac OS X 10.8]]></title>
+    <link href="http://hiroaki.github.io/blog/2013/0615/1/"/>
+    
+    <updated>2013-06-15T17:25:00+09:00</updated>
+    <id>http://hiroaki.github.io/blog/2013/0615/1</id>
+    
+    <content type="html"><![CDATA[<p>Github 上に公開しているじぶんのプロジェクトについてのメモやノートをブログにして書いていこうと思い立ち、流行の <a href="http://octopress.org">Octpress</a> に手を出すことにしました。その際、ちょっとつまづいたところがあったので、記録しておくことにします。</p>
+
+<!-- MORE -->
+
+
+<p>Git や Ruby には少しは慣れてはいるので、すぐセットアップできるだろうと、午前中の旅番組を観ながら始めたのですが、こうして最初の記事を書き始める頃にはすっかり外が暗くなってしまっていました。尤も、合間合間にご飯食べたり、他のことをしたり、しているのではありますが。</p>
+
+<p>何につまづいたかと言えば、 Mac に Ruby をインストールする、最初の最初のところでした。たぶんどこかで話題になっていると思うのですが、 OpenSSL のライブラリとリンクできない事例が、じぶんのところでも起こりました。</p>
+
+<p>OS は Mac OS X 10.8.4 で、入れようとしている Ruby は ruby 2.0.0p195 。 Octopress が高いバージョンの Ruby を必要とすることもそうですが、どうせなら最新がいいやということで、最近リリースされたばかりだと思っていた 2.0 を使うことにしたのです。</p>
+
+<p>ちなみに、じぶんはプロジェクトごとに、インタプリタまるごとインストールしたいので（環境をまったく分け隔てたいので） rbenv を使ってそれらを管理しているのですが、諸事情あって ruby-build プラグインは使っていません。 <a href="https://github.com/sstephenson/ruby-build/wiki">ruby-build の配布元 の wiki</a> には、 Mac にインストールするときの注意点が記載されているので、それに従えば単に Ruby をインストールすることはできたのかもしれませんが──、つまるところ諸事情のために、ソースから入れる必要があったのです。だから、今日も configure スクリプトを叩きます。</p>
+
+<p>さて、ダウンロードして、展開、それから configure してそのまま make するとこんなメッセージを見ることになります。 Mac に入っている OpenSSL が古いので、使えないことを伝えて来ています：</p>
+
+<pre><code>Ignore OpenSSL broken by Apple.
+Please use another openssl. (e.g. using `configure --with-openssl-dir=/path/to/openssl')
+Failed to configure openssl. It will not be installed.
+</code></pre>
+
+<p>OpenSSL はシステムとは違う場所に、次のようにビルドしました。 <code>shared</code> がミソで、かつ <code>config</code> ではなく <code>Configure darwin64-x86_64-cc ...</code> としたのも、何かの README かフォーラムか、ともかくどこかで見たものでした（どこを見たのかは忘れてしまいました）。</p>
+
+<pre><code>$ ./Configure darwin64-x86_64-cc --prefix=/path/to/MyOpenSSL ¥
+    --openssldir=/path/to/MyOpenSSL/openssl shared
+</code></pre>
+
+<p>そして Ruby のソースに戻って、言われたとおりのオプションを追加してみましたが、 configure スクリプトは、「そんなオプションは知らん」と言うではありませんか。</p>
+
+<pre><code>configure: WARNING: unrecognized options: --with-openssl-dir
+</code></pre>
+
+<p>これでしばらくハマりました。任意の場所に入れた OpenSSL を configure が見つけてくれずに、システムに入っている OpenSSL を使おうとしてしまうのです。 configure へ渡すオプションがいけないのは、きっとそうなのですが、ドキュメントを見たり、フォーラムなども海外にまでも足を伸ばして、いろいろと探してみたのですが、すっきり解決している例が見つかりません。結局どういうふうに configure に指定したらよいかが分りませんでした。</p>
+
+<p>ただそうしているうち、なにかの折に Makefile を見てみたらば、気がつきました。結局のところ OpenSSL の位置を伝えてあげればいいのだから、それを伝える術がほかにあればそれでよいのではないかと。そしてこのような解決にたどりついたのです：</p>
+
+<pre><code>$ export PKG_CONFIG_PATH=/path/to/MyOpenSSL/lib/pkgconfig
+$ export LDFLAGS=`pkg-config --libs openssl`
+$ export CFLAGS=`pkg-config --cflags openssl`
+$ ./configure --prefix=$HOME/.rbenv/versions/octopress ¥
+    --enable-shared --disable-install-doc
+$ make
+</code></pre>
+
+<p>余計ながら pkg-config はたぶん、 Mac には標準では入っていないかと思います。その場合 LDFLAGS と CFLAGS には、次のような値をセットしておきます：</p>
+
+<pre><code>$ export LDFLAGS="-L/path/to/MyOpenSSL/lib -lssl -lcrypto"
+$ export CFLAGS="-I/path/to/MyOpenSSL/include"
+</code></pre>
+
+<p>BK と言われそうですが、これで上手くいきました。</p>
+
+<p>Ruby のビルドは OpenSSL に関する問題があっても、そこで止まることはないのですが、のちのち不都合が起きます。むしろそこでビルドが止まってくれた方がよいと言うものですが、そのまま流れて行ってしまうので、ややともすると気がつかなかったかもしれません。するといつまでもこの問題に気がつかずに、苦い思いを強くしていたかもしれません。</p>
+
+<p>ある程度普及している（とじぶんが勝手に思っている） Mac と Ruby の組み合わせで、このような問題に当たるとは思いも寄らなかったので、不意打ちを喰らったようでした。正直なところ、苦悩の最中には configure のバグというか考慮不足があるんじゃないかと疑ったりもしましたが、このようなちょっとズレた現象に遭遇するのは Mac ではよくあることなので、今回もそういうものかとも思います。考察とは言えませんね、まあ、感想です。</p>
+
+<p>──さて、終いにこの記事の主題を含んでいる冒頭の段落を繰り返しますが、このブログでは Github 上に公開しているじぶんのプロジェクトについてのメモや解説なんかを書いていこうと思います。と言いながらも、さっそくプロジェクトとは関係のない記事を長々書いてしまいました。</p>
+
+<p>ブログを書くということは、本来ならばそのツールがどうこうではなく、ツールを使って作ったコンテンツがどうだ、なのだと思うので、なるべくなら、手段の方ばかりに時間を取られないようにしたいものだと思うと同時に、しかし、そんなところで時間をかけなくても済むように、ニッチな事例でもまとめておくことで、どこかで役立てられる場合もあるのではないか、とも思います。そしてそこには、将来のじぶんに対して、ということも含んでのことでもあるので、当人以外誰も困らないようなごく局所的な問題や開発環境等の話題でも、ときどきは記事にしていきたいと、いまは考えています。</p>
+]]></content>
+    
+  </entry>
+  
+</feed>

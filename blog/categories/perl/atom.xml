@@ -1,0 +1,314 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: perl | What hwat?]]></title>
+  <link href="http://hiroaki.github.io/blog/categories/perl/atom.xml" rel="self"/>
+  <link href="http://hiroaki.github.io/"/>
+  <updated>2015-08-09T01:53:03+09:00</updated>
+  <id>http://hiroaki.github.io/</id>
+  <author>
+    <name><![CDATA[hiroaki]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[MIME::Expander 0.02 is released]]></title>
+    <link href="http://hiroaki.github.io/blog/2015/0205/mime-expander-v0-dot-02-is-released/"/>
+    <updated>2015-02-05T21:50:00+09:00</updated>
+    <id>http://hiroaki.github.io/blog/2015/0205/mime-expander-v0-dot-02-is-released</id>
+    <content type="html"><![CDATA[<p>Perl でメールを扱うときには、じぶんはたいてい <a href="http://search.cpan.org/dist/Email-MIME/">Email::MIME</a> を利用します。これだけで間に合っているので、ほかとの比較もべつにしていないのですが、特に添付ファイル付きのメールを扱う時に、各パートに簡単にアクセスできるのが重宝します。</p>
+
+<p>さて、ときに、そうして取り出した添付ファイル、専門用語的には MIME パートと言うでしょうか、現実的には、それらは圧縮されたアーカイブだったりするのが常ではないでしょうか。すると、各パートを取り出したあとに、それらを展開（解凍）しなければなりません。しなければならない、ということは必ずしもありませんが、まあ、展開しますよね。</p>
+
+<p>そのいつものひと手間をも惜しむらく、あるとき、モジュールにするべく取り組んだのですが、その成果が <a href="http://search.cpan.org/dist/MIME-Expander/">MIME::Expander</a> というユーティリティ・モジュールになりました。これをちょっとだけ紹介します。</p>
+
+<!-- more -->
+
+
+<p>POD に書いた英語は翻訳サイトに掛けたでたらめなものなので、あまり読んでほしくないのですが、そこにはいろいろのメソッドがざっと並んではいるものの、使うのは <code>walk</code> メソッドになります。</p>
+
+<p>その動きは基本的に <code>Email::MIME</code> の <code>walk_parts</code> メソッドのようなイメージになります。 <code>walk_parts</code> メソッドは、自身のメッセージの各パートをめぐり、パートごとにコールバック・ルーチンを走らせます。</p>
+
+<p>例えば、 <code>A.txt</code> と <code>B.txt</code> 二つがアーカイブされた <code>C.zip</code> という添付ファイルがひとつ付いた、 <code>D.eml</code> というメッセージがあるとします。</p>
+
+<p><code>D.eml</code> を、 <code>Email::MIME</code> の <code>walk_parts</code> メソッドで処理すると、コールバックには本体の <code>D.eml</code> 自体のパートと、いわゆる添付ファイルである <code>C.zip</code> を持ったパートが渡ってくるので、実装者はそらが ZIP アーカイブであることを確認し、展開しなければなりません。しなければならない、ということは必ずしもありませんが、まあ。</p>
+
+<pre><code>my $em = Email::MIME-&gt;new("D.eml");
+$em-&gt;walk_parts(sub {
+  my $part = shift;
+  if( $part-&gt;content_type =~ m[application/(x-)?zip(-compressed)?]i ){
+    # ZIP に違いない
+    my $uzip = IO::Uncompress::Unzip-&gt;new(...);
+    $unzip-&gt;...;
+    ...
+    ...
+  }
+});
+</code></pre>
+
+<p><code>MIME::Expander</code> の <code>walk</code> メソッドではその手間を省きます。</p>
+
+<p>その callback ルーチンには、 <code>A.txt</code> と <code>B.txt</code> と、それぞれを持った単体のパートが渡ってきます（加えて <code>D.eml</code> 自体のパート）。 <code>C.zip</code> のパート自体は用無しなので、渡ってきません。</p>
+
+<pre><code>my $me = MIME::Expander-&gt;new;
+$me-&gt;walk("D.eml", sub {
+  my $part = shift; # is an instance of Email::MIME
+  $part-&gt;body;      # A.txt, B.txt, D.eml
+  ...
+});
+</code></pre>
+
+<p>このように、<code>MIME::Expander</code> ではひとつのパートをコールバックへ渡す前に、展開可能であれば、それを展開し、幾つかのファイルになったそれぞれを、単体の <code>Email::MIME</code> パートに包んで、それらをコールバックに渡します。</p>
+
+<p>現在は、つぎのアーカイブ形式を自動的に展開します。</p>
+
+<ul>
+<li>application/bzip2</li>
+<li>application/gzip</li>
+<li>application/tar</li>
+<li>application/zip</li>
+<li>message/rfc822</li>
+<li>multipart/mixed</li>
+</ul>
+
+
+<p>末尾の二つはアーカイブではありませんが、似たようなものなので（？）同じように取り扱います。また、入れ子になったアーカイブも、アーカイブでなくなるまで再帰的に展開しようとします。そしてもし、たとえば ZIP ファイルそのものが欲しい時は、オプションを指定することによって、 ZIP は展開しない、といった動きもできるように、しました。</p>
+
+<pre><code>my $me = MIME::Expander-&gt;new({ expects =&gt; ['application/zip'] });
+</code></pre>
+
+<p>ほかにもオプションはありますが、些細なことなので端折ります──。</p>
+
+<p>さて、こうしていちおうは形になって、じぶんがふだん扱う範囲ではうまく動いているのですが、しかし白状すると、内部で行っている MIME タイプの判定にちょっと不安があります。</p>
+
+<p>ファイル・タイプの判定自体は外部の Perl モジュール（現在は <a href="http://search.cpan.org/dist/File-MMagic/">File::MMagic</a> ）に任せているのではありますが、ほかいくつかの異なる判定モジュール（ <a href="http://search.cpan.org/dist/File-MimeInfo/">File::MimeInfo</a> と <a href="http://search.cpan.org/dist/File-LibMagic/">File::LibMagic</a> と）で異なる結果が得られたりするんです。たとえば上にさりげなさそうに例示しました Content-type を正規表現で判定しているところがあるのですが、そのとおり一口に ZIP といっても <code>application/zip</code> だったり <code>application/x-zip</code> だったり、はたまた <code>application/x-zip-compressed</code> だったり&hellip; 。まったく違うとまでは至らずとも、こうした些細な違いがちらほらあります。</p>
+
+<p>MIME の仕様をしっかり理解できていないせいであるという自省はありながらも、じっさいどうなの？　という猜疑心もちょっとあったりします。今後、そのあたりを整理できるとよいのですが、──願わくば、このあたりの事情に明るい諸先生方の目に触れることによって、「これじゃいかん」といったご指摘をいただけたらなと思う所存であります。</p>
+
+<p>オチも含めてお粗末ではありますが <a href="http://search.cpan.org/dist/MIME-Expander/">MIME::Expander</a> の紹介でした。</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Install shared-mime-info on OS X Yosemite]]></title>
+    <link href="http://hiroaki.github.io/blog/2014/1227/install-shared-mime-info-on-os-x-yosemite/"/>
+    <updated>2014-12-27T21:02:00+09:00</updated>
+    <id>http://hiroaki.github.io/blog/2014/1227/install-shared-mime-info-on-os-x-yosemite</id>
+    <content type="html"><![CDATA[<p>任意のファイルの種類が何であるかを特定したいとき、その拡張子で判断してしまうようなお人好しでない限り、話はそう簡単ではありません。</p>
+
+<!-- more -->
+
+
+<p>簡単ではないので理由は端折りますが、実装するには Perl ではモジュール <a href="http://search.cpan.org/dist/File-MimeInfo/">File-MimeInfo</a> を用いるところへ落ち着くと思われます。 Ruby だと <a href="https://rubygems.org/gems/mimemagic">mimemagic</a> かしら。</p>
+
+<p>しかしそれらが有効に働くには、 <a href="http://freedesktop.org/wiki/Software/shared-mime-info/">shared-mime-info</a> というパッケージが、そこに入っていなければなりません（追記： <code>mimemagic</code> では不要でした。 gem のライブラリに Magic データを持っていました）。それは何かというと──冒頭の一文を引用します：</p>
+
+<blockquote><p>The shared-mime-info package contains the core database of common types and the update-mime-database command used to extend it.</p></blockquote>
+
+<p>つまり、ファイルの種類のデータベースですね。</p>
+
+<p>ところで、じぶんの環境は OS X (Yosemite) であります。先に言って仕舞えば、ここには <code>shared-mime-info</code> はありません。したがって、たとえば Perl のそのモジュールをインストールして、こんなふうに実行したところで、むなしい結果を得ることとなります（なりました）。</p>
+
+<pre><code>$ perl -MFile::MimeInfo -E 'say mimetype(shift)' ~/Desktop/IMG_4494.PNG 
+WARNING: You don't seem to have a mime-info database. The
+shared-mime-info package is available from http://freedesktop.org/ .
+application/octet-stream
+$ 
+</code></pre>
+
+<p>打ち明けると、逆にこのことから、ああ <code>shared-mime-info</code> というのが別途必要なんだなということに気づいたのですけれども、さて、ではインストールしよう、となるのは自然な成り行きになるのですが、しかしこれが結構ハマってしまったので、こうしてメモして残そうと思うに至った次第です。</p>
+
+<p>しかしお断りですが、それは局所的・限定的なプロブレムに対する対処療法の一種で、前向きに捉えればある意味「旬」なものではありますが、おそらくほとんどのひとには役に立つものではありませんし、じぶんの環境ですら腐りやすい、そういう内容になっていますので、どうか悪しからず。</p>
+
+<p>──その手順は、試行錯誤してインストールに成功した時までの走り書きメモをまとめて、バッチ・スクリプトにして、 Gist に置きました。スクリプトと言うと偉そうですが、見ると分かるとおり、チェックとか、エラー処理とかまったくしていないので、これをそのまま使うのはどうかと思います。ので、見るだけにして実行はしないでください。</p>
+
+<p><a href="https://gist.github.com/hiroaki/655b2e22b24fc0bdc05f">install-shared-mime-info.sh</a></p>
+
+<p>ハマリ・ポイント（ hummerly point &hellip; ）は、本丸 <code>shared-mime-info</code> のビルドです。</p>
+
+<p><code>configure</code> 自体は成功裏に終わったので、では続いて <code>make</code> とするのですがこんなエラーに遭遇しました。要約すると、コマンド <code>xgettext</code> がないぜ、と言われています：</p>
+
+<pre><code>$ PKG_CONFIG=$PREFIX/bin/pkg-config PKG_CONFIG_PATH=$PREFIX/lib/pkgconfig ./configure --prefix=$PREFIX
+$ make
+  GEN      create-pot
+INTLTOOL_EXTRACT="$PREFIX/bin/intltool-extract" XGETTEXT=":" srcdir=. $PREFIX/bin/intltool-update --gettext-package shared-mime-info --pot
+Can't exec ":": No such file or directory at $PREFIX/bin/intltool-update line 713.
+Use of uninitialized value $version in pattern match (m//) at $PREFIX/bin/intltool-update line 714.
+ *** GNU xgettext is not found on this system!
+ *** Without it, intltool-update can not extract strings.
+...
+...
+make[1]: *** [check] Error 1
+make: *** [check-recursive] Error 1
+$ 
+</code></pre>
+
+<p>このメッセージから直接は読み取れませんが、 <code>intltool</code> をインストールした際に入ったコマンド <code>intltool-update</code> が Perl スクリプトなのでその中を見ることができたのでそれ見てみると、 <code>intltool-update</code> を実行する際に <code>xgettext</code> の情報を正しく渡していない <code>Makefile</code> が悪いとわかります。そして <code>Makefile</code> が悪いなら、それを生成する <code>configure</code> に問題がある、と捜査の手は進みます。</p>
+
+<p>記憶を過去に辿ってみれば、 <code>configure</code> を実行したときには、コマンド <code>xgettext</code> が見つかっている旨が表示されているのですが（実際 <code>PATH</code> も通っています）、しかし現実として生成された <code>Makefile</code> の中では、（それが見つかっていなかったときの意味だろうと思うのですが、） <code>:</code> という何もしないコマンドとして記録されていました。従って、 <code>intltool-update</code> はそれを <code>xgettext</code> とみなして実行したので、 <code>Can't exec ":": No such file or directory</code> というエラーメッセージになり、なるほど辻褄が合うようです。──合ったところで、解決には繋がっていませんが、ちょっと気持ちがすっきりしました。</p>
+
+<p>結局どうしたかというと、 <code>intltool-update</code> を手動で実行しました。これが、どういうことなのかは知りませんが、とりあえずインストールするのが目的になっているので、知らないまま先に進めます。</p>
+
+<p>具体的には、実行されてエラーになったコマンドラインから <code>XGETTEXT=":"</code> のところを削ってしまえば、コマンド・サーチ・パスにある <code>xgettext</code> コマンドが <code>intltool-update</code> 内部から使われる手筈になっていましたので、そうしました。ちなみに、その場で実行したら <code>po</code> ディレクトリに移ってやりなさいという親切なメッセージが出てきたので、それに従い。そして、 <code>make</code> の続きをやり直します。</p>
+
+<pre><code>$ cd po
+$ INTLTOOL_EXTRACT="$PREFIX/bin/intltool-extract" srcdir=. $PREFIX/bin/intltool-update --gettext-package shared-mime-info --pot
+$ cd ..
+$ make
+$ make install
+</code></pre>
+
+<p>望むらくば <code>configure</code> スクリプトを見直したりするべきなのかもしれませんが、それを追求するのはまた別の話になります。今回はただ、ファイルの種類を特定したいのが目的であるのですから、ツールのビルドの問題に対しては、これで十分のような気がします。尤も、その手腕を持たないじぶんの言い訳なのではありますが、次に示すように、望むべく結果を得ることができたのですから、その場しのぎにしては良い案配ではないでしょうか：</p>
+
+<pre><code>$ XDG_DATA_DIRS=$PREFIX/share perl -mFile::MimeInfo::Magic=magic -E 'say magic(shift)' ~/Desktop/IMG_4494.PNG
+image/png
+$ 
+</code></pre>
+
+<p>以上のように、じぶんの場合、任意のファイルの種類が何であるかを特定したいとき、話はそう簡単なことではなかった、という話でした。</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Net::NicoVideo 0.28 is released]]></title>
+    <link href="http://hiroaki.github.io/blog/2013/1104/released-net-nicovideo-v0-dot-28/"/>
+    <updated>2013-11-04T17:19:00+09:00</updated>
+    <id>http://hiroaki.github.io/blog/2013/1104/released-net-nicovideo-v0-dot-28</id>
+    <content type="html"><![CDATA[<p>Perl でニコニコ動画のサイトへアクセスするためのモジュール Net::NicoVideo をアップデートしました。（バージョン 0.28 です）</p>
+
+<p><a href="http://search.cpan.org/dist/Net-NicoVideo/">http://search.cpan.org/dist/Net-NicoVideo/</a></p>
+
+<!-- more -->
+
+
+<p>なんでもサイトのバージョンがこれまでの &ldquo;原宿&rdquo; から &ldquo;GINZA&rdquo; に変わるとのことで、これでモジュールも使えなくなってしまうんだろうな、書き直しだな、<del>面倒</del>大変だな、と早合点して半ば諦めかけていましたが、結局の所 &ldquo;GINZA&rdquo; といっても動画を観るページの &ldquo;ガワ&rdquo; にちょっと手が入っただけのことのようで、 Net::NicoVideo （をはじめとして、市井にひろがる数多のプログラム）が実装しているアクセスの手続き、仕組み、たとえばタグ検索で RSS を得るだとか thumbinfo を fetch して parse するだとかの仕組みは、従来どおり通じるようです。</p>
+
+<p>しかし、これはまったくじぶんがいけないのですが、肝心の動画を観るページの解析の実装が安易すぎたため、脆くもそのページの解析に失敗してしまっていました。もう少し注意していれば、モジュールに手入れは不要なくらいな些細な所でした。それを、このバージョンで修復しています。</p>
+
+<p>尤も、いくつか TODO にしていた内部の実装にも手を入れて、少しは見通し易くなったとも思います。それは Net::NicoVideo::Response と Net::NicoVideo::Content のところですが、いままでコンテンツの内容も Response が扱っていましたが、 Content のほうにあるべきなので、移しました。ただし、フロントエンドの Net::NicoVideo のインスタンスを扱うクライアントは気にしなくていい所です。</p>
+
+<p>それから samples フォルダの中のスクリプトも見直しました。──テストの t が乏しいかわりに、この samples にあるスクリプトを全部動かしてテストはしています。本来 t のほうを充実させるべきなのですが、なかなか捗りません。</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[The Carton bundles a carton]]></title>
+    <link href="http://hiroaki.github.io/blog/2013/0926/the-carton-bundled-a-carton/"/>
+    <updated>2013-09-26T23:31:00+09:00</updated>
+    <id>http://hiroaki.github.io/blog/2013/0926/the-carton-bundled-a-carton</id>
+    <content type="html"><![CDATA[<p>先日書きました Carton そのもののインストールについて、それ自身が依存するモジュールが多すぎて大変、という内容の記事でしたが、そのつぶやきを Carton 作者の @miyagawa 氏が拾って下さり、じぶんの不明を正して下さいました。</p>
+
+<p><code>carton bundle</code> を実行してバンドルされた（モジュールのソースが集められた） vendor ディレクトリの中には、 carton コマンド（スクリプト）が同梱されます！ vendor/bin ディレクトリを覗いてみて下さい。</p>
+
+<!-- more -->
+
+
+<p>そのスクリプトは Carton 配布とは違うものではあるのですが、これを使えば別途 Carton 配布を用意して＋ビルドして＋インストールしなくても、バンドルされたすべてのモジュールをインストールすることが出来ます。</p>
+
+<p>方やもう一件、 JPA の @lestrrat 氏からも CPAN のミラーをローカルホスト上に作るのはどうかという旨のコメントを頂きました。いつも使うモジュールを集めておいたり、リポジトリにさまざまな Perl のプロジェクトがあってモジュールの管理を一括したいようなときに、これも知っておくべき手段ではないでしょうか。</p>
+
+<p>ただ先日書いたじぶんの記事では明らかではありませんでしたが、実際の問題として、じぶんはお客さんのところに設置することを想定していました。</p>
+
+<p>そこは外界へのネットワークもなく、かつツールを置く自由に望みが薄い厳しいところです。挙げ句にじぶんは、モジュールのバージョンをインストール順に書き込んだバッチスクリプト作成という not good な方向を突っ走ってしまっていたのですが、そのような塞がった環境では、 Carton の &ldquo;bundle&rdquo; による機能がアドバンテージを遺憾なく発揮する事でしょう。</p>
+
+<p>詳細については @miyagawa 氏の記事が上がっていますので、そちらを参照下さればと思います。（もしかしたら迷える私のようなユーザのために書いて下さった？としたらまったく有難い事です。ありがとうございます）</p>
+
+<p><a href="http://weblog.bulknews.net/post/62299851941/miyagawa-cpan-module-bootstrap">miyagawa/cpan-module-bootstrap - Tatsuhiko Miyagawa&rsquo;s blog</a></p>
+
+<p>Carton ──時事ネタ的に言えば、なんておもてなしが行き届いていることでしょう。</p>
+
+<p>少し大袈裟な物言いかもしれませんが、 Carton は Perl の今後を左右しかねない革命的なツールだとじぶんは思っています。尤もその始まりは Ruby の Bundler の存在があってのことでもあったのかも知れませんが、それ同等の環境が整ったことは Perl にとって──一般的には廃れてしまったと認知されていることを否めない Perl にとって、これからもモダンであり実用可能であることの必要条件だったのではないでしょうか。逆に厳しい目で見れば、いままでそのような環境が整っていなかったのは不幸だったと思います。</p>
+
+<p>たとえばある言語をこれから初めて使ってみよう思うデベロッパ・ユーザが、（依存モジュールが多くて）何回も make しないと使えない環境下でそのモジュールが使えるようになるまでのストレスを想像できますでしょうか。本番環境に持って行った時にバージョンが違っていたらどうしようという心配は誰もしていないのでしょうか。 Ruby には Bundler がありました。</p>
+
+<p>でもこれからの Perl には Carton があるのです。</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Install Carton without Carton?]]></title>
+    <link href="http://hiroaki.github.io/blog/2013/0921/install-carton-without-carton/"/>
+    <updated>2013-09-21T22:04:00+09:00</updated>
+    <id>http://hiroaki.github.io/blog/2013/0921/install-carton-without-carton</id>
+    <content type="html"><![CDATA[<p>ちょっと前に <a href="https://github.com/miyagawa/carton">Carton</a> もバージョン 1.0 がリリースとなり、 plenv や cpanm らを組み合わせた Perl の環境構築は、ひと昔前のそれと比べてずいぶん簡単になりました。</p>
+
+<p>昔話をするつもりはないのですが、大量のモジュールを使ったプロダクトをデプロイするときなど、 <code>perl Makefile.PL; make; make install</code> の定型文をそれはもう腱鞘炎になるほどタイプし続けては、それだけで半日つぶす事もままあったりもしました。このコマンド・セットをタイプする大会があったなら、じぶんはおそらく上位に入賞する事でしょう。</p>
+
+<!-- more -->
+
+
+<p>だいたいそんなことになる前に、そのようなルーチン・ワークはバッチ・スクリプトを組んでおくなりすればよかったのですが、──実際それを作った事もありましたが、開発中にいろいろなモジュールを試したりしている中で、そもそも、最終的にどのモジュール（と、そのバージョン）が必要で、それが依存しているモジュールはなんだったっけ？　となる事が多く、いったんそうなったが最後、依存関係を探して必要なモジュールをダウンロードして集めては、という茨の作業が始まるのが常でした。つまるところじぶんは、モジュールを管理する上手い方法を知らなかったし、編み出さなかった。</p>
+
+<p>Carton を使うとしても、必要なモジュールがどれかは管理しておかなければならないことに変わりはありませんが、 cpanfile というメモ帳に、「使うモジュール」だけを記しておけばそれでよく、そのモジュールが依存する他のモジュールまで気にしなくていいのが大きな得物です。それどころか cpanm とのコラボレーションで、ダウンロードからインストールまで、すべて面倒をみてくれます。腱鞘炎を心配する事もありません。</p>
+
+<p>そんな Carton のいい事尽くめなところは、あちこちの Perl ユーザが記事にしているので、ここでは繰り返すことはせず、興味を持たれた方はそれらを参照して頂ければと思います。</p>
+
+<p>──ただひとつ、どの記事にも記されていない秘密の？事柄に、じぶは気付きました。なので、それを記してみたいと思います。</p>
+
+<p>Carton は、いちどダウンロードしてインストールしたモジュールを &ldquo;bundle&rdquo; しておくことで、 CPAN ネットワークへ接続できない（ファイア・ウォール内などの）環境にもそれらを再構築できる素晴らしい機能を持っているのですが、さて、その機能を使うためには、 Carton がインストールされていなければなりません。</p>
+
+<p>Carton のインストール、 CPAN （モジュール配布サイト）へ繋ぐ事ができれば <code>cpanm Carton</code> とするだけで終わるのではありますが、それができない環境では、 Carton の配布を別途ダウンロードしてそれを対象の環境へアップロード、そして <code>perl Makefile.PL; make; make install</code> とタイプします。もし、依存するモジュールがあれば、先にそれをインストールしておかなければなりません。</p>
+
+<p>これが茨の道の始まりである事は Carton のおかげで過去のこととなった筈なのですが、あろうことか、 Carton 自身が必要とする依存モジュールが、あるわあるわで、終わってみれば、じぶんは Carton-v1.0.11 を含めて 36 個ものモジュールを手動でインストールしていたのでした（補足： Perl 5.18.1 のコアで）。ちょっと、多すぎます。Carton を利用するにあたって唯一ネガティブなところがここにありました。</p>
+
+<p><strong>Carton を Carton を使ってインストールできないでしょうか？</strong></p>
+
+<p>──もちろん、それから以後は Carton の恩恵にあやかるところが甚大ですから、これに怖じ気づいてインストールしない手はないのですが、願わくば、依存モジュールがもう少し減ってくれればとは思うのは正直な所です。</p>
+
+<p>Perl 5.18.1 の中に Carton-v1.0.11 をインストールするためには、つぎの順番でモジュールをインストールする必要がありました（じぶんの手元の環境で、バージョンは現時点での最新版）。</p>
+
+<ul>
+<li>App-FatPacker-0.009018</li>
+<li>App-cpanminus-1.7001</li>
+<li>Class-Data-Inheritable-0.08</li>
+<li>Devel-StackTrace-1.30</li>
+<li>Exception-Class-1.37</li>
+<li>File-pushd-1.005</li>
+<li>JSON-2.59</li>
+<li>Module-Build-0.4007</li>
+<li>Module-CPANfile-1.0002</li>
+<li>Module-Reader-0.002000</li>
+<li>Try-Tiny-0.18</li>
+<li>autodie-2.21</li>
+<li>Path-Tiny-0.033</li>
+<li>strictures-1.004004</li>
+<li>Module-Runtime-0.013</li>
+<li>Capture-Tiny-0.22</li>
+<li>Test-Pod-1.48</li>
+<li>Test-Fatal-0.012</li>
+<li>Role-Tiny-1.003002</li>
+<li>ExtUtils-Config-0.007</li>
+<li>ExtUtils-Helpers-0.021</li>
+<li>ExtUtils-InstallPaths-0.009</li>
+<li>Module-Build-Tiny-0.027</li>
+<li>Test-Tester-0.109</li>
+<li>Test-NoWarnings-1.04</li>
+<li>Test-Deep-0.110</li>
+<li>CPAN-Meta-Check-0.007</li>
+<li>Test-CheckDeps-0.007</li>
+<li>Test-Warnings-0.009</li>
+<li>Class-Method-Modifiers-2.06</li>
+<li>Sub-Exporter-Progressive-0.001010</li>
+<li>Devel-GlobalDestruction-0.11</li>
+<li>List-MoreUtils-0.33</li>
+<li>Dist-CheckConflicts-0.09</li>
+<li>Moo-1.003001</li>
+<li>Carton-v1.0.11</li>
+</ul>
+
+
+<p>じぶんは昔の苦い手首の思い出を繰り返すまいと、今回はちゃんと、モジュールをインストールする順番をメモしておきました。あとはこれをもとにバッチス・クリプトを書いて、これらを一発でインストールできるように整えておけば準備万端と言うものです。</p>
+
+<p>おそらく、このことに気付いた方もいるでしょうから、なにかほかにいい手だてがあるのかも知れません（追記：あります！）。もし知っていたら、教えて頂きたいと思うのですが、さもなくば、 Github にそのバッチ・スクリプトを置きましたので、いっしょにメンテナンスして頂ければと思います。</p>
+
+<p><del>perl-carton - <a href="https://github.com/hiroaki/perl-carton">https://github.com/hiroaki/perl-carton</a></del></p>
+
+<p>追記：ほかにいい手だてがありました。というより、じぶんが迂闊だっただけかもしれません。この記事を読んで<del>しまっていたら</del>くださったのならば、是非、次の記事も読まなければなりません！</p>
+
+<p><a href="http://hiroaki.github.io/blog/2013/0926/the-carton-bundled-a-carton/">The Carton Bundled a Carton</a></p>
+]]></content>
+  </entry>
+  
+</feed>

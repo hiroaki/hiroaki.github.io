@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: atomicparsley | What hwat?]]></title>
+  <link href="http://hiroaki.github.io/blog/categories/atomicparsley/atom.xml" rel="self"/>
+  <link href="http://hiroaki.github.io/"/>
+  <updated>2015-08-09T01:53:03+09:00</updated>
+  <id>http://hiroaki.github.io/</id>
+  <author>
+    <name><![CDATA[hiroaki]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[build AtomicParsley on CentOS 5]]></title>
+    <link href="http://hiroaki.github.io/blog/2013/0727/build-atomicparsley-on-centos/"/>
+    <updated>2013-07-27T20:53:00+09:00</updated>
+    <id>http://hiroaki.github.io/blog/2013/0727/build-atomicparsley-on-centos</id>
+    <content type="html"><![CDATA[<p><a href="http://atomicparsley.sourceforge.net">AtomicParsley</a> は MPEG-4 メディア・ファイルのメタ情報を編集するためのツール。一般的認知度を気にして誤解を恐れず大雑把に言えば、 mp3 ファイルにアーティスト情報やタイトルなどを記す ID3 タグにあたるそれを、 MPEG-4 ファイルに対して編集できるというもの。別な言い方をすると、 iTunes で取り込んだ AAC フォーマットのオーディオ・ファイルに、「アーティスト」とか「タイトル」とか、 iTunes 上で編集できる項目を編集するツールです（ちなみに mp4 ビデオ・ファイルでも編集できます）。</p>
+
+<p>そして、それは iTunes 上からは編集できない項目も、編集できます。じぶんは「リリース日」を編集したくて、──たぶんそれはニッチな要求なのでしょう、それを実現するためには <a href="http://atomicparsley.sourceforge.net">AtomicParsley</a> 以外のツールを見つけることができませんでした。</p>
+
+<p>これをちょっと古い OS である CentOS 5 の上でビルドする、そのときのメモを記そうと思います。 Mac OS X 用にならば、バイナリがダウンロードできるので、そちらを持って来て任意の場所にコピーすればおわりです。</p>
+
+<!-- MORE -->
+
+
+<p>さて、開発がすでに長いこと止まっているように見えるそれは、モダンさを欠いているのか文化が異なっていたのか、ダウンロードした zip ファイルを展開したディレクトリを眺めても makefile ファイルや configure スクリプトなるものがなく、 README も INSTALL もありません。そのためいきなり迷いましたが、 build というファイルが目に留まりました。拡張子も無く不気味なファイルでしたが、中をチラっと見たところではこれがビルド用のシェルスクリプトのようなので、おもむろにこれを叩くことにします。が、エ
+ラーが出ました。次のような：</p>
+
+<pre><code>$ ./build
+...
+...
+AtomicParsley.cpp:4467: error: invalid conversion from 'const char*' to 'char*'
+</code></pre>
+
+<p>その過程では、ほかの cpp ファイルや h ファイルに対しても似たような警告が出ていたように見えたのですが、それらは警告であって、オブジェクトファイルは生成されています。が、肝心の？ AtomicParsley.cpp だけ、エラーになって、オブジェクトファイルが生成されません。</p>
+
+<p>こんなニッチなツールのビルド情報なんてないよなあと、そのエラーメッセージをまるごと Google 先生に投げてみると、これは C++ と GCC の兼ね合いで、ゴニョゴニョ、結果、コンパイラ・オプションなどでちょこちょこっと回避する策はなく、ソースコードの改修が求められるようでした。</p>
+
+<p>たとえばこちらの記事が参考になります。</p>
+
+<p><a href="http://d.hatena.ne.jp/tmatsuu/20090717/1247835994">GCC 4.4時代のC++プログラミング（C++プログラマーの受難な日々の巻） - Dマイナー志向</a></p>
+
+<p>じぶんは C++ には馴染みが無いのですが、さいわいエラーの出た行は多くなかったので、ものはためしでもあります、その情報のとおりにパッチしてみたところ、コンパイルはエラーなく完了し、リンクも通ってめでたくバイナリが出来てしまいました。</p>
+
+<p><a href="https://gist.github.com/hiroaki/6095214">パッチ</a></p>
+
+<p>根本的な話としては、参考にあげた記事の言うように、ある書き方をしたソースが GCC 4.3 以前では問題なかったけれども GCC 4.4 以降でビルドしようとすると、エラーになってしまうことのようです。じぶんはコンパイラについても詳しくないのですが、一般的なこととして、ふるいアプリを新しいツールでビルドするときに、こういった問題が出てくるのはよくあることだなと思います。</p>
+
+<p>そうして折々こうした事態に出くわすたびに、プログラムを書く者の端くれとして、ソースコードのメンテナとして、だけではなくサーバ管理者などソフトウェアをインストールする立場のエンジニアとしても、サービスを提供し続けようとするとき、未来永きに亘ってそれをビルドする環境があるとは限らないだと、そのための用心を怠ってはならないと、思うのでありました。</p>
+
+<p>蛇足ですが、AAC ファイルに「リリース日」を埋め込むには、こんなふうにします：</p>
+
+<pre><code>$ AtomicParsley audio.m4a ¥
+  --year 2008-08-25T06:46:22Z ¥
+  --title Sweetiex2 ¥
+  --artist 'Dixie Flatline'
+</code></pre>
+
+<p>できあがったファイルを iTunes に読み込ませて、確認してみます：</p>
+
+<p><img src="http://blog.hwat.jp/assets/2013/07/29/capture.png" alt="capture" /></p>
+
+<p>パッチあてたやつでもちゃんと使えるようですネ :-)</p>
+]]></content>
+  </entry>
+  
+</feed>

@@ -1,0 +1,396 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>GPX Casual Viewer v3 - What hwat?</title>
+  <meta name="author" content="hiroaki">
+
+  
+  <meta name="description" content="最近取り掛かっている日曜プログラミングの話です。 GPS 位置情報データのポピュラーなフォーマットである GPX 形式のデータを、 Google Maps API を用いて地図にオーバーレイし、 GPS 位置情報を視覚的に閲覧するビューワーを HTML と JavaScript で作っているので、 &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://hiroaki.github.io/blog/2015/0429/gpx-casual-viewer-v3">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="What hwat?" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/lib/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href='http://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet' type='text/css'>
+<link href='http://fonts.googleapis.com/css?family=Fjalla+One' rel='stylesheet' type='text/css'>
+  
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-299060-4']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+
+
+</head>
+
+<body   class="collapse-sidebar sidebar-footer" >
+  <header role="banner">
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="https://www.google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:hiroaki.github.io" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+  <li><a href="/about">About</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+  
+    
+      <h1 class="entry-title">GPX Casual Viewer v3</h1>
+    
+  
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2015-04-29T19:00:00+09:00" pubdate data-updated="true"></time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>最近取り掛かっている日曜プログラミングの話です。</p>
+
+<p>GPS 位置情報データのポピュラーなフォーマットである GPX 形式のデータを、 Google Maps API を用いて地図にオーバーレイし、 GPS 位置情報を視覚的に閲覧するビューワーを HTML と JavaScript で作っているので、それについて紹介したいと思います。名付けて <del>GPX Casual Viewer v3</del> （名称変更しました。次の記事を参照してください： <a href="http://hiroaki.github.io/blog/2015/0721/maps-dot-gpx-a-dot-k-a-gpx-casual-viewer/">maps.gpx a.k.a. GPX Casual Viewer v3</a> また以下では <code>GPX Casual Viewer v3</code> を <code>maps.gpx</code> と読み替えてください） 。</p>
+
+<p><img src="http://blog.hwat.jp/assets/2015/04/29/figure1.png" width="600" height="452" title="figure #1" alt="sample view figure #1"></p>
+
+<!-- more -->
+
+
+<h2>歴史</h2>
+
+<p>実を言うと、その最初の取り組みはかれこれ何年も前になります。 Google Maps API が世に始めた頃（いつでしたっけ？）。当時はまだ API バージョン 2 でしたが、そのころからこつこつ弄ってはいたのでした。</p>
+
+<p>その成果はじぶんのホームページで公開していたので、いちぶのマニアックな方々（失礼がありましたらお詫びいたします）の目に止まって、使って頂いたりもしていたのですが、しばらくして互換性のない上位の API バージョン 3 が主流になってからというものは、いつかバージョンアップして書き換えようと思いつつも、結局ほったらかしになっていました。</p>
+
+<p>尤も、簡単な閲覧機能だけ API バージョン 3 で実装し直して、個人的に旅の軌跡を眺めてニヤニヤするぶんには、使ってはいたのですが、見方を変えればそれだけで済んでしまっていたので、がっつり作り直すモチベーションが盛り上がることもなく、気がつけばこのように思い出話をするように、いまに至っている次第でした。</p>
+
+<h2>モチベーション</h2>
+
+<p>それがなぜに再び筆を取ろう、いえ、コードを書き直そうかと思ったかといえば、特に大きな理由はないのですが、小さな理由のひとつは、じぶんの JavaScript 技能の維持のために、なにかしら常に書いていたほうがよいな、ということがありました。使わないと、失われてしまいますからね。でもそれは二の次かもしれません。</p>
+
+<p>それから、さきほど、個人的にニヤニヤするための仮の実装があると言いましたが、それが実は使いづらくて、こう治せればいいのになあという部分が常に目についてはストレスに感じていたことがありました。</p>
+
+<p>具体的に例えば、視覚化したい GPX ファイルが、デスクトップ上にあったとします。それを Google Maps API を用いた地図上にオーバーレイしようとしたとき、次の手順を踏む必要がありました。ちょっと細かいですが、そこにストレスの元があるのです：</p>
+
+<ol>
+<li>Google Maps API で実装した地図の HTML ファイルをブラウザで開きます。</li>
+<li>GPX ファイルの URL <code>file:///Users/hiroaki/デスクトップ/data.gpx</code> をクリップボードに取得します（これがちょう★面倒）</li>
+<li>ブラウザのロケーション欄にカーソルを持って行きます（せまい領域にマウスカーソルを合わせないといけない）</li>
+<li>ロケーションの URL の末尾にクエリストリングを、「キーボードを叩いて」加えます <code>?url=</code></li>
+<li>さらに続けて、クリップボードに入れた URL 文字列をペーストします（ああ、イライラする！）</li>
+<li>エンターキーをヒットします。</li>
+<li>オーバレイされた GPS 情報を観て、ニヤニヤします。</li>
+</ol>
+
+
+<p>これは、こうあるべきです：</p>
+
+<ol>
+<li>Google Maps API で実装した地図の HTML ファイルをブラウザで開きます。</li>
+<li>GPX ファイルを、デスクトップからブラウザへドロップします。</li>
+<li>オーバレイされた GPS 情報を観て、ニヤニヤします。</li>
+</ol>
+
+
+<p>ただ、こうすっきりとした手際に仕上げるには、当時の目では困難に見えました。しかし、いまになってみれば、昨今 HTML5 周辺の整備状況が整ってきたという新しい事情があります。──気がつけば、になってしまうのですが、そのへんの技術を用いることで、この理想の形を簡単に実現できる見通しが明らかになっていました。</p>
+
+<p>そう、時代の流れに取り残され気味になっていたことに、気が付いたとも言えるでしょうか。それは最初の理由にも繋がることなのですが、気付きながらも具体的にコードとして書いたことはありませんでしたから、ではなにか取り組むべき課題がないかと考えたときには、その対象がすでに定まっていたも同然、そうした経緯や状況がしぜんと導いて、その適当な課題としてぴったりとあったということが、再開し始めとなった所以となったのでした。</p>
+
+<p>個人的な話ですから、大した理由ではないと言われればそれまでですけれども、そういう個人的な理由はさておき、しかしながらその成果は、僭越ながらも、どなたかのお役にも立てるものではないかしらんと、ちょっと気持ちが大きくなっていたこともあったので、その勢いでここで紹介することにしました。</p>
+
+<p>使い方は上に書いたように３ステップするだけですので、繰り返しません。ここでは主たる機能を紹介します。その前にダウンロードから。</p>
+
+<h2>ダウンロード</h2>
+
+<p>ZIP ファイルにまとまったものが、ここからダウンロードできます：</p>
+
+<p><del><a href="https://github.com/hiroaki/gpx-casual-viewer/releases">https://github.com/hiroaki/gpx-casual-viewer/releases</a></del></p>
+
+<p><a href="https://github.com/hiroaki/maps.gpx/releases">https://github.com/hiroaki/maps.gpx/releases</a></p>
+
+<p>もし Github に馴染みがありましたら、クローンして <code>master</code> をチェックアウトしてください。</p>
+
+<h2>構成</h2>
+
+<p>なお <code>GPX Casual Viewer v3</code> は Google Maps API を用いて HTML ページ上の地図をどうにかするための機能を提供する JavaScript ライブラリ <code>gpx-casual-viewer.js</code> のことを云いまして、それを利用しながら HTML + JavaScript でもってアプリケーションを組み立てていけるように設計されているものです。</p>
+
+<p>つまり純粋なる <code>GPX Casual Viewer v3</code> の利用はプログラミングが必要ですが、ホームページやブログをちょこっと改造したことがあれば、手間はさほどでもないと思います、というより、手間のなるべくかからないようにじぶんなりに考えながら、作成しているものであります。</p>
+
+<p>とはいえ、ただ単に GPX データを閲覧したいだけならば、プログラミングなどはしたくありません。そうしたニーズに対しては、あらかじめ組み立て済みとして用意してある HTML ファイルを、ブラウザで開くだけで、使うことができます。それが <code>viewer.html</code> です。</p>
+
+<p>そして、それはひとつの利用例にすぎません。利用例、それは、ドラッグ＆ドロップで入力するユーザ・インタフェースを備えたビューワーに仕立てた例です。</p>
+
+<p>以下の紹介はひとつの例として組み立て済みの HTML ページ（アプリケーション） <code>viewer.html</code> について、ということになります。</p>
+
+<h2>機能</h2>
+
+<p>ダウンロードした ZIP ファイルを展開したら、中に <code>viewer.html</code> がありますので、最新のブラウザで開いてください。もちろん Internet Exploler ではダメです。</p>
+
+<p>画面いっぱいに、まっさらな地図が表示されます。</p>
+
+<h3>GPX ファイルを入力し、地図にオーバレイします</h3>
+
+<p>GPX ファイルを地図のあるウィンドウにドロップします。</p>
+
+<p>これにより、ひらたく言えば、 GPS のトラック（軌跡）データをポリライン、ピン（地点）データをマーカーとして描画します。 GPS データをどんな機器やアプリで取得したかによって用語は異なるかもしれません。とにかく、歩いた・走った軌跡と、どこかでマークしておいた地点のデータを、 Google Maps 上に視覚化します。</p>
+
+<p>ちなみに GPS データの形式が GPX フォーマットとなったとき、 GPX フォーマットの用語としてはそれぞれ「トラック」と「ウェイポイント」と言います。</p>
+
+<p>ところで、 GPX ファイルの入力の仕方は、じつは幾つかあって、それがこのライブラリの特徴でもあるのですが、ここでは割愛しています。が、もし、任意の GPX データを視覚化した地図を、ご自身のホームページやブログに貼り付けて活用してみたいとお考えであれば、  <code>README-ja.md</code> に書いた説明書きを参照してください。そこには <code>GPX Casual Viewer v3</code> の API の記述があります。</p>
+
+<p>もともと <code>GPX Casual Viewer v3</code> は、そうしたウィジェット（貼り付け、エンベッド）のためのフレームワークとして開発してきたという経緯もあり、本来そちらが主たるインタフェースになっています。</p>
+
+<p>それはさておき、とにかく、手っ取り早く入力するには、ドラッグ＆ドロップするだけです。そして、複数の GPX ファイルを同時にドロップすることもでき、それらを同時に地図上に描画することができます。</p>
+
+<p><img src="http://blog.hwat.jp/assets/2015/04/29/figure2.png" width="640" height="353" title="figure #2" alt="sample view figure #2"></p>
+
+<p><img src="http://blog.hwat.jp/assets/2015/04/29/figure3.png" width="640" height="353" title="figure #3" alt="sample view figure #3"></p>
+
+<h3>位置情報付き JPEG 画像ファイルを入力し、地図上に示します</h3>
+
+<p>これは GPX ファイルとは関係がない、オマケの機能なのですが、重宝するので組み込んでいます。</p>
+
+<p>GPS 搭載の携帯端末のカメラ（もちろん、スマートフォンなどのカメラがポピュラーでしょう）、それで撮影した写真には、位置情報が内包されている場合があります（専門的には、「 EXIF に GPS タグが付随している場合」）。私が使っている iPhone 6 で撮影した画像には当てはまります。そうした JPEG 画像を、地図にドロップすると、その位置を示します。もちろん、複数の画像ファイルをいっぺんにドロップしても構いません。</p>
+
+<div>
+<iframe width="420" height="315" src="https://www.youtube.com/embed/r4oQJXrbadk" frameborder="0" allowfullscreen></iframe>
+</div>
+
+
+<p>また、カメラが GPS 非搭載であったり、撮影時に測位が失敗していたがために、位置情報が入っていない画像となっていることがあり、その撮影場所がわからなくて惜しいと思う場面があるかもしれません。そのとき同時に、 GPS ログを取得していたら、その GPX データを先に投入し、それから画像を追加投入してみてください。</p>
+
+<p><code>viewer.html</code> は画像ファイルの撮影日時の情報を読み取り、先に投入されている GPS データに記録されている日時の情報と照らし合わせることで、だいたいこのへんという位置を示すことができます。</p>
+
+<h3>地点の情報、また任意の２点間の関係を計算し、示します</h3>
+
+<p>トラック（歩いた・走った軌跡）の線上のある地点の情報を、その地点をクリックすることにより、 Google Maps のフキダシとして表示します。</p>
+
+<p>そしてトラック上の２点間の関係情報とは、ある始点Ｐから、任意の点Ｑの、道なりの距離と、かかった時間（ついでに平均速度 km/h ）を表示するものです。
+これは、あたりまえのようなことですが、数多ある閲覧ツールの中には、このあたりまえのことができないものが、しばしあるので、ひとつの特徴として記しておきます。</p>
+
+<p>これは操作が分かりづらいかもしれませんし、ゆえにそれを説明するのも難しい、しかしながら一目瞭然なので、動画にしてみました。</p>
+
+<div>
+<iframe width="560" height="315" src="https://www.youtube.com/embed/dAEpMltRyy0" frameborder="0" allowfullscreen></iframe>
+</div>
+
+
+<p>最初のフキダシは起点を記します。左上のラジオボタンで、起点としています。</p>
+
+<p>そして次に開いたフキダシまでの距離を計算します。このフキダシはトラック上を移動でき、その操作はキーボードの矢印キーです。シフトキーを押しながら操作すると、現在操作中のフキダシが中央になるように画面をパンします。</p>
+
+<h2>今後について</h2>
+
+<p>いまのところは、主だった機能はこれだけです。大したものではないかもしれませんが、最大の目標であったそのユーザ体験の改善としては、いい結果にできたのでは、ないでしょうか（、どうでしょうか）。</p>
+
+<p><code>GPX Casual Viewer v3</code> の今後については、まだ追加したい機能もあることはあるので、まだしばらくは、この取り組みを続けていくつもりで、なにかあれば記事にしたいと考えています。</p>
+
+<p>不具合の発見や、機能の要望などありましたら、プロジェクトのページから Issue を作成していただければと思います。ただ、目下のところまだまだプロトタイプ色が強く、内部仕様が安定せず、インタフェースやデータ形式も含め、コードがころころ書き変わるので、そのへんにかかる API の齟齬や機能の不都合についてはご容赦ください。</p>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">hiroaki</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2015-04-29T19:00:00+09:00" pubdate data-updated="true"></time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/gpx/'>gpx</a>, <a class='category' href='/blog/categories/maps/'>maps</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="http://twitter.com/share" class="twitter-share-button" data-url="http://hiroaki.github.io/blog/2015/0429/gpx-casual-viewer-v3/" data-via="hwatattama" data-counturl="http://hiroaki.github.io/blog/2015/0429/gpx-casual-viewer-v3/" >Tweet</a>
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2015/0205/mime-expander-v0-dot-02-is-released/" title="Previous Post: MIME::Expander 0.02 is released">&laquo; MIME::Expander 0.02 is released</a>
+      
+      
+        <a class="basic-alignment right" href="/blog/2015/0721/maps-dot-gpx-a-dot-k-a-gpx-casual-viewer/" title="Next Post: maps.gpx a.k.a. GPX Casual Viewer v3">maps.gpx a.k.a. GPX Casual Viewer v3 &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2015/0808/drawercss/">DrawerCSS</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2015/0721/maps-dot-gpx-a-dot-k-a-gpx-casual-viewer/">maps.gpx a.k.a. GPX Casual Viewer v3</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2015/0429/gpx-casual-viewer-v3/">GPX Casual Viewer v3</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2015/0205/mime-expander-v0-dot-02-is-released/">MIME::Expander 0.02 is released</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/1227/install-shared-mime-info-on-os-x-yosemite/">Install shared-mime-info on OS X Yosemite</a>
+      </li>
+    
+  </ul>
+</section>
+
+<section>
+  <h1>GitHub Repos</h1>
+  <ul id="gh_repos">
+    <li class="loading">Status updating...</li>
+  </ul>
+  
+  <a href="https://github.com/hiroaki">@hiroaki</a> on GitHub
+  
+  <script type="text/javascript">
+    $(document).ready(function(){
+        if (!window.jXHR){
+            var jxhr = document.createElement('script');
+            jxhr.type = 'text/javascript';
+            jxhr.src = '/javascripts/libs/jXHR.js';
+            var s = document.getElementsByTagName('script')[0];
+            s.parentNode.insertBefore(jxhr, s);
+        }
+
+        github.showRepos({
+            user: 'hiroaki',
+            count: 0,
+            skip_forks: true,
+            target: '#gh_repos'
+        });
+    });
+  </script>
+  <script src="/javascripts/github.js" type="text/javascript"> </script>
+</section>
+
+
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2015 - hiroaki <br/>
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a>, customized with <a href="https://github.com/mjhea0/whiterspace">whiterspace</a>.</span>
+</p>
+
+</footer>
+  
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = 'http://platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>

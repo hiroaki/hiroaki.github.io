@@ -1,0 +1,294 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>I hope that there is an alternative - What hwat?</title>
+  <meta name="author" content="hiroaki">
+
+  
+  <meta name="description" content="Carton を使った Perl モジュールのインストール時に、困ったことがまたあったので、記しておきたいと思います。概要を先に述べますと、 Makefile.PL 実行時にオプションを渡したいのだけれども、現在の Carton では渡せないので、代替手段があればそれを使う、なければ&hellip &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://hiroaki.github.io/blog/2013/0804/i-hope-that-there-is-an-alternative">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="What hwat?" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/lib/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href='http://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet' type='text/css'>
+<link href='http://fonts.googleapis.com/css?family=Fjalla+One' rel='stylesheet' type='text/css'>
+  
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-299060-4']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+
+
+</head>
+
+<body   class="collapse-sidebar sidebar-footer" >
+  <header role="banner">
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="https://www.google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:hiroaki.github.io" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+  <li><a href="/about">About</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+  
+    
+      <h1 class="entry-title">I hope that there is an alternative</h1>
+    
+  
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-08-04T16:23:00+09:00" pubdate data-updated="true"></time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p><a href="https://github.com/miyagawa/carton">Carton</a> を使った Perl モジュールのインストール時に、困ったことがまたあったので、記しておきたいと思います。概要を先に述べますと、 Makefile.PL 実行時にオプションを渡したいのだけれども、現在の Carton では渡せないので、代替手段があればそれを使う、なければ&hellip; 残念。ということです。</p>
+
+<p>バッド・ノウハウという言い方は好ましく思わないのですが、時間的・発生場所いずれにも局所的な問題をワークアラウンド（その場凌ぎ的）に回避するアイデアをひとくちにバッド・ノウハウと言うのならば、ほかにいい言い方も無いので観念するとして、またひとつ、バッド・ノウハウを披露することになるかと思います。</p>
+
+<!-- more -->
+
+
+<p>経緯はこうです。</p>
+
+<p><code>carton install</code> するべく、あるプロダクトに cpanfile を用意して、いざ実行しました。</p>
+
+<p>その中には、 <a href="http://search.cpan.org/dist/Imager-File-PNG/">Imager::File::PNG</a> が含まれていたのですが、それは <a href="http://www.libpng.org/pub/png/libpng.html">libpng</a> を要求します。そして libpng がシステムに入っていないことじぶんは知っていたので、システムデフォルトの lib 以外の場所にインストールはしておきました。ただし、そうした場合、 Makefile.PL 実行時に <code>--incpath</code> と <code>--libpath</code> を指定しなければなりません。</p>
+
+<p>なので、 <code>carton install</code> の実行中に Imager::File::PNG のインストールが失敗するのを見て、見込みどおりであることを確認し、安心して「さて、どうしたものか」と改めて思いました。</p>
+
+<p><code>carton install</code> のとき、 requires しているうちの任意のモジュールのビルドにオプション渡したいのだけれど&hellip; 。</p>
+
+<p>そのつぶやきは @miyagawa 氏が拾ってくださって、折り返しに &ldquo;that&rsquo;s a known issue&rdquo; とコメントを頂きました。このことから、将来的には、このような問題は何らかの形で解消されるものと期待されます。たぶん、 requires 行に、モジュール名、バージョンに続けてオプションが書けるようになるんじゃないでしょうか。当てずっぽうですが、そこにしか、モジュールとの関連を設定できる所がないからです。</p>
+
+<p>さて、失敗した Imager::File::PNG については、別途手動でビルドしてしまえば用は済むのですが、必要なモジュールを全自動でインストールしたいというのが Carton の意義でもあるわけです？から、なんとかして、全自動をかなえたい。 Carton （または cpanm ? ） が対応していないからには、ほかのアプローチを模索しなければなりません。</p>
+
+<p>そこでまずは <a href="http://cpansearch.perl.org/src/TONYC/Imager-File-PNG-0.89/Makefile.PL">Imager::File::PNG の Makefile.PL</a> を注意深く覗いてみることにします。 libpng の在処を探す場面があるはずです。それは中で require している Imager::Probe にありました。それに従い <a href="http://cpansearch.perl.org/src/TONYC/Imager-0.97/lib/Imager/Probe.pm">Imager::Probe のソース</a>を覗いてみると、見つけました。 <code>pkg-config</code> コマンドを呼び出しているようです。</p>
+
+<p><code>pkg-config</code> も、その機能を用いるために、システム標準の位置に無いライブラリについては、それを教えてやる必要があります。それは <a href="http://ja.wikipedia.org/wiki/Pkg-config">PKG_CONFIG_PATH</a> 環境変数で渡すことが出来ます。そして、別途インストールしておいた libpng にはそのPKG_CONFIG_PATH に相応しいディレクトリがありました。</p>
+
+<pre><code>$ export PKG_CONFIG_PATH=/path/to/libpng/lib/pkgconfig:$PKG_CONFIG_PATH
+$ carton install
+...
+</code></pre>
+
+<p>まとめると、 Imager::File::PNG のビルド時には、 Makefile.PL 実行時に <code>--incpath</code> と <code>--libpath</code> を渡すことの替わりに PKG_CONFIG_PATH をセットしておけばよいということでした。</p>
+
+<p>通常、 Carton を使わないビルド時や、そもそもシステムの lib に libpng がインストールされていれば、このような状況には出遭いません。実際 Imager::File::PNG の README には libpng の dev パッケージをインストールしなさいと書いてありましたから、それに従えばいいのです。 <code>pkg-config</code> のことはドキュメントにはありませんし、バージョンが変われば、その手は使えなくなるかもしれません。それがゆえに、 PKG_CONFIG_PATH を使う手がバッド・ノウハウと言える性質を備えています。</p>
+
+<p>けれども、ここで得る教訓があります。デベロッパは、自身のプロダクトを提供する場合、ユーザにカスタマイズする方法を複数用意しておくことが望ましいということです。コマンドライン・オプションだけからしかオプションを指定できないツールでは、コマンドラインが無い環境からはそれを実行できません。</p>
+
+<p>例に挙げた Imager::File::PNG の場合を見直してみますと、これは、たまたま <code>pkg-config</code> を使用していたがために、ユーザがコマンドライン・オプションを使わないことを選択できたわけであって、それ自身がコマンドライン・オプション以外の設定方法を提供しているわけではないので、いまいちと言えます。望むべくは、コマンドライン・オプション同等の設定を行う環境変数などを用意しておくべきなのだと、思います。 libpng をシステムの lib にインストールしたくない（または、できない！）状況も十分あり得るのですから。</p>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">hiroaki</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-08-04T16:23:00+09:00" pubdate data-updated="true"></time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/carton/'>carton</a>, <a class='category' href='/blog/categories/perl/'>perl</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="http://twitter.com/share" class="twitter-share-button" data-url="http://hiroaki.github.io/blog/2013/0804/i-hope-that-there-is-an-alternative/" data-via="hwatattama" data-counturl="http://hiroaki.github.io/blog/2013/0804/i-hope-that-there-is-an-alternative/" >Tweet</a>
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2013/0727/build-atomicparsley-on-centos/" title="Previous Post: build AtomicParsley on CentOS 5">&laquo; build AtomicParsley on CentOS 5</a>
+      
+      
+        <a class="basic-alignment right" href="/blog/2013/0921/install-carton-without-carton/" title="Next Post: Install Carton without Carton?">Install Carton without Carton? &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2015/0808/drawercss/">DrawerCSS</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2015/0721/maps-dot-gpx-a-dot-k-a-gpx-casual-viewer/">maps.gpx a.k.a. GPX Casual Viewer v3</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2015/0429/gpx-casual-viewer-v3/">GPX Casual Viewer v3</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2015/0205/mime-expander-v0-dot-02-is-released/">MIME::Expander 0.02 is released</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/1227/install-shared-mime-info-on-os-x-yosemite/">Install shared-mime-info on OS X Yosemite</a>
+      </li>
+    
+  </ul>
+</section>
+
+<section>
+  <h1>GitHub Repos</h1>
+  <ul id="gh_repos">
+    <li class="loading">Status updating...</li>
+  </ul>
+  
+  <a href="https://github.com/hiroaki">@hiroaki</a> on GitHub
+  
+  <script type="text/javascript">
+    $(document).ready(function(){
+        if (!window.jXHR){
+            var jxhr = document.createElement('script');
+            jxhr.type = 'text/javascript';
+            jxhr.src = '/javascripts/libs/jXHR.js';
+            var s = document.getElementsByTagName('script')[0];
+            s.parentNode.insertBefore(jxhr, s);
+        }
+
+        github.showRepos({
+            user: 'hiroaki',
+            count: 0,
+            skip_forks: true,
+            target: '#gh_repos'
+        });
+    });
+  </script>
+  <script src="/javascripts/github.js" type="text/javascript"> </script>
+</section>
+
+
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2015 - hiroaki <br/>
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a>, customized with <a href="https://github.com/mjhea0/whiterspace">whiterspace</a>.</span>
+</p>
+
+</footer>
+  
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = 'http://platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>

@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/>
+<title>maps.gpx</title>
+<style>
+html, body, #map_canvas { height: 100%; margin: 0px; padding: 0px; }
+</style>
+<script src="http://maps.google.com/maps/api/js?sensor=true&libraries=geometry"></script>
+<script src="../maps-gpx.js"></script>
+<script>
+MapsGPX.onReady(function (){
+  new MapsGPX('map_canvas')
+  .use('Droppable')
+  .register('onAddGPX', function(key) {
+    this.fitBounds(key);
+    this.showOverlayWpts(key);
+    this.showOverlayTrks(key);
+  });
+});
+</script>
+</head><body>
+  <div id="map_canvas"></div>
+</body></html>

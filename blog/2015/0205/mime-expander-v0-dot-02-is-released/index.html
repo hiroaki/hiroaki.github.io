@@ -1,0 +1,345 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>MIME::Expander 0.02 is released - What hwat?</title>
+  <meta name="author" content="hiroaki">
+
+  
+  <meta name="description" content="Perl でメールを扱うときには、じぶんはたいてい Email::MIME を利用します。これだけで間に合っているので、ほかとの比較もべつにしていないのですが、特に添付ファイル付きのメールを扱う時に、各パートに簡単にアクセスできるのが重宝します。 さて、ときに、そうして取り出した添付ファイル、 &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://hiroaki.github.io/blog/2015/0205/mime-expander-v0-dot-02-is-released">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="What hwat?" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/lib/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href='http://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet' type='text/css'>
+<link href='http://fonts.googleapis.com/css?family=Fjalla+One' rel='stylesheet' type='text/css'>
+  
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-299060-4']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+
+
+</head>
+
+<body   class="collapse-sidebar sidebar-footer" >
+  <header role="banner">
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="https://www.google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:hiroaki.github.io" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+  <li><a href="/about">About</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+  
+    
+      <h1 class="entry-title">MIME::Expander 0.02 is released</h1>
+    
+  
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2015-02-05T21:50:00+09:00" pubdate data-updated="true"></time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>Perl でメールを扱うときには、じぶんはたいてい <a href="http://search.cpan.org/dist/Email-MIME/">Email::MIME</a> を利用します。これだけで間に合っているので、ほかとの比較もべつにしていないのですが、特に添付ファイル付きのメールを扱う時に、各パートに簡単にアクセスできるのが重宝します。</p>
+
+<p>さて、ときに、そうして取り出した添付ファイル、専門用語的には MIME パートと言うでしょうか、現実的には、それらは圧縮されたアーカイブだったりするのが常ではないでしょうか。すると、各パートを取り出したあとに、それらを展開（解凍）しなければなりません。しなければならない、ということは必ずしもありませんが、まあ、展開しますよね。</p>
+
+<p>そのいつものひと手間をも惜しむらく、あるとき、モジュールにするべく取り組んだのですが、その成果が <a href="http://search.cpan.org/dist/MIME-Expander/">MIME::Expander</a> というユーティリティ・モジュールになりました。これをちょっとだけ紹介します。</p>
+
+<!-- more -->
+
+
+<p>POD に書いた英語は翻訳サイトに掛けたでたらめなものなので、あまり読んでほしくないのですが、そこにはいろいろのメソッドがざっと並んではいるものの、使うのは <code>walk</code> メソッドになります。</p>
+
+<p>その動きは基本的に <code>Email::MIME</code> の <code>walk_parts</code> メソッドのようなイメージになります。 <code>walk_parts</code> メソッドは、自身のメッセージの各パートをめぐり、パートごとにコールバック・ルーチンを走らせます。</p>
+
+<p>例えば、 <code>A.txt</code> と <code>B.txt</code> 二つがアーカイブされた <code>C.zip</code> という添付ファイルがひとつ付いた、 <code>D.eml</code> というメッセージがあるとします。</p>
+
+<p><code>D.eml</code> を、 <code>Email::MIME</code> の <code>walk_parts</code> メソッドで処理すると、コールバックには本体の <code>D.eml</code> 自体のパートと、いわゆる添付ファイルである <code>C.zip</code> を持ったパートが渡ってくるので、実装者はそらが ZIP アーカイブであることを確認し、展開しなければなりません。しなければならない、ということは必ずしもありませんが、まあ。</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>my $em = Email::MIME-&gt;new("D.eml");
+</span><span class='line'>$em-&gt;walk_parts(sub {
+</span><span class='line'>  my $part = shift;
+</span><span class='line'>  if( $part-&gt;content_type =~ m[application/(x-)?zip(-compressed)?]i ){
+</span><span class='line'>    # ZIP に違いない
+</span><span class='line'>    my $uzip = IO::Uncompress::Unzip-&gt;new(...);
+</span><span class='line'>    $unzip-&gt;...;
+</span><span class='line'>    ...
+</span><span class='line'>    ...
+</span><span class='line'>  }
+</span><span class='line'>});</span></code></pre></td></tr></table></div></figure>
+
+
+<p><code>MIME::Expander</code> の <code>walk</code> メソッドではその手間を省きます。</p>
+
+<p>その callback ルーチンには、 <code>A.txt</code> と <code>B.txt</code> と、それぞれを持った単体のパートが渡ってきます（加えて <code>D.eml</code> 自体のパート）。 <code>C.zip</code> のパート自体は用無しなので、渡ってきません。</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>my $me = MIME::Expander-&gt;new;
+</span><span class='line'>$me-&gt;walk("D.eml", sub {
+</span><span class='line'>  my $part = shift; # is an instance of Email::MIME
+</span><span class='line'>  $part-&gt;body;      # A.txt, B.txt, D.eml
+</span><span class='line'>  ...
+</span><span class='line'>});</span></code></pre></td></tr></table></div></figure>
+
+
+<p>このように、<code>MIME::Expander</code> ではひとつのパートをコールバックへ渡す前に、展開可能であれば、それを展開し、幾つかのファイルになったそれぞれを、単体の <code>Email::MIME</code> パートに包んで、それらをコールバックに渡します。</p>
+
+<p>現在は、つぎのアーカイブ形式を自動的に展開します。</p>
+
+<ul>
+<li>application/bzip2</li>
+<li>application/gzip</li>
+<li>application/tar</li>
+<li>application/zip</li>
+<li>message/rfc822</li>
+<li>multipart/mixed</li>
+</ul>
+
+
+<p>末尾の二つはアーカイブではありませんが、似たようなものなので（？）同じように取り扱います。また、入れ子になったアーカイブも、アーカイブでなくなるまで再帰的に展開しようとします。そしてもし、たとえば ZIP ファイルそのものが欲しい時は、オプションを指定することによって、 ZIP は展開しない、といった動きもできるように、しました。</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>my $me = MIME::Expander-&gt;new({ expects =&gt; ['application/zip'] });</span></code></pre></td></tr></table></div></figure>
+
+
+<p>ほかにもオプションはありますが、些細なことなので端折ります──。</p>
+
+<p>さて、こうしていちおうは形になって、じぶんがふだん扱う範囲ではうまく動いているのですが、しかし白状すると、内部で行っている MIME タイプの判定にちょっと不安があります。</p>
+
+<p>ファイル・タイプの判定自体は外部の Perl モジュール（現在は <a href="http://search.cpan.org/dist/File-MMagic/">File::MMagic</a> ）に任せているのではありますが、ほかいくつかの異なる判定モジュール（ <a href="http://search.cpan.org/dist/File-MimeInfo/">File::MimeInfo</a> と <a href="http://search.cpan.org/dist/File-LibMagic/">File::LibMagic</a> と）で異なる結果が得られたりするんです。たとえば上にさりげなさそうに例示しました Content-type を正規表現で判定しているところがあるのですが、そのとおり一口に ZIP といっても <code>application/zip</code> だったり <code>application/x-zip</code> だったり、はたまた <code>application/x-zip-compressed</code> だったり&hellip; 。まったく違うとまでは至らずとも、こうした些細な違いがちらほらあります。</p>
+
+<p>MIME の仕様をしっかり理解できていないせいであるという自省はありながらも、じっさいどうなの？　という猜疑心もちょっとあったりします。今後、そのあたりを整理できるとよいのですが、──願わくば、このあたりの事情に明るい諸先生方の目に触れることによって、「これじゃいかん」といったご指摘をいただけたらなと思う所存であります。</p>
+
+<p>オチも含めてお粗末ではありますが <a href="http://search.cpan.org/dist/MIME-Expander/">MIME::Expander</a> の紹介でした。</p>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">hiroaki</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2015-02-05T21:50:00+09:00" pubdate data-updated="true"></time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/perl/'>perl</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="http://twitter.com/share" class="twitter-share-button" data-url="http://hiroaki.github.io/blog/2015/0205/mime-expander-v0-dot-02-is-released/" data-via="hwatattama" data-counturl="http://hiroaki.github.io/blog/2015/0205/mime-expander-v0-dot-02-is-released/" >Tweet</a>
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2014/1227/install-shared-mime-info-on-os-x-yosemite/" title="Previous Post: Install shared-mime-info on OS X Yosemite">&laquo; Install shared-mime-info on OS X Yosemite</a>
+      
+      
+        <a class="basic-alignment right" href="/blog/2015/0429/gpx-casual-viewer-v3/" title="Next Post: GPX Casual Viewer v3">GPX Casual Viewer v3 &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2015/0808/drawercss/">DrawerCSS</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2015/0721/maps-dot-gpx-a-dot-k-a-gpx-casual-viewer/">maps.gpx a.k.a. GPX Casual Viewer v3</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2015/0429/gpx-casual-viewer-v3/">GPX Casual Viewer v3</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2015/0205/mime-expander-v0-dot-02-is-released/">MIME::Expander 0.02 is released</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/1227/install-shared-mime-info-on-os-x-yosemite/">Install shared-mime-info on OS X Yosemite</a>
+      </li>
+    
+  </ul>
+</section>
+
+<section>
+  <h1>GitHub Repos</h1>
+  <ul id="gh_repos">
+    <li class="loading">Status updating...</li>
+  </ul>
+  
+  <a href="https://github.com/hiroaki">@hiroaki</a> on GitHub
+  
+  <script type="text/javascript">
+    $(document).ready(function(){
+        if (!window.jXHR){
+            var jxhr = document.createElement('script');
+            jxhr.type = 'text/javascript';
+            jxhr.src = '/javascripts/libs/jXHR.js';
+            var s = document.getElementsByTagName('script')[0];
+            s.parentNode.insertBefore(jxhr, s);
+        }
+
+        github.showRepos({
+            user: 'hiroaki',
+            count: 0,
+            skip_forks: true,
+            target: '#gh_repos'
+        });
+    });
+  </script>
+  <script src="/javascripts/github.js" type="text/javascript"> </script>
+</section>
+
+
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2015 - hiroaki <br/>
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a>, customized with <a href="https://github.com/mjhea0/whiterspace">whiterspace</a>.</span>
+</p>
+
+</footer>
+  
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = 'http://platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>

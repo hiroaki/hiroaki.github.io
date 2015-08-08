@@ -1,0 +1,350 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: ruby | What hwat?]]></title>
+  <link href="http://hiroaki.github.io/blog/categories/ruby/atom.xml" rel="self"/>
+  <link href="http://hiroaki.github.io/"/>
+  <updated>2015-08-09T01:53:03+09:00</updated>
+  <id>http://hiroaki.github.io/</id>
+  <author>
+    <name><![CDATA[hiroaki]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Install shared-mime-info on OS X Yosemite]]></title>
+    <link href="http://hiroaki.github.io/blog/2014/1227/install-shared-mime-info-on-os-x-yosemite/"/>
+    <updated>2014-12-27T21:02:00+09:00</updated>
+    <id>http://hiroaki.github.io/blog/2014/1227/install-shared-mime-info-on-os-x-yosemite</id>
+    <content type="html"><![CDATA[<p>任意のファイルの種類が何であるかを特定したいとき、その拡張子で判断してしまうようなお人好しでない限り、話はそう簡単ではありません。</p>
+
+<!-- more -->
+
+
+<p>簡単ではないので理由は端折りますが、実装するには Perl ではモジュール <a href="http://search.cpan.org/dist/File-MimeInfo/">File-MimeInfo</a> を用いるところへ落ち着くと思われます。 Ruby だと <a href="https://rubygems.org/gems/mimemagic">mimemagic</a> かしら。</p>
+
+<p>しかしそれらが有効に働くには、 <a href="http://freedesktop.org/wiki/Software/shared-mime-info/">shared-mime-info</a> というパッケージが、そこに入っていなければなりません（追記： <code>mimemagic</code> では不要でした。 gem のライブラリに Magic データを持っていました）。それは何かというと──冒頭の一文を引用します：</p>
+
+<blockquote><p>The shared-mime-info package contains the core database of common types and the update-mime-database command used to extend it.</p></blockquote>
+
+<p>つまり、ファイルの種類のデータベースですね。</p>
+
+<p>ところで、じぶんの環境は OS X (Yosemite) であります。先に言って仕舞えば、ここには <code>shared-mime-info</code> はありません。したがって、たとえば Perl のそのモジュールをインストールして、こんなふうに実行したところで、むなしい結果を得ることとなります（なりました）。</p>
+
+<pre><code>$ perl -MFile::MimeInfo -E 'say mimetype(shift)' ~/Desktop/IMG_4494.PNG 
+WARNING: You don't seem to have a mime-info database. The
+shared-mime-info package is available from http://freedesktop.org/ .
+application/octet-stream
+$ 
+</code></pre>
+
+<p>打ち明けると、逆にこのことから、ああ <code>shared-mime-info</code> というのが別途必要なんだなということに気づいたのですけれども、さて、ではインストールしよう、となるのは自然な成り行きになるのですが、しかしこれが結構ハマってしまったので、こうしてメモして残そうと思うに至った次第です。</p>
+
+<p>しかしお断りですが、それは局所的・限定的なプロブレムに対する対処療法の一種で、前向きに捉えればある意味「旬」なものではありますが、おそらくほとんどのひとには役に立つものではありませんし、じぶんの環境ですら腐りやすい、そういう内容になっていますので、どうか悪しからず。</p>
+
+<p>──その手順は、試行錯誤してインストールに成功した時までの走り書きメモをまとめて、バッチ・スクリプトにして、 Gist に置きました。スクリプトと言うと偉そうですが、見ると分かるとおり、チェックとか、エラー処理とかまったくしていないので、これをそのまま使うのはどうかと思います。ので、見るだけにして実行はしないでください。</p>
+
+<p><a href="https://gist.github.com/hiroaki/655b2e22b24fc0bdc05f">install-shared-mime-info.sh</a></p>
+
+<p>ハマリ・ポイント（ hummerly point &hellip; ）は、本丸 <code>shared-mime-info</code> のビルドです。</p>
+
+<p><code>configure</code> 自体は成功裏に終わったので、では続いて <code>make</code> とするのですがこんなエラーに遭遇しました。要約すると、コマンド <code>xgettext</code> がないぜ、と言われています：</p>
+
+<pre><code>$ PKG_CONFIG=$PREFIX/bin/pkg-config PKG_CONFIG_PATH=$PREFIX/lib/pkgconfig ./configure --prefix=$PREFIX
+$ make
+  GEN      create-pot
+INTLTOOL_EXTRACT="$PREFIX/bin/intltool-extract" XGETTEXT=":" srcdir=. $PREFIX/bin/intltool-update --gettext-package shared-mime-info --pot
+Can't exec ":": No such file or directory at $PREFIX/bin/intltool-update line 713.
+Use of uninitialized value $version in pattern match (m//) at $PREFIX/bin/intltool-update line 714.
+ *** GNU xgettext is not found on this system!
+ *** Without it, intltool-update can not extract strings.
+...
+...
+make[1]: *** [check] Error 1
+make: *** [check-recursive] Error 1
+$ 
+</code></pre>
+
+<p>このメッセージから直接は読み取れませんが、 <code>intltool</code> をインストールした際に入ったコマンド <code>intltool-update</code> が Perl スクリプトなのでその中を見ることができたのでそれ見てみると、 <code>intltool-update</code> を実行する際に <code>xgettext</code> の情報を正しく渡していない <code>Makefile</code> が悪いとわかります。そして <code>Makefile</code> が悪いなら、それを生成する <code>configure</code> に問題がある、と捜査の手は進みます。</p>
+
+<p>記憶を過去に辿ってみれば、 <code>configure</code> を実行したときには、コマンド <code>xgettext</code> が見つかっている旨が表示されているのですが（実際 <code>PATH</code> も通っています）、しかし現実として生成された <code>Makefile</code> の中では、（それが見つかっていなかったときの意味だろうと思うのですが、） <code>:</code> という何もしないコマンドとして記録されていました。従って、 <code>intltool-update</code> はそれを <code>xgettext</code> とみなして実行したので、 <code>Can't exec ":": No such file or directory</code> というエラーメッセージになり、なるほど辻褄が合うようです。──合ったところで、解決には繋がっていませんが、ちょっと気持ちがすっきりしました。</p>
+
+<p>結局どうしたかというと、 <code>intltool-update</code> を手動で実行しました。これが、どういうことなのかは知りませんが、とりあえずインストールするのが目的になっているので、知らないまま先に進めます。</p>
+
+<p>具体的には、実行されてエラーになったコマンドラインから <code>XGETTEXT=":"</code> のところを削ってしまえば、コマンド・サーチ・パスにある <code>xgettext</code> コマンドが <code>intltool-update</code> 内部から使われる手筈になっていましたので、そうしました。ちなみに、その場で実行したら <code>po</code> ディレクトリに移ってやりなさいという親切なメッセージが出てきたので、それに従い。そして、 <code>make</code> の続きをやり直します。</p>
+
+<pre><code>$ cd po
+$ INTLTOOL_EXTRACT="$PREFIX/bin/intltool-extract" srcdir=. $PREFIX/bin/intltool-update --gettext-package shared-mime-info --pot
+$ cd ..
+$ make
+$ make install
+</code></pre>
+
+<p>望むらくば <code>configure</code> スクリプトを見直したりするべきなのかもしれませんが、それを追求するのはまた別の話になります。今回はただ、ファイルの種類を特定したいのが目的であるのですから、ツールのビルドの問題に対しては、これで十分のような気がします。尤も、その手腕を持たないじぶんの言い訳なのではありますが、次に示すように、望むべく結果を得ることができたのですから、その場しのぎにしては良い案配ではないでしょうか：</p>
+
+<pre><code>$ XDG_DATA_DIRS=$PREFIX/share perl -mFile::MimeInfo::Magic=magic -E 'say magic(shift)' ~/Desktop/IMG_4494.PNG
+image/png
+$ 
+</code></pre>
+
+<p>以上のように、じぶんの場合、任意のファイルの種類が何であるかを特定したいとき、話はそう簡単なことではなかった、という話でした。</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Real-time Monitor with Sinatra]]></title>
+    <link href="http://hiroaki.github.io/blog/2014/1216/real-time-monitor-with-sinatra/"/>
+    <updated>2014-12-16T00:06:00+09:00</updated>
+    <id>http://hiroaki.github.io/blog/2014/1216/real-time-monitor-with-sinatra</id>
+    <content type="html"><![CDATA[<p>あるとき、とある現場で、任意のホスト上の何かリソースの現在値を、リアルタイムでモニタリングしたい旨の相談を受けたので、これは &ldquo;real-time web&rdquo; の出番だと閃いて、そのキャッチ・コピーを掲げる Perl の Web フレームワーク Mojolicious でやってみようと取り掛かることにしました。と、書き出したところですが、しまいには Ruby の Sinatra で実装したものを紹介するだけのところで話は終わります。</p>
+
+<!-- more -->
+
+
+<p></p>
+
+<p>ツールはいずれにしても、まずロジックがありきです。──仕組はホスト上のあるコマンド、ここではサンプルとしてロード・アベレージ（ <code>uptime</code> コマンド）にしましたがなんでもいいです、その現在値をリアルタイムに＝１秒とかのスパンで定期的に取得して、都度クライアントにプッシュするような具合でしょう。そんんふうにざっとした想像はできたものの、しかし実際に組み立てたことはこれまでありませんでしたから、じぶんにとってはちょうど手頃な課題ではありました。</p>
+
+<p>冒頭に述べた通り、 Mojolicious が &ldquo;real-time web&rdquo; を売り文句にしていることを覚えていたので、手始めに最初は <a href="http://mojolicio.us/perldoc/Mojolicious/Guides/Cookbook#REAL-TIME-WEB">Mojolicious のドキュメント</a> を頼りに開いて、ストリーミングというキーワードを探しました。そして、サーバ・プッシュとしてのファースト・ステップはさほど難なく、形を見ることができました。──そこにあるサンプルをコピペしただけでしたから：</p>
+
+<p><a href="http://mojolicio.us/perldoc/Mojolicious/Guides/Cookbook#EventSource-web-service">EventSource web service</a></p>
+
+<p>ただこのときじぶんは、サーバからのプッシュだから <code>WebSocket</code> を使うのかな？　と頼りなく考えていましたが、 <a href="http://dev.w3.org/html5/eventsource/">Server-Sent Events</a> なる技術を用いて、 HTTP だけで「プッシュ通知」を実現できるとのことを初めて知ることとなります。冒頭の一文を引用します：</p>
+
+<blockquote><p>This specification defines an API for opening an HTTP connection for receiving push notifications from a server in the form of DOM events.</p></blockquote>
+
+<p>「 HTTP 接続したサーバからプッシュ通知を DOM イベントとして受けるための仕様」とでも読みましょうか。今回は、仕組みが簡単そうに見えたこれを試してみることにしたのですが、その仕様は見た目どおりシンプルで、理解し易いものでした。</p>
+
+<p>その取り巻く技術がいったいどんなものかについては、上述 Mojolicious のたった数行のサンプルにヒントがすべてが詰まっているので、ここでは冗長に述べることはしませんが、アプリケーション実装者としてのポイントとしては、クライアント・サイドである HTML 5 の <code>EventSource</code> オブジェクトにあるように思います。と、言っても難しいことはありませんで、通知が来るので、それを受けたときに駆動するイベントハンドラでデータを使うだけ、でした。そしてサーバ・サイド側の要点としては、 <code>content-type</code> が <code>text/event-stream</code> であること。</p>
+
+<p>Mojolicious のサンプルでは、サーバ上でログファイルに行が追加された時にイベントが発行されて、その通知をクライアントの <code>EventSource</code> のインスタンスが受け、そのイベント・ハンドラがデータ、ここではログの行を、ページに表示するだけです。それはそれでリアルタイムなログ・モニタとなりそうですが、今回の件では、ロード・アベレージのリアルタイムな値をモニタしたいので、このサンプルを元に、改造していきます。</p>
+
+<p>改造の要点は、定期的に＝延々とループしながらロード・アベレージ（ <code>uptime</code> コマンドの結果）を取得するサービスが別に必要だというところです。クライアントからのリクエストが来るたびにそのサービスを起動しても同じ結果が得られるかもしれませんが、そうすると、リクエストの数だけ <code>uptime</code> を別々に実行してしまい、無駄です。ホスト上で同じタイミングで <code>uptime</code> したところで結果は同じでしょう。それどころかむしろ負荷が上がってしまって高めの値が出てしまう？　そういった懸念もありました。そこで、値を取得するサービスはただひとつだけ動かし、そのサービスが１秒ごとに更新し続ける結果を、任意のタイミングでやってくるすべてのリクエストが参照し（それはすなわちその時の最新値である）、それをクライアントへレスポンスする、といった実装にしようと思い至ります。</p>
+
+<p>──ところでずいぶん長らく書いてきてしまいましたが、 Sinatra はいつ出てくるのかというと、そろそろです。</p>
+
+<p>さて Perl で別プロセスを生もうと思った時、そのデータを、リクエストのプロセスから参照するにはどうするかという技術的な厄介に気づきます。プロセス間通信？　ファイルを経由する？　そういう面倒な&hellip; ことをするくらいならば、 Ruby の Thread を用いるのが手軽で良かろうと思うのです。（本当を言うと、 Mojolicious にも適当なやり方があるのかもしれませんが、すぐにはわからなかったのです。）</p>
+
+<p>そうして作ったプロトタイプがこれです。 Gist に置きました。</p>
+
+<p><a href="https://gist.github.com/hiroaki/ad55b38be8701f25eb93">https://gist.github.com/hiroaki/ad55b38be8701f25eb93</a></p>
+
+<p>動作デモのページを用意すれば、より良いのはわかっているつもりですが、メンテナンス対象が増えてしまうのが嫌なので、作りませんでした。興味ありましたら、コードを動かしてみてください。動作させるためには、 <code>sinatra</code> と <code>thin</code> 、ふたつの gem が必要です。──とはいえ、やはり絵があるとインパクトがあって、この記事にも幾ばくかの華やぎを添えるのも事実です。から、戯れですが動画に撮ったので、デモの代わりに YouTube に置いたその動画を貼っておきたいと思います。</p>
+
+<iframe width="560" height="315" src="http://www.youtube.com/embed/HdBtD-t4xg4?t=3m30s" frameborder="0" allowfullscreen></iframe>
+
+
+<p><a href="http://www.youtube.com/embed/HdBtD-t4xg4?t=3m30s">http://www.youtube.com/embed/HdBtD-t4xg4?t=3m30s</a></p>
+
+<p>さて、 Mojolicious で基本的な技術概要を得てダラダラと述べておきながら、結局 Sinatra で実装し、しかもそれについての解説はまったくしていません。一体何のつもりなのか、と訝しがられるのも無理はありません。でも、にわかに覚えたてのじぶんの解説などは、あまりためになりそうもありませんから、止しておこうと思います。くわしくは Sinatra の README ドキュメント、イントロダクションを見ていただくのが、よいかと思います。</p>
+
+<p><a href="http://www.sinatrarb.com/intro-ja.html#ストリーミングレスポンス(Streaming%20Responses)">Sinatra: README (Japanese) # ストリーミングレスポンス(Streaming Responses)</a></p>
+
+<p>そもそもは、これほど簡単にサーバ・プッシュができるんだ、ということを紹介してみようと思ったのが、この記事を書く動機になったことでした。なので、そこへ到達できたところで、この記事は〆たいと思います。おわり。</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[GServer can exceed the max connections]]></title>
+    <link href="http://hiroaki.github.io/blog/2014/1005/gserver-can-exceed-the-max-connections/"/>
+    <updated>2014-10-05T22:54:00+09:00</updated>
+    <id>http://hiroaki.github.io/blog/2014/1005/gserver-can-exceed-the-max-connections</id>
+    <content type="html"><![CDATA[<p>前回 Ruby の <code>gserver</code> のことについて書いた後、少しばかり調べを進めてみていたら、 Ruby 2.2 からは標準添付ではなくなるとの「事実」に遭遇してしまいました。いいライブラリだなと覚えた矢先でしたから、がっかりです。尤も、標準ではなくなるだけのことですから、使い続けることはできるでしょう。</p>
+
+<p>ただ標準添付から外される理由に、（１）テストも無い代物で、（２）ドキュメントどおりには振る舞わず（後述）、（３）だれもメンテナンスしていない状態である、ということが挙げられていて、それがために誰も使っていないから外す、とのことでした。加えてその提案がなされたのが３年前ということもあって、じぶんとしてはまったくモチベーションが下がってしまいました。</p>
+
+<p><a href="https://bugs.ruby-lang.org/issues/5480">Feature #5480: remove GServer from stdlib - ruby-trunk - Ruby Issue Tracking System</a></p>
+
+<!-- more -->
+
+
+<p></p>
+
+<p>確かに、テストがありませんでした。卵が先か鶏が先か、ゆえにメンテナがいないのも頷けます。そして誰も使っていないかというと、それはどうでしょうか。じぶんにとって、それはどうでもいいことでしたから、特に調べもしませんでしたが、ちょっと検索をかけてみた所では、サンプル以上のことを書いている記事は見つけられませんでした。しかし Ruby で TCP サーバを書く人がどれだけあるかと想像すると、あまりいないんじゃないかという根拠のない──あるとすれば偏見から、思われるので、サーバを書く人がいないから、メンテされるほどの課題が出て来なかったのかも知れない。と、前向きに？考えることにして、動作に問題がないならば、標準であろうがなかろうが、だれが使っていようが、だれも使っていなかろうが、便利ならば使えばいいのだという結論に至ります。</p>
+
+<p>そのコードは、 Perl ばかり書いて来たじぶんにとって馴染みの薄いスレッドを使っている所が特徴的なわりにすっきりしていてじつにシンプルです。みんなこれを使えばいいのにと、改めて思います。そうして使う人が増えれば、メンテナンスするひとも出てくることも期待できるでしょう。</p>
+
+<p>じぶんはある実務で SMTP サーバを書く必要が生じて、 <code>midi-smtp-server</code> という gem を選択して使い始めたのが <code>gserver</code> を知る切っ掛けでもあったのですが、いまのところ上手くいっています。インターネットに出ない閉じたネットワーク内で使う代物なので、細かい気遣いをすることはなかったのですが、いざというときに内部動作が理解しやすいことも、ライブラリの選択にあたっては重視していましたから、その内容がシンプルであることは心理面でも助けになりました。</p>
+
+<p>さて、そんな経緯もありながらしばらく <code>gserver</code> を扱っているのですが、自作の SMTP サーバのテストを書いている時に、最大コネクション数が設定値を超えてしまう現象に遭遇しました。それも再現性がなく、ときどきです。</p>
+
+<p>冒頭の、標準添付から外される理由の（２）として挙げられているのは、このことかなと思いました。</p>
+
+<p>ソースに当たってみると、最大コネクション数の管理とスレッドが連動しているところなど、なるほどこういうもんなんだなと鵜呑みにしてしまっていましたが、よくよく見ていると、クライアントの接続要求に応じて生成された子スレッドの中で現在の接続数を増やしているので、その処理が通るのが先か、または親スレッドが新たに接続要求に応じて現在の接続数をチェックするのが先かで、結果が違ってくるんじゃないかと思えて来ました。</p>
+
+<p>そこで、ものは試しに、修正を加えてみることにしました。</p>
+
+<p><a href="https://github.com/hiroaki/gserver/tree/tight-max-connection-limitation">hiroaki/gserver at tight-max-connection-limitation</a></p>
+
+<p>rspec を追加したコミットを先にして、修正前のオリジナルを試験してみますと、じぶんの手元のマシンでは 100 回試行すればそのうち数回は設定した最大接続数を超えた接続が行われ、テストが失敗しました。そして、追加の修正コミットのあとは、試行回数 1,000 にしても、最大接続数を超えることはなくなり、テストは成功ました。うまくいったようです。これもライブラリの内部がシンプルな構造であったためにできたことかもしれません。（ここで、できた、というのは、手を入れてみようと思うことができた、というところにかかっています。）</p>
+
+<p>ただし、パッチした影響で、ほかの機能の安全が守られているかどうかというのが判らないのが、不安の残る所です。こういうときに、テストがもともと無いのには、確かに困ります。現在のバージョンにテストがないということは、そのこと自体が将来の発展を妨げる一因となっていると、いえる事例かもしれません。</p>
+
+<p>ところでこのブランチ、フォーク元にプル・リクエストを出してみようかとも考えましたが、少なくとも誰かにレビューしてもらってからのほうがいいかと思って躊躇っていました。でもメンテされていないものにマージしてほしいとは言えません。 <code>gserver</code> は標準添付ということで心強く思ってたのですが、これまで述べて来たようにもともと頼りないライブラリだったとあれば、このままお蔵入りにするか、プライベートで使うだけの代物になるだろうと思います。しばらくは実務で使ってる実装の方でも、オリジナルの動向の方でも、様子を見守るスタンス、です。</p>
+
+<p>──見守るとは言いますが、 SMTP サーバを書くにあたって代わりになる、かつメンテナンスされているものがあれば、それを使って行きたいというのが本音ですけれども。みなさんは SMTP サーバを書く時に、どんなライブラリを使っているのでしょうか。</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[How to shutdown GServer gracefully?]]></title>
+    <link href="http://hiroaki.github.io/blog/2014/0907/how-to-shutdown-gserver-gracefully/"/>
+    <updated>2014-09-07T21:34:00+09:00</updated>
+    <id>http://hiroaki.github.io/blog/2014/0907/how-to-shutdown-gserver-gracefully</id>
+    <content type="html"><![CDATA[<p>Ruby の標準添付ライブラリに <a href="http://docs.ruby-lang.org/ja/2.1.0/library/gserver.html">gserver</a> というのがあって、これを用いれば頗る簡単に TCP サーバを書くことが出来、こりゃいいね、って思いながら使ってみたのですけれども、サーバの停止の手続きについてちょっと悩むことがありました。</p>
+
+<p>いざサーバの停止を行おうとするとき、まだ接続中のクライアントが居たらば、その終了を待ってから、サーバは停止してほしいのは誰しも考える所です（「優雅なシャットダウン」 &ldquo;Graceful shutdown&rdquo; ）。<code>GServer</code> クラスのインタフェースとしては <code>#shutdown</code> メソッドが、それらしいことを行うはずなのですが、実際はそう上手くは問屋が卸しませんでした。</p>
+
+<!-- more -->
+
+
+<p>承前の通り簡単な内容なのでまずは書いたコード全容を貼ります。処理内容はいわゆる echo サーバです。このサーバを（フォアグラウンドで）起動したら、 <code>Ctrl+c</code> （ INT シグナル）で、優雅なシャットダウンをさせようとしています。ちなみにクライアントは、サーバに空行を送ることで接続を終了します。</p>
+
+<pre><code>require 'gserver'
+
+class EchoServer &lt; GServer
+
+  def initialize(port=10001, host='127.0.0.1', *args)
+    super(port, host, *args)
+    self.audit = true
+    trap :INT, proc {
+      self.shutdown
+    }
+  end
+
+  def serve(io)
+    loop do
+      if IO.select([io], nil, nil, 0.1)
+        data = io.gets
+        break if data.nil? || data =~ /^[\r\n]*$/
+        io.puts("echo: #{data}")
+      end
+    end
+    io.close
+  end
+
+end
+
+STDERR.sync
+STDOUT.sync
+server = EchoServer.new
+server.start
+server.join
+</code></pre>
+
+<p>いざこれを実行し、別端末からクライアントとして接続します。 echo の動作はうまくいきます。空行を送ることでいったん接続を切り、改めて、今度はクライアントを接続中にしたまま、サーバに INT シグナルを送ってみます。クライアントが接続中なので、まだ終了しません。思惑どおりです。</p>
+
+<p>しかし、そのクライアントを切断させますと、どうでしょうか。サーバの動作ログにはクライアントが切断した旨が出力されますが、サーバは止まりません。おや？　と思いました。また、この状態で、再びクライアントから接続を試みると、繋がってしまいます。これもおや？　と思いました。サーバはまだ接続を受け付けてしまっていますから、忙しいサイトでは休む間もないことでしょう。いちおう、すべてのクライアントが接続を終了させると、サーバも終了しましたが。</p>
+
+<p>何がいけないのでしょうか？</p>
+
+<p><code>GServer</code> クラスのソースにあたってみると、 <code>#sutdown</code> メソッドはたんにフラグを立てるだけの様で、実際の停止の手続きは別にありました。サーバのメインの処理は、新たなクライアントの接続を待つ無限ループです。無限ループは、フラグが立っていることで抜け、そして終了の手続きへと進む、といった風に読めます。サーバがループの中で、 ACCEPT 状態、つまり新たなクライアントの接続を待っている間は、文字通りその地点で待っているので、フラグをチェックする所へ来ないのです。事実、気がつけば rdoc での <code>#shutdown</code> の説明には &ldquo;Schedule a shutdown for the server&rdquo; と書いてありました。まさしく。端的に表していますが、ではどうしたら、優雅なシャットダウンを実現できるでしょうか。</p>
+
+<p>このからくりからひとつ思いつく解決方法は、 <code>#sutdown</code> メソッドを実行したで、新たなクライアントを作り、接続し、そして切断することです。</p>
+
+<pre><code>    trap :INT, proc {
+      self.shutdown
+      TCPSocket.open(host,port).close
+    }
+</code></pre>
+
+<p>こうすることで、新たな接続を受け付けたサーバは、ループを一回進め、次のループへのチェックへ制御がやってきます。すると事前の <code>#shutdown</code> メソッドによりフラグが立っているので、ループを抜け、サーバのスレッドは子スレッドの終了を迎える体制に入ります。また同時に、このときは既にサーバは ACCEPT をしていない状態ですから、クライアントからの新しい接続は、期待どおり拒否されることになります。</p>
+
+<p>そこまで行けば、あとは接続中の幾つかのクライアント（子スレッド）がそれぞれ自身の処理を終えて接続を切り次第 <code>server.join</code> のところに集まってくるのを待っているだけです。そうしてすべての子スレッドが集まることでサーバも目出たく、優雅に、終了することが出来ます。</p>
+
+<p>実際にやってみますと、思いどおりにいきました。しかしいまひとつ、釈然としません。なにか方法はないものかと、もう少し探ってみることにしました。</p>
+
+<p><code>GServer</code> のソースをじっと見つめていると、 <code>#start</code> メソッドによって内部で生成される <code>TCPServer</code> のインスタンス（サーバ・スレッド）が <code>#accept</code> メソッドでクライアントの接続を待っています。このメソッドはスレッドの流れをブロックします。</p>
+
+<p>ここがポイントであることには間違いないので、このブロック状態を解く手だてがあればよさそうなのですが、そのような使命を直接的に背負った機能は、どの API にも見つけられませんでした。その理由を知るには、そもそも TCP 的にどのようにそれを実行するのか（するべきなのか）についてまず知らないといけないと考え、それから関係各所を回ってみたのですが（ via Google ）、しかしじぶんが開いたそれらしい様々などのドキュメントにも ACCEPT 状態を無理矢理？解く方法は明示されていませんでした（明示されていることを見つけられませんでした）。</p>
+
+<p>そんな中で、試しに、無理矢理サーバのソケットを閉じてはどうだろうと思い至ります。 <code>GServer</code> のインスタンスの中にサーバソケットを持っている <code>TCPServer</code> のインスタンスがあるので、それを摑み取って <code>#close</code> を送ってみることにしました。いうなれば、間接的に ACCEPT 状態のブロックを解くことを期待する魂胆です。</p>
+
+<pre><code>    trap :INT, proc {
+      self.shutdown
+      self.instance_variable_get(:@tcpServer).close
+    }
+</code></pre>
+
+<p>この方法はどうやら上手くいったようです。 INT シグナルを trap したサーバは、 ACCEPT をやめたと見えて、新しいクライアントを受け付けなくなりました。一方で、接続中のクライアントが既にあった場合は、そのコネクションが切られるまで、待っていました。そして、すべてのクライアントが接続を終了したとき、はじめてサーバも終了しました。いい案配です。</p>
+
+<p>さて、こうしてみると、 <code>Gserver#shutdown</code> の後に、クライアント接続を一回虚しく空振りさせるよりも、 <code>TCPServer#close</code> を発行する方がスマートなように思えます。ただし、それが正攻法ならば。──言うまでもなくこれはアクセス手段が意図的に公開されていないインスタンスを摑み取っている時点で正攻法ではありません。そして一方 <code>TCPServer#close</code> も確信があってやっていることではないので、これでいいのかと不安は残ります。そのような不安を抱えてまでも <code>TCPServer#close</code> するメリットは、虚しいかなあまりないようです。従って、理屈的に正攻法である空振りクライアントを実装するほうが、不格好でも、良いものだと判断するほかありません。とはいえ、いちおう、一定の成果は得られた気がします。──顛末はここまでです。</p>
+
+<p>結局のところ、優雅なシャットダウンのために、空振りクライアント接続をするといったいまひとつ優雅ではない実装を行う、ということでじぶんの悩みはそこに落とさざるを得なかったという話は終わりなのですが、さてしかし、今回の主役であるその <code>GServer</code> クラスのほう、こちらこのへんの動きは（優雅なシャットダウンは新たなクライアントが接続しに来ないと始まらないこと）
+、そもそも設計の想定のうちなのでしょうか。──必然的に湧いて来るこの次なる疑問については、でも、またの機会にしたいと思います。長くなりました。</p>
+
+<p>追記：その後、こんなチケットを見つけました。同じことを言っているのでしょうか？　ただ、それから二年以上動きがないようです。さて。</p>
+
+<p><a href="https://bugs.ruby-lang.org/issues/6369">Bug #6369: GServer blocking after shutdown called - ruby-trunk - Ruby Issue Tracking System</a></p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Hello Octopress - Build Ruby 2.0 on Mac OS X 10.8]]></title>
+    <link href="http://hiroaki.github.io/blog/2013/0615/1/"/>
+    <updated>2013-06-15T17:25:00+09:00</updated>
+    <id>http://hiroaki.github.io/blog/2013/0615/1</id>
+    <content type="html"><![CDATA[<p>Github 上に公開しているじぶんのプロジェクトについてのメモやノートをブログにして書いていこうと思い立ち、流行の <a href="http://octopress.org">Octpress</a> に手を出すことにしました。その際、ちょっとつまづいたところがあったので、記録しておくことにします。</p>
+
+<!-- MORE -->
+
+
+<p>Git や Ruby には少しは慣れてはいるので、すぐセットアップできるだろうと、午前中の旅番組を観ながら始めたのですが、こうして最初の記事を書き始める頃にはすっかり外が暗くなってしまっていました。尤も、合間合間にご飯食べたり、他のことをしたり、しているのではありますが。</p>
+
+<p>何につまづいたかと言えば、 Mac に Ruby をインストールする、最初の最初のところでした。たぶんどこかで話題になっていると思うのですが、 OpenSSL のライブラリとリンクできない事例が、じぶんのところでも起こりました。</p>
+
+<p>OS は Mac OS X 10.8.4 で、入れようとしている Ruby は ruby 2.0.0p195 。 Octopress が高いバージョンの Ruby を必要とすることもそうですが、どうせなら最新がいいやということで、最近リリースされたばかりだと思っていた 2.0 を使うことにしたのです。</p>
+
+<p>ちなみに、じぶんはプロジェクトごとに、インタプリタまるごとインストールしたいので（環境をまったく分け隔てたいので） rbenv を使ってそれらを管理しているのですが、諸事情あって ruby-build プラグインは使っていません。 <a href="https://github.com/sstephenson/ruby-build/wiki">ruby-build の配布元 の wiki</a> には、 Mac にインストールするときの注意点が記載されているので、それに従えば単に Ruby をインストールすることはできたのかもしれませんが──、つまるところ諸事情のために、ソースから入れる必要があったのです。だから、今日も configure スクリプトを叩きます。</p>
+
+<p>さて、ダウンロードして、展開、それから configure してそのまま make するとこんなメッセージを見ることになります。 Mac に入っている OpenSSL が古いので、使えないことを伝えて来ています：</p>
+
+<pre><code>Ignore OpenSSL broken by Apple.
+Please use another openssl. (e.g. using `configure --with-openssl-dir=/path/to/openssl')
+Failed to configure openssl. It will not be installed.
+</code></pre>
+
+<p>OpenSSL はシステムとは違う場所に、次のようにビルドしました。 <code>shared</code> がミソで、かつ <code>config</code> ではなく <code>Configure darwin64-x86_64-cc ...</code> としたのも、何かの README かフォーラムか、ともかくどこかで見たものでした（どこを見たのかは忘れてしまいました）。</p>
+
+<pre><code>$ ./Configure darwin64-x86_64-cc --prefix=/path/to/MyOpenSSL ¥
+    --openssldir=/path/to/MyOpenSSL/openssl shared
+</code></pre>
+
+<p>そして Ruby のソースに戻って、言われたとおりのオプションを追加してみましたが、 configure スクリプトは、「そんなオプションは知らん」と言うではありませんか。</p>
+
+<pre><code>configure: WARNING: unrecognized options: --with-openssl-dir
+</code></pre>
+
+<p>これでしばらくハマりました。任意の場所に入れた OpenSSL を configure が見つけてくれずに、システムに入っている OpenSSL を使おうとしてしまうのです。 configure へ渡すオプションがいけないのは、きっとそうなのですが、ドキュメントを見たり、フォーラムなども海外にまでも足を伸ばして、いろいろと探してみたのですが、すっきり解決している例が見つかりません。結局どういうふうに configure に指定したらよいかが分りませんでした。</p>
+
+<p>ただそうしているうち、なにかの折に Makefile を見てみたらば、気がつきました。結局のところ OpenSSL の位置を伝えてあげればいいのだから、それを伝える術がほかにあればそれでよいのではないかと。そしてこのような解決にたどりついたのです：</p>
+
+<pre><code>$ export PKG_CONFIG_PATH=/path/to/MyOpenSSL/lib/pkgconfig
+$ export LDFLAGS=`pkg-config --libs openssl`
+$ export CFLAGS=`pkg-config --cflags openssl`
+$ ./configure --prefix=$HOME/.rbenv/versions/octopress ¥
+    --enable-shared --disable-install-doc
+$ make
+</code></pre>
+
+<p>余計ながら pkg-config はたぶん、 Mac には標準では入っていないかと思います。その場合 LDFLAGS と CFLAGS には、次のような値をセットしておきます：</p>
+
+<pre><code>$ export LDFLAGS="-L/path/to/MyOpenSSL/lib -lssl -lcrypto"
+$ export CFLAGS="-I/path/to/MyOpenSSL/include"
+</code></pre>
+
+<p>BK と言われそうですが、これで上手くいきました。</p>
+
+<p>Ruby のビルドは OpenSSL に関する問題があっても、そこで止まることはないのですが、のちのち不都合が起きます。むしろそこでビルドが止まってくれた方がよいと言うものですが、そのまま流れて行ってしまうので、ややともすると気がつかなかったかもしれません。するといつまでもこの問題に気がつかずに、苦い思いを強くしていたかもしれません。</p>
+
+<p>ある程度普及している（とじぶんが勝手に思っている） Mac と Ruby の組み合わせで、このような問題に当たるとは思いも寄らなかったので、不意打ちを喰らったようでした。正直なところ、苦悩の最中には configure のバグというか考慮不足があるんじゃないかと疑ったりもしましたが、このようなちょっとズレた現象に遭遇するのは Mac ではよくあることなので、今回もそういうものかとも思います。考察とは言えませんね、まあ、感想です。</p>
+
+<p>──さて、終いにこの記事の主題を含んでいる冒頭の段落を繰り返しますが、このブログでは Github 上に公開しているじぶんのプロジェクトについてのメモや解説なんかを書いていこうと思います。と言いながらも、さっそくプロジェクトとは関係のない記事を長々書いてしまいました。</p>
+
+<p>ブログを書くということは、本来ならばそのツールがどうこうではなく、ツールを使って作ったコンテンツがどうだ、なのだと思うので、なるべくなら、手段の方ばかりに時間を取られないようにしたいものだと思うと同時に、しかし、そんなところで時間をかけなくても済むように、ニッチな事例でもまとめておくことで、どこかで役立てられる場合もあるのではないか、とも思います。そしてそこには、将来のじぶんに対して、ということも含んでのことでもあるので、当人以外誰も困らないようなごく局所的な問題や開発環境等の話題でも、ときどきは記事にしていきたいと、いまは考えています。</p>
+]]></content>
+  </entry>
+  
+</feed>

@@ -1,0 +1,333 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Install Carton without Carton? - What hwat?</title>
+  <meta name="author" content="hiroaki">
+
+  
+  <meta name="description" content="ちょっと前に Carton もバージョン 1.0 がリリースとなり、 plenv や cpanm らを組み合わせた Perl の環境構築は、ひと昔前のそれと比べてずいぶん簡単になりました。 昔話をするつもりはないのですが、大量のモジュールを使ったプロダクトをデプロイするときなど、 perl &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://hiroaki.github.io/blog/2013/0921/install-carton-without-carton">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="What hwat?" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/lib/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href='http://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet' type='text/css'>
+<link href='http://fonts.googleapis.com/css?family=Fjalla+One' rel='stylesheet' type='text/css'>
+  
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-299060-4']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+
+
+</head>
+
+<body   class="collapse-sidebar sidebar-footer" >
+  <header role="banner">
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="https://www.google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:hiroaki.github.io" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+  <li><a href="/about">About</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+  
+    
+      <h1 class="entry-title">Install Carton without Carton?</h1>
+    
+  
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-09-21T22:04:00+09:00" pubdate data-updated="true"></time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>ちょっと前に <a href="https://github.com/miyagawa/carton">Carton</a> もバージョン 1.0 がリリースとなり、 plenv や cpanm らを組み合わせた Perl の環境構築は、ひと昔前のそれと比べてずいぶん簡単になりました。</p>
+
+<p>昔話をするつもりはないのですが、大量のモジュールを使ったプロダクトをデプロイするときなど、 <code>perl Makefile.PL; make; make install</code> の定型文をそれはもう腱鞘炎になるほどタイプし続けては、それだけで半日つぶす事もままあったりもしました。このコマンド・セットをタイプする大会があったなら、じぶんはおそらく上位に入賞する事でしょう。</p>
+
+<!-- more -->
+
+
+<p>だいたいそんなことになる前に、そのようなルーチン・ワークはバッチ・スクリプトを組んでおくなりすればよかったのですが、──実際それを作った事もありましたが、開発中にいろいろなモジュールを試したりしている中で、そもそも、最終的にどのモジュール（と、そのバージョン）が必要で、それが依存しているモジュールはなんだったっけ？　となる事が多く、いったんそうなったが最後、依存関係を探して必要なモジュールをダウンロードして集めては、という茨の作業が始まるのが常でした。つまるところじぶんは、モジュールを管理する上手い方法を知らなかったし、編み出さなかった。</p>
+
+<p>Carton を使うとしても、必要なモジュールがどれかは管理しておかなければならないことに変わりはありませんが、 cpanfile というメモ帳に、「使うモジュール」だけを記しておけばそれでよく、そのモジュールが依存する他のモジュールまで気にしなくていいのが大きな得物です。それどころか cpanm とのコラボレーションで、ダウンロードからインストールまで、すべて面倒をみてくれます。腱鞘炎を心配する事もありません。</p>
+
+<p>そんな Carton のいい事尽くめなところは、あちこちの Perl ユーザが記事にしているので、ここでは繰り返すことはせず、興味を持たれた方はそれらを参照して頂ければと思います。</p>
+
+<p>──ただひとつ、どの記事にも記されていない秘密の？事柄に、じぶは気付きました。なので、それを記してみたいと思います。</p>
+
+<p>Carton は、いちどダウンロードしてインストールしたモジュールを &ldquo;bundle&rdquo; しておくことで、 CPAN ネットワークへ接続できない（ファイア・ウォール内などの）環境にもそれらを再構築できる素晴らしい機能を持っているのですが、さて、その機能を使うためには、 Carton がインストールされていなければなりません。</p>
+
+<p>Carton のインストール、 CPAN （モジュール配布サイト）へ繋ぐ事ができれば <code>cpanm Carton</code> とするだけで終わるのではありますが、それができない環境では、 Carton の配布を別途ダウンロードしてそれを対象の環境へアップロード、そして <code>perl Makefile.PL; make; make install</code> とタイプします。もし、依存するモジュールがあれば、先にそれをインストールしておかなければなりません。</p>
+
+<p>これが茨の道の始まりである事は Carton のおかげで過去のこととなった筈なのですが、あろうことか、 Carton 自身が必要とする依存モジュールが、あるわあるわで、終わってみれば、じぶんは Carton-v1.0.11 を含めて 36 個ものモジュールを手動でインストールしていたのでした（補足： Perl 5.18.1 のコアで）。ちょっと、多すぎます。Carton を利用するにあたって唯一ネガティブなところがここにありました。</p>
+
+<p><strong>Carton を Carton を使ってインストールできないでしょうか？</strong></p>
+
+<p>──もちろん、それから以後は Carton の恩恵にあやかるところが甚大ですから、これに怖じ気づいてインストールしない手はないのですが、願わくば、依存モジュールがもう少し減ってくれればとは思うのは正直な所です。</p>
+
+<p>Perl 5.18.1 の中に Carton-v1.0.11 をインストールするためには、つぎの順番でモジュールをインストールする必要がありました（じぶんの手元の環境で、バージョンは現時点での最新版）。</p>
+
+<ul>
+<li>App-FatPacker-0.009018</li>
+<li>App-cpanminus-1.7001</li>
+<li>Class-Data-Inheritable-0.08</li>
+<li>Devel-StackTrace-1.30</li>
+<li>Exception-Class-1.37</li>
+<li>File-pushd-1.005</li>
+<li>JSON-2.59</li>
+<li>Module-Build-0.4007</li>
+<li>Module-CPANfile-1.0002</li>
+<li>Module-Reader-0.002000</li>
+<li>Try-Tiny-0.18</li>
+<li>autodie-2.21</li>
+<li>Path-Tiny-0.033</li>
+<li>strictures-1.004004</li>
+<li>Module-Runtime-0.013</li>
+<li>Capture-Tiny-0.22</li>
+<li>Test-Pod-1.48</li>
+<li>Test-Fatal-0.012</li>
+<li>Role-Tiny-1.003002</li>
+<li>ExtUtils-Config-0.007</li>
+<li>ExtUtils-Helpers-0.021</li>
+<li>ExtUtils-InstallPaths-0.009</li>
+<li>Module-Build-Tiny-0.027</li>
+<li>Test-Tester-0.109</li>
+<li>Test-NoWarnings-1.04</li>
+<li>Test-Deep-0.110</li>
+<li>CPAN-Meta-Check-0.007</li>
+<li>Test-CheckDeps-0.007</li>
+<li>Test-Warnings-0.009</li>
+<li>Class-Method-Modifiers-2.06</li>
+<li>Sub-Exporter-Progressive-0.001010</li>
+<li>Devel-GlobalDestruction-0.11</li>
+<li>List-MoreUtils-0.33</li>
+<li>Dist-CheckConflicts-0.09</li>
+<li>Moo-1.003001</li>
+<li>Carton-v1.0.11</li>
+</ul>
+
+
+<p>じぶんは昔の苦い手首の思い出を繰り返すまいと、今回はちゃんと、モジュールをインストールする順番をメモしておきました。あとはこれをもとにバッチス・クリプトを書いて、これらを一発でインストールできるように整えておけば準備万端と言うものです。</p>
+
+<p>おそらく、このことに気付いた方もいるでしょうから、なにかほかにいい手だてがあるのかも知れません（追記：あります！）。もし知っていたら、教えて頂きたいと思うのですが、さもなくば、 Github にそのバッチ・スクリプトを置きましたので、いっしょにメンテナンスして頂ければと思います。</p>
+
+<p><del>perl-carton - <a href="https://github.com/hiroaki/perl-carton">https://github.com/hiroaki/perl-carton</a></del></p>
+
+<p>追記：ほかにいい手だてがありました。というより、じぶんが迂闊だっただけかもしれません。この記事を読んで<del>しまっていたら</del>くださったのならば、是非、次の記事も読まなければなりません！</p>
+
+<p><a href="http://hiroaki.github.io/blog/2013/0926/the-carton-bundled-a-carton/">The Carton Bundled a Carton</a></p>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">hiroaki</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-09-21T22:04:00+09:00" pubdate data-updated="true"></time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/carton/'>carton</a>, <a class='category' href='/blog/categories/perl/'>perl</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="http://twitter.com/share" class="twitter-share-button" data-url="http://hiroaki.github.io/blog/2013/0921/install-carton-without-carton/" data-via="hwatattama" data-counturl="http://hiroaki.github.io/blog/2013/0921/install-carton-without-carton/" >Tweet</a>
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2013/0804/i-hope-that-there-is-an-alternative/" title="Previous Post: I hope that there is an alternative">&laquo; I hope that there is an alternative</a>
+      
+      
+        <a class="basic-alignment right" href="/blog/2013/0926/the-carton-bundled-a-carton/" title="Next Post: The Carton bundles a carton">The Carton bundles a carton &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2015/0808/drawercss/">DrawerCSS</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2015/0721/maps-dot-gpx-a-dot-k-a-gpx-casual-viewer/">maps.gpx a.k.a. GPX Casual Viewer v3</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2015/0429/gpx-casual-viewer-v3/">GPX Casual Viewer v3</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2015/0205/mime-expander-v0-dot-02-is-released/">MIME::Expander 0.02 is released</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/1227/install-shared-mime-info-on-os-x-yosemite/">Install shared-mime-info on OS X Yosemite</a>
+      </li>
+    
+  </ul>
+</section>
+
+<section>
+  <h1>GitHub Repos</h1>
+  <ul id="gh_repos">
+    <li class="loading">Status updating...</li>
+  </ul>
+  
+  <a href="https://github.com/hiroaki">@hiroaki</a> on GitHub
+  
+  <script type="text/javascript">
+    $(document).ready(function(){
+        if (!window.jXHR){
+            var jxhr = document.createElement('script');
+            jxhr.type = 'text/javascript';
+            jxhr.src = '/javascripts/libs/jXHR.js';
+            var s = document.getElementsByTagName('script')[0];
+            s.parentNode.insertBefore(jxhr, s);
+        }
+
+        github.showRepos({
+            user: 'hiroaki',
+            count: 0,
+            skip_forks: true,
+            target: '#gh_repos'
+        });
+    });
+  </script>
+  <script src="/javascripts/github.js" type="text/javascript"> </script>
+</section>
+
+
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2015 - hiroaki <br/>
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a>, customized with <a href="https://github.com/mjhea0/whiterspace">whiterspace</a>.</span>
+</p>
+
+</footer>
+  
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = 'http://platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>

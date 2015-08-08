@@ -1,0 +1,302 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Real-time Monitor with Sinatra - What hwat?</title>
+  <meta name="author" content="hiroaki">
+
+  
+  <meta name="description" content="あるとき、とある現場で、任意のホスト上の何かリソースの現在値を、リアルタイムでモニタリングしたい旨の相談を受けたので、これは &ldquo;real-time web&rdquo; の出番だと閃いて、そのキャッチ・コピーを掲げる Perl の Web フレームワーク Mojolicious &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://hiroaki.github.io/blog/2014/1216/real-time-monitor-with-sinatra">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="What hwat?" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/lib/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href='http://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet' type='text/css'>
+<link href='http://fonts.googleapis.com/css?family=Fjalla+One' rel='stylesheet' type='text/css'>
+  
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-299060-4']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+
+
+</head>
+
+<body   class="collapse-sidebar sidebar-footer" >
+  <header role="banner">
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="https://www.google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:hiroaki.github.io" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+  <li><a href="/about">About</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+  
+    
+      <h1 class="entry-title">Real-time Monitor with Sinatra</h1>
+    
+  
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-12-16T00:06:00+09:00" pubdate data-updated="true"></time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>あるとき、とある現場で、任意のホスト上の何かリソースの現在値を、リアルタイムでモニタリングしたい旨の相談を受けたので、これは &ldquo;real-time web&rdquo; の出番だと閃いて、そのキャッチ・コピーを掲げる Perl の Web フレームワーク Mojolicious でやってみようと取り掛かることにしました。と、書き出したところですが、しまいには Ruby の Sinatra で実装したものを紹介するだけのところで話は終わります。</p>
+
+<!-- more -->
+
+
+<p></p>
+
+<p>ツールはいずれにしても、まずロジックがありきです。──仕組はホスト上のあるコマンド、ここではサンプルとしてロード・アベレージ（ <code>uptime</code> コマンド）にしましたがなんでもいいです、その現在値をリアルタイムに＝１秒とかのスパンで定期的に取得して、都度クライアントにプッシュするような具合でしょう。そんんふうにざっとした想像はできたものの、しかし実際に組み立てたことはこれまでありませんでしたから、じぶんにとってはちょうど手頃な課題ではありました。</p>
+
+<p>冒頭に述べた通り、 Mojolicious が &ldquo;real-time web&rdquo; を売り文句にしていることを覚えていたので、手始めに最初は <a href="http://mojolicio.us/perldoc/Mojolicious/Guides/Cookbook#REAL-TIME-WEB">Mojolicious のドキュメント</a> を頼りに開いて、ストリーミングというキーワードを探しました。そして、サーバ・プッシュとしてのファースト・ステップはさほど難なく、形を見ることができました。──そこにあるサンプルをコピペしただけでしたから：</p>
+
+<p><a href="http://mojolicio.us/perldoc/Mojolicious/Guides/Cookbook#EventSource-web-service">EventSource web service</a></p>
+
+<p>ただこのときじぶんは、サーバからのプッシュだから <code>WebSocket</code> を使うのかな？　と頼りなく考えていましたが、 <a href="http://dev.w3.org/html5/eventsource/">Server-Sent Events</a> なる技術を用いて、 HTTP だけで「プッシュ通知」を実現できるとのことを初めて知ることとなります。冒頭の一文を引用します：</p>
+
+<blockquote><p>This specification defines an API for opening an HTTP connection for receiving push notifications from a server in the form of DOM events.</p></blockquote>
+
+<p>「 HTTP 接続したサーバからプッシュ通知を DOM イベントとして受けるための仕様」とでも読みましょうか。今回は、仕組みが簡単そうに見えたこれを試してみることにしたのですが、その仕様は見た目どおりシンプルで、理解し易いものでした。</p>
+
+<p>その取り巻く技術がいったいどんなものかについては、上述 Mojolicious のたった数行のサンプルにヒントがすべてが詰まっているので、ここでは冗長に述べることはしませんが、アプリケーション実装者としてのポイントとしては、クライアント・サイドである HTML 5 の <code>EventSource</code> オブジェクトにあるように思います。と、言っても難しいことはありませんで、通知が来るので、それを受けたときに駆動するイベントハンドラでデータを使うだけ、でした。そしてサーバ・サイド側の要点としては、 <code>content-type</code> が <code>text/event-stream</code> であること。</p>
+
+<p>Mojolicious のサンプルでは、サーバ上でログファイルに行が追加された時にイベントが発行されて、その通知をクライアントの <code>EventSource</code> のインスタンスが受け、そのイベント・ハンドラがデータ、ここではログの行を、ページに表示するだけです。それはそれでリアルタイムなログ・モニタとなりそうですが、今回の件では、ロード・アベレージのリアルタイムな値をモニタしたいので、このサンプルを元に、改造していきます。</p>
+
+<p>改造の要点は、定期的に＝延々とループしながらロード・アベレージ（ <code>uptime</code> コマンドの結果）を取得するサービスが別に必要だというところです。クライアントからのリクエストが来るたびにそのサービスを起動しても同じ結果が得られるかもしれませんが、そうすると、リクエストの数だけ <code>uptime</code> を別々に実行してしまい、無駄です。ホスト上で同じタイミングで <code>uptime</code> したところで結果は同じでしょう。それどころかむしろ負荷が上がってしまって高めの値が出てしまう？　そういった懸念もありました。そこで、値を取得するサービスはただひとつだけ動かし、そのサービスが１秒ごとに更新し続ける結果を、任意のタイミングでやってくるすべてのリクエストが参照し（それはすなわちその時の最新値である）、それをクライアントへレスポンスする、といった実装にしようと思い至ります。</p>
+
+<p>──ところでずいぶん長らく書いてきてしまいましたが、 Sinatra はいつ出てくるのかというと、そろそろです。</p>
+
+<p>さて Perl で別プロセスを生もうと思った時、そのデータを、リクエストのプロセスから参照するにはどうするかという技術的な厄介に気づきます。プロセス間通信？　ファイルを経由する？　そういう面倒な&hellip; ことをするくらいならば、 Ruby の Thread を用いるのが手軽で良かろうと思うのです。（本当を言うと、 Mojolicious にも適当なやり方があるのかもしれませんが、すぐにはわからなかったのです。）</p>
+
+<p>そうして作ったプロトタイプがこれです。 Gist に置きました。</p>
+
+<p><a href="https://gist.github.com/hiroaki/ad55b38be8701f25eb93">https://gist.github.com/hiroaki/ad55b38be8701f25eb93</a></p>
+
+<p>動作デモのページを用意すれば、より良いのはわかっているつもりですが、メンテナンス対象が増えてしまうのが嫌なので、作りませんでした。興味ありましたら、コードを動かしてみてください。動作させるためには、 <code>sinatra</code> と <code>thin</code> 、ふたつの gem が必要です。──とはいえ、やはり絵があるとインパクトがあって、この記事にも幾ばくかの華やぎを添えるのも事実です。から、戯れですが動画に撮ったので、デモの代わりに YouTube に置いたその動画を貼っておきたいと思います。</p>
+
+<iframe width="560" height="315" src="http://www.youtube.com/embed/HdBtD-t4xg4?t=3m30s" frameborder="0" allowfullscreen></iframe>
+
+
+<p><a href="http://www.youtube.com/embed/HdBtD-t4xg4?t=3m30s">http://www.youtube.com/embed/HdBtD-t4xg4?t=3m30s</a></p>
+
+<p>さて、 Mojolicious で基本的な技術概要を得てダラダラと述べておきながら、結局 Sinatra で実装し、しかもそれについての解説はまったくしていません。一体何のつもりなのか、と訝しがられるのも無理はありません。でも、にわかに覚えたてのじぶんの解説などは、あまりためになりそうもありませんから、止しておこうと思います。くわしくは Sinatra の README ドキュメント、イントロダクションを見ていただくのが、よいかと思います。</p>
+
+<p><a href="http://www.sinatrarb.com/intro-ja.html#ストリーミングレスポンス(Streaming%20Responses)">Sinatra: README (Japanese) # ストリーミングレスポンス(Streaming Responses)</a></p>
+
+<p>そもそもは、これほど簡単にサーバ・プッシュができるんだ、ということを紹介してみようと思ったのが、この記事を書く動機になったことでした。なので、そこへ到達できたところで、この記事は〆たいと思います。おわり。</p>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">hiroaki</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-12-16T00:06:00+09:00" pubdate data-updated="true"></time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/ruby/'>ruby</a>, <a class='category' href='/blog/categories/sinatra/'>sinatra</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="http://twitter.com/share" class="twitter-share-button" data-url="http://hiroaki.github.io/blog/2014/1216/real-time-monitor-with-sinatra/" data-via="hwatattama" data-counturl="http://hiroaki.github.io/blog/2014/1216/real-time-monitor-with-sinatra/" >Tweet</a>
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2014/1005/gserver-can-exceed-the-max-connections/" title="Previous Post: GServer can exceed the max connections">&laquo; GServer can exceed the max connections</a>
+      
+      
+        <a class="basic-alignment right" href="/blog/2014/1227/install-shared-mime-info-on-os-x-yosemite/" title="Next Post: Install shared-mime-info on OS X Yosemite">Install shared-mime-info on OS X Yosemite &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2015/0808/drawercss/">DrawerCSS</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2015/0721/maps-dot-gpx-a-dot-k-a-gpx-casual-viewer/">maps.gpx a.k.a. GPX Casual Viewer v3</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2015/0429/gpx-casual-viewer-v3/">GPX Casual Viewer v3</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2015/0205/mime-expander-v0-dot-02-is-released/">MIME::Expander 0.02 is released</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/1227/install-shared-mime-info-on-os-x-yosemite/">Install shared-mime-info on OS X Yosemite</a>
+      </li>
+    
+  </ul>
+</section>
+
+<section>
+  <h1>GitHub Repos</h1>
+  <ul id="gh_repos">
+    <li class="loading">Status updating...</li>
+  </ul>
+  
+  <a href="https://github.com/hiroaki">@hiroaki</a> on GitHub
+  
+  <script type="text/javascript">
+    $(document).ready(function(){
+        if (!window.jXHR){
+            var jxhr = document.createElement('script');
+            jxhr.type = 'text/javascript';
+            jxhr.src = '/javascripts/libs/jXHR.js';
+            var s = document.getElementsByTagName('script')[0];
+            s.parentNode.insertBefore(jxhr, s);
+        }
+
+        github.showRepos({
+            user: 'hiroaki',
+            count: 0,
+            skip_forks: true,
+            target: '#gh_repos'
+        });
+    });
+  </script>
+  <script src="/javascripts/github.js" type="text/javascript"> </script>
+</section>
+
+
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2015 - hiroaki <br/>
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a>, customized with <a href="https://github.com/mjhea0/whiterspace">whiterspace</a>.</span>
+</p>
+
+</footer>
+  
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = 'http://platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>

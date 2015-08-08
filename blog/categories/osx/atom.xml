@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: osx | What hwat?]]></title>
+  <link href="http://hiroaki.github.io/blog/categories/osx/atom.xml" rel="self"/>
+  <link href="http://hiroaki.github.io/"/>
+  <updated>2015-08-09T01:53:03+09:00</updated>
+  <id>http://hiroaki.github.io/</id>
+  <author>
+    <name><![CDATA[hiroaki]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Install shared-mime-info on OS X Yosemite]]></title>
+    <link href="http://hiroaki.github.io/blog/2014/1227/install-shared-mime-info-on-os-x-yosemite/"/>
+    <updated>2014-12-27T21:02:00+09:00</updated>
+    <id>http://hiroaki.github.io/blog/2014/1227/install-shared-mime-info-on-os-x-yosemite</id>
+    <content type="html"><![CDATA[<p>任意のファイルの種類が何であるかを特定したいとき、その拡張子で判断してしまうようなお人好しでない限り、話はそう簡単ではありません。</p>
+
+<!-- more -->
+
+
+<p>簡単ではないので理由は端折りますが、実装するには Perl ではモジュール <a href="http://search.cpan.org/dist/File-MimeInfo/">File-MimeInfo</a> を用いるところへ落ち着くと思われます。 Ruby だと <a href="https://rubygems.org/gems/mimemagic">mimemagic</a> かしら。</p>
+
+<p>しかしそれらが有効に働くには、 <a href="http://freedesktop.org/wiki/Software/shared-mime-info/">shared-mime-info</a> というパッケージが、そこに入っていなければなりません（追記： <code>mimemagic</code> では不要でした。 gem のライブラリに Magic データを持っていました）。それは何かというと──冒頭の一文を引用します：</p>
+
+<blockquote><p>The shared-mime-info package contains the core database of common types and the update-mime-database command used to extend it.</p></blockquote>
+
+<p>つまり、ファイルの種類のデータベースですね。</p>
+
+<p>ところで、じぶんの環境は OS X (Yosemite) であります。先に言って仕舞えば、ここには <code>shared-mime-info</code> はありません。したがって、たとえば Perl のそのモジュールをインストールして、こんなふうに実行したところで、むなしい結果を得ることとなります（なりました）。</p>
+
+<pre><code>$ perl -MFile::MimeInfo -E 'say mimetype(shift)' ~/Desktop/IMG_4494.PNG 
+WARNING: You don't seem to have a mime-info database. The
+shared-mime-info package is available from http://freedesktop.org/ .
+application/octet-stream
+$ 
+</code></pre>
+
+<p>打ち明けると、逆にこのことから、ああ <code>shared-mime-info</code> というのが別途必要なんだなということに気づいたのですけれども、さて、ではインストールしよう、となるのは自然な成り行きになるのですが、しかしこれが結構ハマってしまったので、こうしてメモして残そうと思うに至った次第です。</p>
+
+<p>しかしお断りですが、それは局所的・限定的なプロブレムに対する対処療法の一種で、前向きに捉えればある意味「旬」なものではありますが、おそらくほとんどのひとには役に立つものではありませんし、じぶんの環境ですら腐りやすい、そういう内容になっていますので、どうか悪しからず。</p>
+
+<p>──その手順は、試行錯誤してインストールに成功した時までの走り書きメモをまとめて、バッチ・スクリプトにして、 Gist に置きました。スクリプトと言うと偉そうですが、見ると分かるとおり、チェックとか、エラー処理とかまったくしていないので、これをそのまま使うのはどうかと思います。ので、見るだけにして実行はしないでください。</p>
+
+<p><a href="https://gist.github.com/hiroaki/655b2e22b24fc0bdc05f">install-shared-mime-info.sh</a></p>
+
+<p>ハマリ・ポイント（ hummerly point &hellip; ）は、本丸 <code>shared-mime-info</code> のビルドです。</p>
+
+<p><code>configure</code> 自体は成功裏に終わったので、では続いて <code>make</code> とするのですがこんなエラーに遭遇しました。要約すると、コマンド <code>xgettext</code> がないぜ、と言われています：</p>
+
+<pre><code>$ PKG_CONFIG=$PREFIX/bin/pkg-config PKG_CONFIG_PATH=$PREFIX/lib/pkgconfig ./configure --prefix=$PREFIX
+$ make
+  GEN      create-pot
+INTLTOOL_EXTRACT="$PREFIX/bin/intltool-extract" XGETTEXT=":" srcdir=. $PREFIX/bin/intltool-update --gettext-package shared-mime-info --pot
+Can't exec ":": No such file or directory at $PREFIX/bin/intltool-update line 713.
+Use of uninitialized value $version in pattern match (m//) at $PREFIX/bin/intltool-update line 714.
+ *** GNU xgettext is not found on this system!
+ *** Without it, intltool-update can not extract strings.
+...
+...
+make[1]: *** [check] Error 1
+make: *** [check-recursive] Error 1
+$ 
+</code></pre>
+
+<p>このメッセージから直接は読み取れませんが、 <code>intltool</code> をインストールした際に入ったコマンド <code>intltool-update</code> が Perl スクリプトなのでその中を見ることができたのでそれ見てみると、 <code>intltool-update</code> を実行する際に <code>xgettext</code> の情報を正しく渡していない <code>Makefile</code> が悪いとわかります。そして <code>Makefile</code> が悪いなら、それを生成する <code>configure</code> に問題がある、と捜査の手は進みます。</p>
+
+<p>記憶を過去に辿ってみれば、 <code>configure</code> を実行したときには、コマンド <code>xgettext</code> が見つかっている旨が表示されているのですが（実際 <code>PATH</code> も通っています）、しかし現実として生成された <code>Makefile</code> の中では、（それが見つかっていなかったときの意味だろうと思うのですが、） <code>:</code> という何もしないコマンドとして記録されていました。従って、 <code>intltool-update</code> はそれを <code>xgettext</code> とみなして実行したので、 <code>Can't exec ":": No such file or directory</code> というエラーメッセージになり、なるほど辻褄が合うようです。──合ったところで、解決には繋がっていませんが、ちょっと気持ちがすっきりしました。</p>
+
+<p>結局どうしたかというと、 <code>intltool-update</code> を手動で実行しました。これが、どういうことなのかは知りませんが、とりあえずインストールするのが目的になっているので、知らないまま先に進めます。</p>
+
+<p>具体的には、実行されてエラーになったコマンドラインから <code>XGETTEXT=":"</code> のところを削ってしまえば、コマンド・サーチ・パスにある <code>xgettext</code> コマンドが <code>intltool-update</code> 内部から使われる手筈になっていましたので、そうしました。ちなみに、その場で実行したら <code>po</code> ディレクトリに移ってやりなさいという親切なメッセージが出てきたので、それに従い。そして、 <code>make</code> の続きをやり直します。</p>
+
+<pre><code>$ cd po
+$ INTLTOOL_EXTRACT="$PREFIX/bin/intltool-extract" srcdir=. $PREFIX/bin/intltool-update --gettext-package shared-mime-info --pot
+$ cd ..
+$ make
+$ make install
+</code></pre>
+
+<p>望むらくば <code>configure</code> スクリプトを見直したりするべきなのかもしれませんが、それを追求するのはまた別の話になります。今回はただ、ファイルの種類を特定したいのが目的であるのですから、ツールのビルドの問題に対しては、これで十分のような気がします。尤も、その手腕を持たないじぶんの言い訳なのではありますが、次に示すように、望むべく結果を得ることができたのですから、その場しのぎにしては良い案配ではないでしょうか：</p>
+
+<pre><code>$ XDG_DATA_DIRS=$PREFIX/share perl -mFile::MimeInfo::Magic=magic -E 'say magic(shift)' ~/Desktop/IMG_4494.PNG
+image/png
+$ 
+</code></pre>
+
+<p>以上のように、じぶんの場合、任意のファイルの種類が何であるかを特定したいとき、話はそう簡単なことではなかった、という話でした。</p>
+]]></content>
+  </entry>
+  
+</feed>

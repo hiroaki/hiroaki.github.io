@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: carton | What hwat?]]></title>
+  <link href="http://hiroaki.github.io/blog/categories/carton/atom.xml" rel="self"/>
+  <link href="http://hiroaki.github.io/"/>
+  <updated>2015-08-09T01:53:03+09:00</updated>
+  <id>http://hiroaki.github.io/</id>
+  <author>
+    <name><![CDATA[hiroaki]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[The Carton bundles a carton]]></title>
+    <link href="http://hiroaki.github.io/blog/2013/0926/the-carton-bundled-a-carton/"/>
+    <updated>2013-09-26T23:31:00+09:00</updated>
+    <id>http://hiroaki.github.io/blog/2013/0926/the-carton-bundled-a-carton</id>
+    <content type="html"><![CDATA[<p>先日書きました Carton そのもののインストールについて、それ自身が依存するモジュールが多すぎて大変、という内容の記事でしたが、そのつぶやきを Carton 作者の @miyagawa 氏が拾って下さり、じぶんの不明を正して下さいました。</p>
+
+<p><code>carton bundle</code> を実行してバンドルされた（モジュールのソースが集められた） vendor ディレクトリの中には、 carton コマンド（スクリプト）が同梱されます！ vendor/bin ディレクトリを覗いてみて下さい。</p>
+
+<!-- more -->
+
+
+<p>そのスクリプトは Carton 配布とは違うものではあるのですが、これを使えば別途 Carton 配布を用意して＋ビルドして＋インストールしなくても、バンドルされたすべてのモジュールをインストールすることが出来ます。</p>
+
+<p>方やもう一件、 JPA の @lestrrat 氏からも CPAN のミラーをローカルホスト上に作るのはどうかという旨のコメントを頂きました。いつも使うモジュールを集めておいたり、リポジトリにさまざまな Perl のプロジェクトがあってモジュールの管理を一括したいようなときに、これも知っておくべき手段ではないでしょうか。</p>
+
+<p>ただ先日書いたじぶんの記事では明らかではありませんでしたが、実際の問題として、じぶんはお客さんのところに設置することを想定していました。</p>
+
+<p>そこは外界へのネットワークもなく、かつツールを置く自由に望みが薄い厳しいところです。挙げ句にじぶんは、モジュールのバージョンをインストール順に書き込んだバッチスクリプト作成という not good な方向を突っ走ってしまっていたのですが、そのような塞がった環境では、 Carton の &ldquo;bundle&rdquo; による機能がアドバンテージを遺憾なく発揮する事でしょう。</p>
+
+<p>詳細については @miyagawa 氏の記事が上がっていますので、そちらを参照下さればと思います。（もしかしたら迷える私のようなユーザのために書いて下さった？としたらまったく有難い事です。ありがとうございます）</p>
+
+<p><a href="http://weblog.bulknews.net/post/62299851941/miyagawa-cpan-module-bootstrap">miyagawa/cpan-module-bootstrap - Tatsuhiko Miyagawa&rsquo;s blog</a></p>
+
+<p>Carton ──時事ネタ的に言えば、なんておもてなしが行き届いていることでしょう。</p>
+
+<p>少し大袈裟な物言いかもしれませんが、 Carton は Perl の今後を左右しかねない革命的なツールだとじぶんは思っています。尤もその始まりは Ruby の Bundler の存在があってのことでもあったのかも知れませんが、それ同等の環境が整ったことは Perl にとって──一般的には廃れてしまったと認知されていることを否めない Perl にとって、これからもモダンであり実用可能であることの必要条件だったのではないでしょうか。逆に厳しい目で見れば、いままでそのような環境が整っていなかったのは不幸だったと思います。</p>
+
+<p>たとえばある言語をこれから初めて使ってみよう思うデベロッパ・ユーザが、（依存モジュールが多くて）何回も make しないと使えない環境下でそのモジュールが使えるようになるまでのストレスを想像できますでしょうか。本番環境に持って行った時にバージョンが違っていたらどうしようという心配は誰もしていないのでしょうか。 Ruby には Bundler がありました。</p>
+
+<p>でもこれからの Perl には Carton があるのです。</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Install Carton without Carton?]]></title>
+    <link href="http://hiroaki.github.io/blog/2013/0921/install-carton-without-carton/"/>
+    <updated>2013-09-21T22:04:00+09:00</updated>
+    <id>http://hiroaki.github.io/blog/2013/0921/install-carton-without-carton</id>
+    <content type="html"><![CDATA[<p>ちょっと前に <a href="https://github.com/miyagawa/carton">Carton</a> もバージョン 1.0 がリリースとなり、 plenv や cpanm らを組み合わせた Perl の環境構築は、ひと昔前のそれと比べてずいぶん簡単になりました。</p>
+
+<p>昔話をするつもりはないのですが、大量のモジュールを使ったプロダクトをデプロイするときなど、 <code>perl Makefile.PL; make; make install</code> の定型文をそれはもう腱鞘炎になるほどタイプし続けては、それだけで半日つぶす事もままあったりもしました。このコマンド・セットをタイプする大会があったなら、じぶんはおそらく上位に入賞する事でしょう。</p>
+
+<!-- more -->
+
+
+<p>だいたいそんなことになる前に、そのようなルーチン・ワークはバッチ・スクリプトを組んでおくなりすればよかったのですが、──実際それを作った事もありましたが、開発中にいろいろなモジュールを試したりしている中で、そもそも、最終的にどのモジュール（と、そのバージョン）が必要で、それが依存しているモジュールはなんだったっけ？　となる事が多く、いったんそうなったが最後、依存関係を探して必要なモジュールをダウンロードして集めては、という茨の作業が始まるのが常でした。つまるところじぶんは、モジュールを管理する上手い方法を知らなかったし、編み出さなかった。</p>
+
+<p>Carton を使うとしても、必要なモジュールがどれかは管理しておかなければならないことに変わりはありませんが、 cpanfile というメモ帳に、「使うモジュール」だけを記しておけばそれでよく、そのモジュールが依存する他のモジュールまで気にしなくていいのが大きな得物です。それどころか cpanm とのコラボレーションで、ダウンロードからインストールまで、すべて面倒をみてくれます。腱鞘炎を心配する事もありません。</p>
+
+<p>そんな Carton のいい事尽くめなところは、あちこちの Perl ユーザが記事にしているので、ここでは繰り返すことはせず、興味を持たれた方はそれらを参照して頂ければと思います。</p>
+
+<p>──ただひとつ、どの記事にも記されていない秘密の？事柄に、じぶは気付きました。なので、それを記してみたいと思います。</p>
+
+<p>Carton は、いちどダウンロードしてインストールしたモジュールを &ldquo;bundle&rdquo; しておくことで、 CPAN ネットワークへ接続できない（ファイア・ウォール内などの）環境にもそれらを再構築できる素晴らしい機能を持っているのですが、さて、その機能を使うためには、 Carton がインストールされていなければなりません。</p>
+
+<p>Carton のインストール、 CPAN （モジュール配布サイト）へ繋ぐ事ができれば <code>cpanm Carton</code> とするだけで終わるのではありますが、それができない環境では、 Carton の配布を別途ダウンロードしてそれを対象の環境へアップロード、そして <code>perl Makefile.PL; make; make install</code> とタイプします。もし、依存するモジュールがあれば、先にそれをインストールしておかなければなりません。</p>
+
+<p>これが茨の道の始まりである事は Carton のおかげで過去のこととなった筈なのですが、あろうことか、 Carton 自身が必要とする依存モジュールが、あるわあるわで、終わってみれば、じぶんは Carton-v1.0.11 を含めて 36 個ものモジュールを手動でインストールしていたのでした（補足： Perl 5.18.1 のコアで）。ちょっと、多すぎます。Carton を利用するにあたって唯一ネガティブなところがここにありました。</p>
+
+<p><strong>Carton を Carton を使ってインストールできないでしょうか？</strong></p>
+
+<p>──もちろん、それから以後は Carton の恩恵にあやかるところが甚大ですから、これに怖じ気づいてインストールしない手はないのですが、願わくば、依存モジュールがもう少し減ってくれればとは思うのは正直な所です。</p>
+
+<p>Perl 5.18.1 の中に Carton-v1.0.11 をインストールするためには、つぎの順番でモジュールをインストールする必要がありました（じぶんの手元の環境で、バージョンは現時点での最新版）。</p>
+
+<ul>
+<li>App-FatPacker-0.009018</li>
+<li>App-cpanminus-1.7001</li>
+<li>Class-Data-Inheritable-0.08</li>
+<li>Devel-StackTrace-1.30</li>
+<li>Exception-Class-1.37</li>
+<li>File-pushd-1.005</li>
+<li>JSON-2.59</li>
+<li>Module-Build-0.4007</li>
+<li>Module-CPANfile-1.0002</li>
+<li>Module-Reader-0.002000</li>
+<li>Try-Tiny-0.18</li>
+<li>autodie-2.21</li>
+<li>Path-Tiny-0.033</li>
+<li>strictures-1.004004</li>
+<li>Module-Runtime-0.013</li>
+<li>Capture-Tiny-0.22</li>
+<li>Test-Pod-1.48</li>
+<li>Test-Fatal-0.012</li>
+<li>Role-Tiny-1.003002</li>
+<li>ExtUtils-Config-0.007</li>
+<li>ExtUtils-Helpers-0.021</li>
+<li>ExtUtils-InstallPaths-0.009</li>
+<li>Module-Build-Tiny-0.027</li>
+<li>Test-Tester-0.109</li>
+<li>Test-NoWarnings-1.04</li>
+<li>Test-Deep-0.110</li>
+<li>CPAN-Meta-Check-0.007</li>
+<li>Test-CheckDeps-0.007</li>
+<li>Test-Warnings-0.009</li>
+<li>Class-Method-Modifiers-2.06</li>
+<li>Sub-Exporter-Progressive-0.001010</li>
+<li>Devel-GlobalDestruction-0.11</li>
+<li>List-MoreUtils-0.33</li>
+<li>Dist-CheckConflicts-0.09</li>
+<li>Moo-1.003001</li>
+<li>Carton-v1.0.11</li>
+</ul>
+
+
+<p>じぶんは昔の苦い手首の思い出を繰り返すまいと、今回はちゃんと、モジュールをインストールする順番をメモしておきました。あとはこれをもとにバッチス・クリプトを書いて、これらを一発でインストールできるように整えておけば準備万端と言うものです。</p>
+
+<p>おそらく、このことに気付いた方もいるでしょうから、なにかほかにいい手だてがあるのかも知れません（追記：あります！）。もし知っていたら、教えて頂きたいと思うのですが、さもなくば、 Github にそのバッチ・スクリプトを置きましたので、いっしょにメンテナンスして頂ければと思います。</p>
+
+<p><del>perl-carton - <a href="https://github.com/hiroaki/perl-carton">https://github.com/hiroaki/perl-carton</a></del></p>
+
+<p>追記：ほかにいい手だてがありました。というより、じぶんが迂闊だっただけかもしれません。この記事を読んで<del>しまっていたら</del>くださったのならば、是非、次の記事も読まなければなりません！</p>
+
+<p><a href="http://hiroaki.github.io/blog/2013/0926/the-carton-bundled-a-carton/">The Carton Bundled a Carton</a></p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[I hope that there is an alternative]]></title>
+    <link href="http://hiroaki.github.io/blog/2013/0804/i-hope-that-there-is-an-alternative/"/>
+    <updated>2013-08-04T16:23:00+09:00</updated>
+    <id>http://hiroaki.github.io/blog/2013/0804/i-hope-that-there-is-an-alternative</id>
+    <content type="html"><![CDATA[<p><a href="https://github.com/miyagawa/carton">Carton</a> を使った Perl モジュールのインストール時に、困ったことがまたあったので、記しておきたいと思います。概要を先に述べますと、 Makefile.PL 実行時にオプションを渡したいのだけれども、現在の Carton では渡せないので、代替手段があればそれを使う、なければ&hellip; 残念。ということです。</p>
+
+<p>バッド・ノウハウという言い方は好ましく思わないのですが、時間的・発生場所いずれにも局所的な問題をワークアラウンド（その場凌ぎ的）に回避するアイデアをひとくちにバッド・ノウハウと言うのならば、ほかにいい言い方も無いので観念するとして、またひとつ、バッド・ノウハウを披露することになるかと思います。</p>
+
+<!-- more -->
+
+
+<p>経緯はこうです。</p>
+
+<p><code>carton install</code> するべく、あるプロダクトに cpanfile を用意して、いざ実行しました。</p>
+
+<p>その中には、 <a href="http://search.cpan.org/dist/Imager-File-PNG/">Imager::File::PNG</a> が含まれていたのですが、それは <a href="http://www.libpng.org/pub/png/libpng.html">libpng</a> を要求します。そして libpng がシステムに入っていないことじぶんは知っていたので、システムデフォルトの lib 以外の場所にインストールはしておきました。ただし、そうした場合、 Makefile.PL 実行時に <code>--incpath</code> と <code>--libpath</code> を指定しなければなりません。</p>
+
+<p>なので、 <code>carton install</code> の実行中に Imager::File::PNG のインストールが失敗するのを見て、見込みどおりであることを確認し、安心して「さて、どうしたものか」と改めて思いました。</p>
+
+<p><code>carton install</code> のとき、 requires しているうちの任意のモジュールのビルドにオプション渡したいのだけれど&hellip; 。</p>
+
+<p>そのつぶやきは @miyagawa 氏が拾ってくださって、折り返しに &ldquo;that&rsquo;s a known issue&rdquo; とコメントを頂きました。このことから、将来的には、このような問題は何らかの形で解消されるものと期待されます。たぶん、 requires 行に、モジュール名、バージョンに続けてオプションが書けるようになるんじゃないでしょうか。当てずっぽうですが、そこにしか、モジュールとの関連を設定できる所がないからです。</p>
+
+<p>さて、失敗した Imager::File::PNG については、別途手動でビルドしてしまえば用は済むのですが、必要なモジュールを全自動でインストールしたいというのが Carton の意義でもあるわけです？から、なんとかして、全自動をかなえたい。 Carton （または cpanm ? ） が対応していないからには、ほかのアプローチを模索しなければなりません。</p>
+
+<p>そこでまずは <a href="http://cpansearch.perl.org/src/TONYC/Imager-File-PNG-0.89/Makefile.PL">Imager::File::PNG の Makefile.PL</a> を注意深く覗いてみることにします。 libpng の在処を探す場面があるはずです。それは中で require している Imager::Probe にありました。それに従い <a href="http://cpansearch.perl.org/src/TONYC/Imager-0.97/lib/Imager/Probe.pm">Imager::Probe のソース</a>を覗いてみると、見つけました。 <code>pkg-config</code> コマンドを呼び出しているようです。</p>
+
+<p><code>pkg-config</code> も、その機能を用いるために、システム標準の位置に無いライブラリについては、それを教えてやる必要があります。それは <a href="http://ja.wikipedia.org/wiki/Pkg-config">PKG_CONFIG_PATH</a> 環境変数で渡すことが出来ます。そして、別途インストールしておいた libpng にはそのPKG_CONFIG_PATH に相応しいディレクトリがありました。</p>
+
+<pre><code>$ export PKG_CONFIG_PATH=/path/to/libpng/lib/pkgconfig:$PKG_CONFIG_PATH
+$ carton install
+...
+</code></pre>
+
+<p>まとめると、 Imager::File::PNG のビルド時には、 Makefile.PL 実行時に <code>--incpath</code> と <code>--libpath</code> を渡すことの替わりに PKG_CONFIG_PATH をセットしておけばよいということでした。</p>
+
+<p>通常、 Carton を使わないビルド時や、そもそもシステムの lib に libpng がインストールされていれば、このような状況には出遭いません。実際 Imager::File::PNG の README には libpng の dev パッケージをインストールしなさいと書いてありましたから、それに従えばいいのです。 <code>pkg-config</code> のことはドキュメントにはありませんし、バージョンが変われば、その手は使えなくなるかもしれません。それがゆえに、 PKG_CONFIG_PATH を使う手がバッド・ノウハウと言える性質を備えています。</p>
+
+<p>けれども、ここで得る教訓があります。デベロッパは、自身のプロダクトを提供する場合、ユーザにカスタマイズする方法を複数用意しておくことが望ましいということです。コマンドライン・オプションだけからしかオプションを指定できないツールでは、コマンドラインが無い環境からはそれを実行できません。</p>
+
+<p>例に挙げた Imager::File::PNG の場合を見直してみますと、これは、たまたま <code>pkg-config</code> を使用していたがために、ユーザがコマンドライン・オプションを使わないことを選択できたわけであって、それ自身がコマンドライン・オプション以外の設定方法を提供しているわけではないので、いまいちと言えます。望むべくは、コマンドライン・オプション同等の設定を行う環境変数などを用意しておくべきなのだと、思います。 libpng をシステムの lib にインストールしたくない（または、できない！）状況も十分あり得るのですから。</p>
+]]></content>
+  </entry>
+  
+</feed>

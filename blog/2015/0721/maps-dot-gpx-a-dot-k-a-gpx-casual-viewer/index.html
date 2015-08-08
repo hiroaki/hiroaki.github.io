@@ -1,0 +1,301 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>maps.gpx a.k.a. GPX Casual Viewer v3 - What hwat?</title>
+  <meta name="author" content="hiroaki">
+
+  
+  <meta name="description" content="Also known as &hellip; と格好つけなくても、ほとんど知られることのない GPX Casual Viewer v3 は、バージョン v2.3.0 から名称を maps.gpx と変えました。 https://github.com/hiroaki/maps.gpx 理由は簡単で、 &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://hiroaki.github.io/blog/2015/0721/maps-dot-gpx-a-dot-k-a-gpx-casual-viewer">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="What hwat?" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/lib/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href='http://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet' type='text/css'>
+<link href='http://fonts.googleapis.com/css?family=Fjalla+One' rel='stylesheet' type='text/css'>
+  
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-299060-4']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+
+
+</head>
+
+<body   class="collapse-sidebar sidebar-footer" >
+  <header role="banner">
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="https://www.google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:hiroaki.github.io" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+  <li><a href="/about">About</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+  
+    
+      <h1 class="entry-title">maps.gpx a.k.a. GPX Casual Viewer v3</h1>
+    
+  
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2015-07-21T21:43:00+09:00" pubdate data-updated="true"></time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>Also known as &hellip; と格好つけなくても、ほとんど知られることのない GPX Casual Viewer v3 は、バージョン v2.3.0 から名称を maps.gpx と変えました。</p>
+
+<p><a href="https://github.com/hiroaki/maps.gpx">https://github.com/hiroaki/maps.gpx</a></p>
+
+<p>理由は簡単で、ビューワー viewer にとどまらない構想があるからです。──将来的にはエディタ editor としても使えるものに仕上げる希望があります。と、他人事のような言い回しになりましたが、もちろん Github に公開しているからには、じぶん以外の某によって、それが達成されてもいいわけですから、幅広い解釈ができる表現をあえて選んでいるということでもあります。</p>
+
+<!-- more -->
+
+
+<h2>変更点</h2>
+
+<p>さて寝言は大概にして、名称変更した maps.gpx の最初のリリースは、 GPX Casual Viewer v3 の v2.3.0 相当の機能でもって、名前空間 <code>GPXCasualViewer</code> が <code>MapsGPX</code> に変わっただけのものになります。また maps.gpx のバージョンはその地点を v3.0.0 として、同時にここからはセマンティック・バージョニングを宣言しようかと思います。</p>
+
+<p>ときに、<a href="http://hiroaki.github.io/blog/2015/0429/gpx-casual-viewer-v3/">前回記事にした</a>  GPX Casual Viewer v3 のとき（ v2.2.0 ）から v2.3.0 への変更点ですが、機能の変更はあまりなく、内部的な話が主なものになっています。詳しくは割愛ですが、外部の JavaScript ファイルを、明示しなくてもよいようになっています。 API を使って、独自の HTML ページ（アプリケーション）を作りたい人にとっては、手続きが簡素化されていることが、わかることでしょう。 <code>viewer.html</code> のソースへのリンクを貼っておきますので、前のバージョンと見比べてみてください。</p>
+
+<p><a href="https://github.com/hiroaki/maps.gpx/blob/v3.0.0/viewer.html">https://github.com/hiroaki/maps.gpx/blob/v3.0.0/viewer.html</a></p>
+
+<p>新機能のほうもすこしあります。</p>
+
+<h3>標高グラフ</h3>
+
+<p>ひとつの目玉は、標高グラフを表示できるようにしたことです。が、あまり上出来ではないので、また今後も手が入っていくことと思います。</p>
+
+<p><img src="http://blog.hwat.jp/assets/2015/07/21/figure4.png" width="640" height="525" title="figure #1" alt="figure #4"></p>
+
+<p>右下にジグザグのアイコンがあります。これはトグルスイッチで、グラフを表示する領域を画面下部に出し入れします。</p>
+
+<p><strong>開いた状態で</strong>、ポリラインをクリックすると、そのトラックの情報から標高グラフを描画します。</p>
+
+<h3>現在位置</h3>
+
+<p>あと、現在地点を取得してポイントできるようにしました。それらしいアイコンが右下にありますが、それです。ブラウザの設定で、位置情報サービスの利用を許可して、お楽しみいただければと思います。</p>
+
+<p><img src="http://blog.hwat.jp/assets/2015/07/21/figure1.png" width="600" height="417" title="figure #1" alt="figure #1"></p>
+
+<p>アイコン画像の中心が赤いとき、現在地点を地図の中心に追跡します。</p>
+
+<p>この状態から、同じボタンをクリックするか、または地図をドラッグすると、次のように、アイコン画像の中心が青くなります。青から、さらにクリックすると、位置情報の取得を終了し、始めの状態に戻ります。</p>
+
+<p><img src="http://blog.hwat.jp/assets/2015/07/21/figure2.png" width="600" height="417" title="figure #1" alt="figure #2"></p>
+
+<p>また、測位できない状態のときは、次のように、それっぽいアイコンになります。ブラウザの設定で、位置情報の利用を許可していない場合や、許可していても、なんらかの原因で測位ができていない状態を表しています。</p>
+
+<p><img src="http://blog.hwat.jp/assets/2015/07/21/figure3.png" width="600" height="417" title="figure #1" alt="figure #3"></p>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">hiroaki</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2015-07-21T21:43:00+09:00" pubdate data-updated="true"></time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/gpx/'>gpx</a>, <a class='category' href='/blog/categories/maps/'>maps</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="http://twitter.com/share" class="twitter-share-button" data-url="http://hiroaki.github.io/blog/2015/0721/maps-dot-gpx-a-dot-k-a-gpx-casual-viewer/" data-via="hwatattama" data-counturl="http://hiroaki.github.io/blog/2015/0721/maps-dot-gpx-a-dot-k-a-gpx-casual-viewer/" >Tweet</a>
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2015/0429/gpx-casual-viewer-v3/" title="Previous Post: GPX Casual Viewer v3">&laquo; GPX Casual Viewer v3</a>
+      
+      
+        <a class="basic-alignment right" href="/blog/2015/0808/drawercss/" title="Next Post: DrawerCSS">DrawerCSS &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2015/0808/drawercss/">DrawerCSS</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2015/0721/maps-dot-gpx-a-dot-k-a-gpx-casual-viewer/">maps.gpx a.k.a. GPX Casual Viewer v3</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2015/0429/gpx-casual-viewer-v3/">GPX Casual Viewer v3</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2015/0205/mime-expander-v0-dot-02-is-released/">MIME::Expander 0.02 is released</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/1227/install-shared-mime-info-on-os-x-yosemite/">Install shared-mime-info on OS X Yosemite</a>
+      </li>
+    
+  </ul>
+</section>
+
+<section>
+  <h1>GitHub Repos</h1>
+  <ul id="gh_repos">
+    <li class="loading">Status updating...</li>
+  </ul>
+  
+  <a href="https://github.com/hiroaki">@hiroaki</a> on GitHub
+  
+  <script type="text/javascript">
+    $(document).ready(function(){
+        if (!window.jXHR){
+            var jxhr = document.createElement('script');
+            jxhr.type = 'text/javascript';
+            jxhr.src = '/javascripts/libs/jXHR.js';
+            var s = document.getElementsByTagName('script')[0];
+            s.parentNode.insertBefore(jxhr, s);
+        }
+
+        github.showRepos({
+            user: 'hiroaki',
+            count: 0,
+            skip_forks: true,
+            target: '#gh_repos'
+        });
+    });
+  </script>
+  <script src="/javascripts/github.js" type="text/javascript"> </script>
+</section>
+
+
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2015 - hiroaki <br/>
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a>, customized with <a href="https://github.com/mjhea0/whiterspace">whiterspace</a>.</span>
+</p>
+
+</footer>
+  
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = 'http://platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>
