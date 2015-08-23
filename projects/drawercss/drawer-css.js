@@ -1,7 +1,7 @@
 function DrawerCSS(){
   this.initialize.apply(this, arguments);
 }
-DrawerCSS.VERSION = '0.1.5';
+DrawerCSS.VERSION = '0.3.0';
 DrawerCSS._vendorT = ['webkitT', 'mozT', 'oT', 'msT', 't'];
 DrawerCSS.getDimensions = function(element) {
   // getDimensions by prototype.js 1.6.0.3
@@ -47,6 +47,7 @@ DrawerCSS.prototype = {
 
     this._opened = false;
     this._events = {};
+    this._origin = {};
 
     this.$main = document.getElementById(main_id);
     this.$sub  = document.getElementById(sub_id );
@@ -56,6 +57,13 @@ DrawerCSS.prototype = {
     }
 
     this.reset();
+  },
+  active_span: function (){
+    var span_function = this.span;
+    if ( typeof this.span != 'function' ) {
+      span_function = (function() { return this }).bind(this.span);
+    }
+    return span_function;
   },
   reset: function() {
     this.destroy();
@@ -108,28 +116,44 @@ DrawerCSS.prototype = {
     if ( false ) {
       void(0);
     } else if ( this.side == 'TOP' ) {
+      if ( ! this.$main.style.bottom ) {
+        this.$main.style.bottom = 0;
+      }
+      this._origin = {attribute: 'bottom', value: this.$main.style.bottom};
       this.$sub.style.width   = '100%';
-      this.$sub.style.height  = this.span;
+      this.$sub.style.height  = this.active_span().call(this);
       this.$sub.style.top     = 0;
       this.$sub.style.right   = '';
       this.$sub.style.bottom  = '';
       this.$sub.style.left    = 0;
     } else if ( this.side == 'RIGHT' ) {
-      this.$sub.style.width   = this.span;
+      if ( ! this.$main.style.left ) {
+        this.$main.style.left = 0;
+      }
+      this._origin = {attribute: 'left', value: this.$main.style.left};
+      this.$sub.style.width   = this.active_span().call(this);
       this.$sub.style.height  = '100%';
       this.$sub.style.top     = 0;
       this.$sub.style.right   = 0;
       this.$sub.style.bottom  = '';
       this.$sub.style.left    = '';
     } else if ( this.side == 'BOTTOM' ) {
+      if ( ! this.$main.style.top ) {
+        this.$main.style.top = 0;
+      }
+      this._origin = {attribute: 'top', value: this.$main.style.top};
       this.$sub.style.width   = '100%';
-      this.$sub.style.height  = this.span;
+      this.$sub.style.height  = this.active_span().call(this);
       this.$sub.style.top     = '';
       this.$sub.style.right   = 0;
       this.$sub.style.bottom  = 0;
       this.$sub.style.left    = '';
     } else if ( this.side == 'LEFT' ) {
-      this.$sub.style.width   = this.span;
+      if ( ! this.$main.style.right ) {
+        this.$main.style.right = 0;
+      }
+      this._origin = {attribute: 'right', value: this.$main.style.right};
+      this.$sub.style.width   = this.active_span().call(this);
       this.$sub.style.height  = '100%';
       this.$sub.style.top     = 0;
       this.$sub.style.right   = '';
@@ -152,24 +176,24 @@ DrawerCSS.prototype = {
     } else if ( this.side == 'TOP' ) {
       this.$main.style.bottom = 0;
       this.$sub.style.width   = '100%';
-      this.$sub.style.height  = this.span;
+      this.$sub.style.height  = this.active_span().call(this);
       this.$sub.style.top     = 0;
       this.$sub.style.left    = 0;
     } else if ( this.side == 'RIGHT' ) {
       this.$main.style.left   = 0;
-      this.$sub.style.width   = this.span;
+      this.$sub.style.width   = this.active_span().call(this);
       this.$sub.style.height  = '100%';
       this.$sub.style.bottom  = 0;
       this.$sub.style.right   = 0;
     } else if ( this.side == 'BOTTOM' ) {
       this.$main.style.top    = 0;
       this.$sub.style.width   = '100%';
-      this.$sub.style.height  = this.span;
+      this.$sub.style.height  = this.active_span().call(this);
       this.$sub.style.bottom  = 0;
       this.$sub.style.right   = 0;
     } else if ( this.side == 'LEFT' ) {
       this.$main.style.right  = 0;
-      this.$sub.style.width   = this.span;
+      this.$sub.style.width   = this.active_span().call(this);
       this.$sub.style.height  = '100%';
       this.$sub.style.top     = 0;
       this.$sub.style.left    = 0;
@@ -209,27 +233,31 @@ DrawerCSS.prototype = {
       TOP: 'bottom',
       RIGHT: 'left',
       BOTTOM: 'top'
-    }[this.side]] = '-' + this.span;
+    }[this.side]] = '-' + this.active_span().call(this);
   },
   _open_compress: function (){
     if ( false ) {
       void(0);
     } else if ( this.side == 'LEFT' ) {
+      this.$sub.style.width = this.active_span().call(this);
       this.$main.style.width
         = DrawerCSS.getDimensions(this.$main).width
         - DrawerCSS.getDimensions(this.$sub ).width
         + 'px';
     } else if ( this.side == 'BOTTOM' ) {
+      this.$sub.style.height = this.active_span().call(this);
       this.$main.style.height
         = DrawerCSS.getDimensions(this.$main).height
         - DrawerCSS.getDimensions(this.$sub ).height
         + 'px';
     } else if ( this.side == 'TOP' ) {
+      this.$sub.style.height = this.active_span().call(this);
       this.$main.style.height
         = DrawerCSS.getDimensions(this.$main).height
         - DrawerCSS.getDimensions(this.$sub ).height
         + 'px';
     } else if ( this.side == 'RIGHT' ) {
+      this.$sub.style.width = this.active_span().call(this);
       this.$main.style.width
         = DrawerCSS.getDimensions(this.$main).width
         - DrawerCSS.getDimensions(this.$sub ).width
@@ -255,9 +283,7 @@ DrawerCSS.prototype = {
     return this;
   },
   _close_slide: function() {
-    this.$main.style[{
-      TOP: 'bottom', RIGHT: 'left', BOTTOM: 'top', LEFT: 'right'
-    }[this.side]] = '';
+    this.$main.style[this._origin['attribute']] = this._origin['value'];
   },
   _close_compress: function() {
     this.$main.style[{
