@@ -96,9 +96,6 @@
     <loc>http://hiroaki.github.io/blog/categories/javascript/</loc>
   </url>
   <url>
-    <loc>http://hiroaki.github.io/posts/2/</loc>
-  </url>
-  <url>
     <loc>http://hiroaki.github.io/projects/drawercss/sample-advanced.html</loc>
     <lastmod>2015-08-24T01:40:42+09:00</lastmod>
   </url>
@@ -113,6 +110,22 @@
   <url>
     <loc>http://hiroaki.github.io/projects/drawercss/sample.html</loc>
     <lastmod>2015-08-08T16:18:07+09:00</lastmod>
+  </url>
+  <url>
+    <loc>http://hiroaki.github.io/projects/mapsgpx/3b1319c/samples/viewer-droppable.html</loc>
+    <lastmod>2015-08-26T01:33:34+09:00</lastmod>
+  </url>
+  <url>
+    <loc>http://hiroaki.github.io/projects/mapsgpx/3b1319c/samples/viewer-input.html</loc>
+    <lastmod>2015-08-26T01:33:34+09:00</lastmod>
+  </url>
+  <url>
+    <loc>http://hiroaki.github.io/projects/mapsgpx/3b1319c/samples/viewer-xhr.html</loc>
+    <lastmod>2015-08-26T01:33:34+09:00</lastmod>
+  </url>
+  <url>
+    <loc>http://hiroaki.github.io/projects/mapsgpx/3b1319c/viewer.html</loc>
+    <lastmod>2015-08-26T01:33:34+09:00</lastmod>
   </url>
   <url>
     <loc>http://hiroaki.github.io/projects/mapsgpx/samples/viewer-droppable.html</loc>

@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/>
+<title>maps.gpx</title>
+<style>
+#map_canvas { width: 400px; height: 400px; }
+</style>
+<script src="http://maps.google.com/maps/api/js?sensor=true&libraries=geometry"></script>
+<script src="../maps-gpx.js"></script>
+<script>
+MapsGPX.onReady(function (){
+  var app = new MapsGPX('map_canvas');
+  google.maps.event.addDomListener(document.getElementById('apply'), 'click',
+    (function(event) {
+      var key = 'identifier_of_this_gpx_data';
+      this.addGPX(key, document.getElementById('gpx_data').value);
+      this.fitBounds(key);
+      this.showOverlayWpts(key);
+      this.showOverlayRtes(key);
+      this.showOverlayTrks(key);
+    }).bind(app));
+});
+</script>
+</head><body>
+  <div id="map_canvas"></div>
+  <div>
+<textarea id="gpx_data" rows="12" cols="80">
+<?xml version="1.0"?>
+<gpx version="1.1" creator="maps.gpx" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://www.topografix.com/GPX/1/1" xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd">
+<wpt lat="35.683955" lon="139.774462"></wpt>
+</gpx>
+</textarea>
+  </div>
+  <div>
+    <button id="apply">Overlay</button>
+  </div>  
+</body></html>
