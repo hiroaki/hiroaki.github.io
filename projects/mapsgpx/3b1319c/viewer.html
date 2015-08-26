@@ -13,7 +13,6 @@ MapsGPX.strict = false;
 MapsGPX.cache_script = false;
 MapsGPX.onReady(function() {
   new MapsGPX('map_canvas')
-    .extend('QueryURL')
     .extend('DrawerCSS')
     .extend('DescImage')
     .extend('Droppable')
@@ -29,6 +28,7 @@ MapsGPX.onReady(function() {
     .extend('VertexInfoWindow')
     .extend('SidePanelControl', {base_id:'map_container', drawer_id:'sidepanel', span:'280px', maxSpan:'80%'})
     .extend('FileClip')
+    .extend('QueryURL')
     .extended(function() {
       this.register('onAddGPX', function(key) {
         this.fitBounds(key);
