@@ -1,197 +1,8 @@
-# maps.gpx
-
-The maps.gpx is a HTML5 application for overlay GPX on the Google Maps.
-
-The main part of this project is `maps-gpx.js` JavaScript library
-that provides each functions.
-And HTML files are built by its several functions according to application.
-
-Bundled `viewer.html` is one of example of application.
-And there are other examples in `samples` directory.
-
-Below is the description of the main JavaScript library `maps-gpx.js`.
-
-## Usage
-
-At first, load the Google Maps API with the geometory library.
-
-And if it using the function which requires a GPS, set `sensor` to true.
-
-Then load the `maps-gpx.js`. The class `MapsGPX` is defined by this.
-
-
-```
-<script src="http://maps.google.com/maps/api/js?sensor=true&libraries=geometry">
-</script>
-<script src="maps-gpx.js">
-</script>
-```
-
-It is reasonable to begin applicatio after that waits a load of a document to be completed like general application.
-
-Please use class method `onReady` for it.
-
-After `load` of document waits for an event as well as all preparations of an after-mentioned plug-in have been completed, this guarantees to be called back.
-
-Even if the document triggers `load` event,
-there is a possibility that some of the function can't prepare yet.
-
-```
-MapsGPX.onReady(function (){
-  // Logic of application should be written here.
-});
-```
-
-To instantiate the class,
-it accepts two parameters that are the same as `google.maps.Map` of Google Maps API.
-
-The first argument is the ID for the viewport (DIV element) that should be drawn the map.
-
-And the second argument gives [options](https://developers.google.com/maps/documentation/javascript/reference?hl=ja#MapOptions) by Hash,
-it will be passed inside to constructor of `google.maps.Map` directly.
-However, it is set the default value of `MapsGPX` if it is omitted.
-
-```
-<div id="map_canvas">
-</div>
-<script>
-MapsGPX.onReady(function (){
-  var app = new MapsGPX('map_canvas');
-  // ...
-});
-</script>
-```
-
-Now a map is ready. Let's give GPX data to this map to overlay.
-
-There are several ways to give GPX:
-
-* String of GPX directly
-* via binary of GPX (File or Blob object)
-* via URL of GPX
-
-The methods are prepared respectively.
-
-* `addGPX`
-* `input`
-
-A method  `addGPX` is the lower-level input method from which a text of the contents of GPX is received.
-
-On the other hand the higher-level input method  `input` is covering both of URL and Blob of GPX,
-its contents of the object are passed to the method `addGPX`.
-
-API is prepared for each, but part of user interface is left to developer.
-However, it's possible to use the plug-in offered by external file instead of writing code.
-
-* `Droppable`
-* `QueryURL`
-
-A plug-in `Droppable` passes the GPX object to method `input`,
-by the user drags and drops GPX files on the map.
-
-And A plug-in `QueryURL` also passes URL
-which is the value of the parameter 'url' of the query string, to method `input`.
-
-To use a plug-in, give its name to the instance method `use`.
-
-```
-app.use('Droppable');
-app.use('QueryURL');
-```
-
-Specifically, please see examples described to below,
-and build your application using the methods of instance, plug-ins and more things.
-
-
-## Example 1
-
-This example is using plug-in `Droppable`, which provides one of user interface.
-
-This is an application that overlays waypoints and tracks as markers and polylines,
-by you drag and drop GPX files into browser window.
-
-And as the action when GPX was added:
-- Fit the map so that all coordinates be contained in the viewport.
-- Show all the waypoints and the tracks for adding GPX.
-
-Like this example, when not directing specifically, overlays won't be shown.
-
-It is possible to show/hide overlays anytime.
-
-```
-<!DOCTYPE html>
-<html lang="en"><head><meta charset="UTF-8"/>
-<title>maps.gpx</title>
-<style>
-html, body, #map_canvas { width: 100%; height: 100%; margin: 0px; padding: 0px; }
-</style>
-<script src="http://maps.google.com/maps/api/js?sensor=true&libraries=geometry"></script>
-<script src="../maps-gpx.js"></script>
-<script>
-MapsGPX.onReady(function (){
-  new MapsGPX('map_canvas')
-  .use('Droppable')
-  .register('onAddGPX', function(key) {
-    this.fitBounds(key);
-    this.showOverlayWpts(key);
-    this.showOverlayTrks(key);
-  });
-});
-</script>
-</head><body>
-  <div id="map_canvas"></div>
-</body></html>
-```
-
-
-## Example 2
-
-This example inputs GPX from URL.
-
-In this case, it is useful when giving GPX as a parameter to a general-purpose map
-on the page generated from a template in the CMS, Weblog and so on.
-
-```
-<!DOCTYPE html>
-<html lang="en"><head><meta charset="UTF-8"/>
-<title>maps.gpx</title>
-<style>
-div.map { width:640px; height:320px; }
-img.info-window { max-width: 200px; max-height: 200px; }
-</style>
-<script src="http://maps.google.com/maps/api/js?sensor=true&libraries=geometry"></script>
-<script src="../maps-gpx.js"></script>
-<script>
-MapsGPX.onReady(function (){
-  var $maps = document.getElementsByClassName('map'),
-      apps = [], i, l, url;
-  for ( i = 0, l = $maps.length; i < l; ++i ) {
-    url = $maps.item(i).getAttribute('data-url');
-    apps[i] = new MapsGPX($maps.item(i).getAttribute('id'));
-    apps[i].input(url, url).then((function(key) {
-      this.fitBounds(key);
-      this.showOverlayWpts(key);
-      this.showOverlayTrks(key);
-    }).bind(apps[i]));
-  }
-});
-</script>
-</head><body>
-
-  <h1>Japan National Route 1</h1>
-  <div class="map" id="R1" data-url="R1.gpx"></div>
-
-  <h1>Walking The Lake Biwa Canal</h1>
-  <div class="map" id="sosui" data-url="Biwakososui.gpx"></div>
-
-</body></html>
-```
-
----
-
 # API reference
 
 Because maps.gpx is under development, API will be changed without notice.
+
+This document is for version v4.x
 
 
 ## MapsGPX class
@@ -208,8 +19,11 @@ property       | type    | description
 ---------------|---------|------------
 strict         | boolean | With checking about GPX is valid (but not yet completely), when call instance method `addGPX`. Default is `true`. It throws an exception if received invalid one
 join_trkseg    | boolean | Merge all trkseg in a "trk", one polyline per one "trk". Default is `true`
+cache_script    | boolean | Direct to cache the library to the browser (does not always cache.) Default is `true`. During development it is a good idea to set the `false`
 basedir        | String  | The directory this library is placed (read only)
 plugin_dir     | String  | The directory the plugins are placed. It is `plugins` under the `basedir`
+script_loader  | String  | JavaScript file name to be loaded automatically as a plug-in. This name is used by all plug-ins. Default is `loader.js`.
+style_loader   | String  | CSS file name to be loaded automatically as a plug-in. This name is used by all plug-ins. Default is `loader.css`.
 
 
 ### Class Methods
@@ -281,6 +95,8 @@ showOverlayRtes( key?:String ) | this | Show overlays for routes in GPX specifie
 hideOverlayRtes( key?:String ) | this | Hide overlays for routes in GPX specified by *key*
 showOverlayTrks( key?:String ) | this | Show overlays for tracks in GPX specified by *key*
 hideOverlayTrks( key?:String ) | this | Hide overlays for tracks in GPX specified by *key*
+showOverlayGpxs( key?:String ) | this | Show overlays for GPX specified by *key*
+hideOverlayGpxs( key?:String ) | this | Hide overlays for GPX specified by *key*
 registerInputHandler( handler:MapsGPX.InputHandler ) | this | Register an input handler to application. The handler to input GPX is already registered by default. It can be used when the application will handle the other media types
 input( key:String, src:Object, type?:String ) | Promise | Input *src*. Its media-type of the data is judged inside and handled with an appropriate input handler if registered by `registerInputHandler`. When `input` GPX, it is handled by the default input handler
 getGPX( key:String )              | gpxType | Return GPX specified *key*
@@ -288,7 +104,9 @@ eachGPX( callback:Function )      | this    | Apply callback to each GPX. Given 
 getKeysOfGPX( )                   | Array   | Return list of GPX keys
 addGPX( key:String, src:String )  | this    | Add GPX by *src* text as *key*. If the instance already has *key*, overwrite it
 removeGPX( key:String )           | this    | Remove GPX specified by *key*
-use( PluginName:String )                   | this | Use plug-in specified identifier
+use( PluginName:String, params?:Hash )     | this | Use plug-in specified identifier. *params* will be passed to the callback of the plug-in
+extend( PluginName:String, params?:Hash ) | this | Commit to use plug-in at calling `extended`. *params* will be passed to the callback of the plug-in
+extended( callback:Function ) | this | Load and performs all plugins which were commited by `extend`. The *callback* receives no parameters. Note that the committed state will be cleared
 register( hook:String, callback:Function ) | this | Register a *callback* function on specified *hook* point
 applyHook( hook:String, arguments )        | this | Apply all functions registered specified *hook* point as method of the instance `this`. *arguments* are different every hook point
 
@@ -309,6 +127,10 @@ onCreateLatlngbounds  | Apply hooks when `MapsGPX.LatLngBounds` is created. The 
 onCreateMarker        | Apply hooks when `MapsGPX.Marker` is created. The callback will accept created object
 onCreatePolyline      | Apply hooks when `MapsGPX.Polyline` is created. The callback will accept created object
 onAddGPX              | Apply hooks when added GPX by `addGPX(key, src)`. The callback will accept the 1st argument *key* that will able to identify added GPX
+onShowMarker        | Apply hooks when `MapsGPX.Marker` is shown by `showOverlay...`. The callback receives its instance.
+onHideMarker        | Apply hooks when `MapsGPX.Marker` is hidden by `hideOverlay...`. The callback receives its instance.
+onShowPolyline      | Apply hooks when `MapsGPX.Polyline` is shown by `showOverlay...`. The callback receives its instance.
+onHidePolyline      | Apply hooks when `MapsGPX.Polyline` is hidden by `hideOverlay...`. The callback receives its instance.
 
 Also there are hook points made by some plug-ins.
 
@@ -422,22 +244,54 @@ computeDistanceTrack( origin:Integer, destination:Integer )|Float| Compute dista
 
 ## Plug-in
 
-There is mechanism of a plug-in in class `MapsGPX`.
-It is usually provided in a different JavaScript source.
+The plug-in is a mechanism to add functionality to the class `MapsGPX`.
+It is usually provided in a separate JavaScript source file.
 
-To use a plugin, declare it.
+Therefore it has to be loaded the source of plug-in by `require_plugin` or `require_plugins` instance method.
+And call `use` method to start its use.
+
+However, this is a primitive way:
 
 ```
+app.require_plugins('PluginName')
 app.use('PluginName');
 ```
 
-Please refer to each plug-in for details.
+Usually, please using the method according to `extend` and `extended`:
+
+```
+app.extend('PluginName').extended(function() { ... })
+```
+
+The `extend` method pushes `PluginName` to the queue for plug-ins which are going to be used.
+At that point, it does not perform  the load of the source file.
+
+You can push some plug-ins to the queue:
+
+```
+app.extend('Foo');
+app.extend('Bar');
+app.extend('Baz');
+app.extended(function(){
+  ...
+});
+```
+
+Plug-ins loading and execution will be performed when the `extended` method is called.
+At that time, the order in which they queued is protected.
+
+The important thing is that
+the callback of `extended` will be performed after all load of plug-in have been completed.
+
+When you write code that depends on the plug-ins must be after the plug-ins have completed loading.
+Therefore you will want to write the body of the application to callback of `extended`.
+
 
 ### Core plug-in
 
-These plug-in are included inside the core library.
+These plug-ins are included inside the core library.
 
-Even if you do not `use`, these plug-ins used by default effect.
+Even if it is not be called to use, these plug-ins will be used by default.
 
 #### MapsGPX.plugin.SetTitleOnCreateMarker
 
@@ -476,8 +330,9 @@ Essentially, this is the interface to make a plug-in.
 property   | type     | description
 -----------|----------|------------
 path       | string   | Used to resolve the base path of this plug-in. It is can be set by the instance method `require_plugin` of `MapsGPX`
+bundles    | Array of String | List of JavaScript files and CSS files that this plug-in required. Each name is basename of path. These must be deployed the same directory as `loader.js`
 callback   | Function | When registering this plug-in with an instance of `MapsGPX`, callback will be called at timing of the hook point set by property *hook*. If *hook* is false value, it will be called at just `use`. *callback* is called as the instance method of the `MapsGPX`, and its arguments are different depending on hooks.
-hook       | String | specify the *hook* point to register the callback
+callback | Function | Function performing when the `use` instance method will be called. *callback* receives the parameter passed by `use` or `extend`
 
 A plug-in declares with each instance of `MapsGPX` basically (A plug-in shared by all instances is also possible.)
 

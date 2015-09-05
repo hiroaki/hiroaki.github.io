@@ -4,27 +4,31 @@
  *   Released under the MIT license
  */
 
+// namespace
 function MapsGPX() {
   this.initialize.apply(this, arguments);
 }
 
 // constants, do not change these value
-MapsGPX.VERSION = '3.0.0';
+MapsGPX.VERSION = '4.0.0';
 MapsGPX.EXTENSIONS = [
+  'GeoLocation',
+  'GeoLocationControl',
+  'DrawerCSS',
   'DescImage',
-  'Droppable',
   'EXIF',
   'EXIF2GPX',
   'EXIFMarker',
   'ElevationChart',
-  'GeoLocation',
-  'GeoLocationControl',
-  'InputFileControl',
-  'Milestone',
+  'Droppable',
   'QueryURL',
+  'InputFileControl',
   'SearchControl',
+  'Milestone',
   'VertexInfo',
-  'VertexInfoWindow'
+  'VertexInfoWindow',
+  'SidePanelControl',
+  'FileClip'
 ];
 MapsGPX.ELEMENTS = {
   AGEOFDGPSDATA: 'ageofdgpsdata',
@@ -63,14 +67,19 @@ MapsGPX.ELEMENTS = {
   VDOP: 'vdop',
   WPT: 'wpt',
   YEAR: 'year'
-}
+};
+MapsGPX._sequence = 0;
+MapsGPX.nextval = function() {
+  return ++MapsGPX._sequence;
+};
 
 // global properties, you can change
 MapsGPX.strict        = true;
 MapsGPX.join_trkseg   = true;
+MapsGPX.cache_script  = true;
 
-// layout
-MapsGPX.basedir = (function (){
+// layout, auto detect
+MapsGPX.basedir = (function() {
   var scripts = document.getElementsByTagName('script'),
       re = new RegExp('/maps-gpx\.js.*'),
       i, l, src;
@@ -86,7 +95,9 @@ MapsGPX.plugin_dir    = [MapsGPX.basedir, 'plugins'].join('/');
 MapsGPX.scrip_loader  = 'loader.js';
 MapsGPX.style_loader  = 'loader.css';
 
-// common util
+//--------------------------------------
+// static methods - common util
+//
 MapsGPX.parseQueryString = function(/* usually 'location.search' */qstring) {
   var params = {}, str, pairs, i, l, pair;
   if ( qstring ) {
@@ -100,7 +111,7 @@ MapsGPX.parseQueryString = function(/* usually 'location.search' */qstring) {
     }
   }
   return params;
-}
+};
 MapsGPX.parseXML = function(str) {
   if ( typeof ActiveXObject != 'undefined' && typeof GetObject != 'undefined' ) {
     var doc = new ActiveXObject('Microsoft.XMLDOM');
@@ -111,7 +122,7 @@ MapsGPX.parseXML = function(str) {
     return (new DOMParser()).parseFromString(str, 'text/xml');
   }
   throw( new Error('Cannot parse string as XML stream.') );
-}
+};
 MapsGPX.createXMLHttpRequest = function() {
   try {
     if ( typeof ActiveXObject != 'undefined' ) {
@@ -123,7 +134,7 @@ MapsGPX.createXMLHttpRequest = function() {
     throw( new Error('Cannot create XmlHttpRequest object.') );
   }
   return null;
-}
+};
 MapsGPX.resolveAsBlob = function(src) {
   if ((src instanceof Blob) || (src instanceof File)) {
     return Promise.resolve(src);
@@ -132,7 +143,7 @@ MapsGPX.resolveAsBlob = function(src) {
       var xhr = MapsGPX.createXMLHttpRequest();
       xhr.open('GET', src, true);
       xhr.responseType = 'blob';
-      xhr.onload = function (ev){
+      xhr.onload = function(ev) {
         if (this.readyState === 4 ) {
           if (this.status === 200 || this.status === 0 ) {
             resolve(this.response);
@@ -142,7 +153,7 @@ MapsGPX.resolveAsBlob = function(src) {
       xhr.send();
     });
   }
-}
+};
 MapsGPX.resolveAsArrayBuffer = function(src) {
   return MapsGPX.resolveAsBlob(src).then(function(blob) {
     return new Promise(function(resolve, reject) {
@@ -153,14 +164,14 @@ MapsGPX.resolveAsArrayBuffer = function(src) {
       reader.readAsArrayBuffer(blob);
     });
   });
-}
+};
 MapsGPX.resolveAsObjectURL = function(src) {
   return MapsGPX.resolveAsBlob(src).then(function(blob) {
     return new Promise(function(resolve, reject) {
       resolve(URL.createObjectURL(blob));
     });
   });
-}
+};
 MapsGPX.resolveAsDataURL = function(src) {
   return MapsGPX.resolveAsBlob(src).then(function(blob) {
     return new Promise(function(resolve, reject) {
@@ -171,7 +182,7 @@ MapsGPX.resolveAsDataURL = function(src) {
       reader.readAsDataURL(blob);
     });
   });
-}
+};
 MapsGPX.resolveAsText = function(src, encoding) {
   return MapsGPX.resolveAsBlob(src).then(function(blob) {
     return new Promise(function(resolve, reject) {
@@ -182,9 +193,8 @@ MapsGPX.resolveAsText = function(src, encoding) {
       reader.readAsText(blob, encoding || 'UTF-8');
     });
   });
-}
-
-// convert gpx document to json
+};
+// util to convert gpx document to json
 MapsGPX.GPXToJSON = function( xml_document ) {
   var i, l, j, m, gpx, bounds, 
   linkTypeToJson = function(/*dom node <link>*/node) {
@@ -309,10 +319,9 @@ MapsGPX.GPXToJSON = function( xml_document ) {
   }
   gpx.metadata[MapsGPX.ELEMENTS.BOUNDS] = bounds;
   return gpx;
-}
-
+};
 // make bounds
-MapsGPX.boundsOf = function (pts, bounds){
+MapsGPX.boundsOf = function(pts, bounds) {
   var i, l;
   bounds = bounds || {
     minlat:  90.0,
@@ -335,22 +344,31 @@ MapsGPX.boundsOf = function (pts, bounds){
     }
   }
   return bounds;
-}
-
-// extend google.maps.LatLngBounds
+};
+//--------------------------------------
+// class MapsGPX.LatLngBounds
+//   inherited google.maps.LatLngBounds
+//
 MapsGPX.LatLngBounds = function(sw, ne) {
   this.super      = google.maps.LatLngBounds.prototype;
+  this.object_id  = 'MapsGPX.LatLngBounds#'+ MapsGPX.LatLngBounds.nextval();
   google.maps.LatLngBounds.apply(this, arguments);
-}
+};
+MapsGPX.LatLngBounds._sequence = 0;
+MapsGPX.LatLngBounds.nextval = function() {
+  return ++MapsGPX.LatLngBounds._sequence;
+};
   MapsGPX.LatLngBounds.prototype = Object.create(google.maps.LatLngBounds.prototype, {
     constructor: { value: MapsGPX.LatLngBounds }
   });
-  MapsGPX.LatLngBounds.prototype.clone = function (){
+  MapsGPX.LatLngBounds.prototype.clone = function() {
     return new MapsGPX.LatLngBounds(this.getSouthWest(), this.getNorthEast());
-  }
-
-// extend google.maps.Marker
-MapsGPX.Marker = function (element_name, src, opts) {
+  };
+//--------------------------------------
+// class MapsGPX.Marker
+//   inherited google.maps.Marker
+//
+MapsGPX.Marker = function(element_name, src, opts) {
   var wpt_type = src,
       options = opts || {};
 
@@ -358,33 +376,43 @@ MapsGPX.Marker = function (element_name, src, opts) {
   this._element   = element_name;
   this._source    = src;
   this._overlayed = null;
+  this.object_id  = 'MapsGPX.Marker#'+ MapsGPX.Marker.nextval();
 
   options.position = new google.maps.LatLng(wpt_type.lat, wpt_type.lon);
 
   google.maps.Marker.apply(this, [options]);
-}
+};
+MapsGPX.Marker._sequence = 0;
+MapsGPX.Marker.nextval = function() {
+  return ++MapsGPX.Marker._sequence;
+};
   MapsGPX.Marker.prototype = Object.create(google.maps.Marker.prototype, {
-    constructor: { value: MapsGPX.Marker },
-    overlayed: function () { return this._overlayed } // extend
+    constructor: { value: MapsGPX.Marker }
   });
-  MapsGPX.Marker.prototype.isWpt = function () {
+  MapsGPX.Marker.prototype.overlayed = function() {
+    return this._overlayed;
+  };
+  MapsGPX.Marker.prototype.isWpt = function() {
     return this._element == MapsGPX.WPT ? true : false
   };
-  MapsGPX.Marker.prototype.isRte = function () {
+  MapsGPX.Marker.prototype.isRte = function() {
     return this._element == MapsGPX.RTE ? true : false
   };
-  MapsGPX.Marker.prototype.isTrk = function () {
+  MapsGPX.Marker.prototype.isTrk = function() {
     return this._element == MapsGPX.TRK ? true : false
   };
-  MapsGPX.Marker.prototype.getSource = function () {
+  MapsGPX.Marker.prototype.getSource = function() {
     return this._source;
   };
-  MapsGPX.Marker.prototype.setMap = function (g_map) { // override
+  MapsGPX.Marker.prototype.setMap = function(g_map) { // override
     this._overlayed = g_map ? true : false;
     this.super.setMap.call(this, g_map);
-  }
-// extend google.maps.Polyline
-MapsGPX.Polyline = function (element_name, src, opts) {
+  };
+//--------------------------------------
+// class MapsGPX.Polyline
+//   inherited google.maps.Polyline
+//
+MapsGPX.Polyline = function(element_name, src, opts) {
   var pts = src,
       options = opts || {},
       i, j, m;
@@ -393,6 +421,7 @@ MapsGPX.Polyline = function (element_name, src, opts) {
   this._element   = element_name;
   this._source    = src;
   this._overlayed = null;
+  this.object_id  = 'MapsGPX.Polyline#'+ MapsGPX.Polyline.nextval();
 
   options.path = new google.maps.MVCArray();
   i = 0;
@@ -401,24 +430,30 @@ MapsGPX.Polyline = function (element_name, src, opts) {
   }
 
   google.maps.Polyline.apply(this, [options]);
-}
+};
+MapsGPX.Polyline._sequence = 0;
+MapsGPX.Polyline.nextval = function() {
+  return ++MapsGPX.Polyline._sequence;
+};
   MapsGPX.Polyline.prototype = Object.create(google.maps.Polyline.prototype, {
-    constructor: { value: MapsGPX.Polyline },
-    overlayed: function () { return this._overlayed } // extend
+    constructor: { value: MapsGPX.Polyline }
   });
-  MapsGPX.Polyline.prototype.isWpt = function () {
+  MapsGPX.Polyline.prototype.overlayed = function() {
+    return this._overlayed;
+  };
+  MapsGPX.Polyline.prototype.isWpt = function() {
     return this._element == MapsGPX.ELEMENTS.WPT ? true : false
   };
-  MapsGPX.Polyline.prototype.isRte = function () {
+  MapsGPX.Polyline.prototype.isRte = function() {
     return this._element == MapsGPX.ELEMENTS.RTE ? true : false
   };
-  MapsGPX.Polyline.prototype.isTrk = function () {
+  MapsGPX.Polyline.prototype.isTrk = function() {
     return this._element == MapsGPX.ELEMENTS.TRK ? true : false
   };
-  MapsGPX.Polyline.prototype.getSource = function () {
+  MapsGPX.Polyline.prototype.getSource = function() {
     return this._source;
   };
-  MapsGPX.Polyline.prototype.setMap = function (g_map) { // override
+  MapsGPX.Polyline.prototype.setMap = function(g_map) { // override
     this._overlayed = g_map ? true : false;
     this.super.setMap.call(this, g_map);
   };
@@ -453,40 +488,40 @@ MapsGPX.Polyline = function (element_name, src, opts) {
     }
     return sum;
   };
-
 // factories to create extended maps objects
-MapsGPX.createLatlngbounds = function (bounds) {
+MapsGPX.createLatlngbounds = function(bounds) {
   return new MapsGPX.LatLngBounds(
     new google.maps.LatLng(bounds.minlat, bounds.minlon),
     new google.maps.LatLng(bounds.maxlat, bounds.maxlon)
     );
-}
-MapsGPX.createOverlayAsWpt = function (src, options) {
+};
+MapsGPX.createOverlayAsWpt = function(src, options) {
   if ( src instanceof Array ) {
     throw( new Error('overlay for wpt is not created from Array') );
   } else {
     return new MapsGPX.Marker(MapsGPX.ELEMENTS.WPT, src, options);
   }
-}
-MapsGPX.createOverlayAsRte = function (src, options) {
+};
+MapsGPX.createOverlayAsRte = function(src, options) {
   if ( src instanceof Array ) {
     return new MapsGPX.Polyline(MapsGPX.ELEMENTS.RTE, src, options);
   } else {
     return new MapsGPX.Marker(MapsGPX.ELEMENTS.RTE, src, options);
   }
-}
-MapsGPX.createOverlayAsTrk = function (src, options) {
+};
+MapsGPX.createOverlayAsTrk = function(src, options) {
   if ( src instanceof Array ) {
     return new MapsGPX.Polyline(MapsGPX.ELEMENTS.TRK, src, options);
   } else {
     return new MapsGPX.Marker(MapsGPX.ELEMENTS.TRK, src, options);
   }
-}
-
-// Interface MapsGPX.InputHandler
+};
+//--------------------------------------
+// interface MapsGPX.InputHandler
+//
 MapsGPX.InputHandler = function() {
   this.initialize.apply(this, arguments);
-}
+};
 MapsGPX.InputHandler.prototype.initialize = function(type, handler) {
   this.type = type;
   this.handler = handler;
@@ -506,27 +541,27 @@ MapsGPX.InputHandler.prototype.getHandler = function() {
   return this.handler;
 };
 MapsGPX.InputHandler.defaultHandler = function(key, src) {
-  return Promise.resolve(function (obj){ return key });
+  return Promise.resolve(function(obj){ return key });
 };
-MapsGPX.InputHandler.prototype.execute = function (bind, key, src){
+MapsGPX.InputHandler.prototype.execute = function(bind, key, src) {
   return (this.getHandler() || MapsGPX.InputHandler.defaultHandler).call(bind, key, src);
 };
-
 // default input handler for application/gpx
 MapsGPX.defaultInputHandlerApplicationGPX = function(key, src) {
   return MapsGPX.resolveAsText(src)
-    .then((function (gpx_text){ // resolveAsText makes gpx_text from src
+    .then((function(gpx_text) { // resolveAsText makes gpx_text from src
       this.addGPX(key, gpx_text);
       return key;
     }).bind(this));
 };
-
-// map control generateor
-MapsGPX.MapControl = function (){
+//--------------------------------------
+// class MapsGPX.MapControl
+//
+MapsGPX.MapControl = function() {
   this.initialize.apply(this, arguments);
-}
+};
 MapsGPX.MapControl.prototype = {
-  initialize: function (icons, options){
+  initialize: function(icons, options) {
     var defaults = {
       map: null,
       initial: Object.keys(icons)[0],
@@ -556,13 +591,13 @@ MapsGPX.MapControl.prototype = {
   _getIconByKey: function(key) {
     return this.icons[key];
   },
-  _getCurrentIcon: function (){
+  _getCurrentIcon: function() {
     return this._getIconByKey(this.current_key);
   },
-  _getIconElement: function (){
+  _getIconElement: function() {
     return this.$element.getElementsByTagName('img').item(0);
   },
-  _createElement: function (){
+  _createElement: function() {
     var ic, div, vendor, anchor;
 
     ic = document.createElement('img');
@@ -615,8 +650,9 @@ MapsGPX.MapControl.prototype = {
     return this;
   }
 };
-
-// constructor of class MapsGPX
+//--------------------------------------
+// instance methods
+//
 MapsGPX.prototype.initialize = function(map_id, map_options, options) {
   var attr;
   this.map          = null;
@@ -626,6 +662,7 @@ MapsGPX.prototype.initialize = function(map_id, map_options, options) {
   if ( ! this.map_element ) {
     throw( new Error('Could not get element by #'+ map_id) );
   }
+  this.object_id    = 'MapsGPX#'+ MapsGPX.nextval();
 
   this.map_settings = {};
   this.map_defaults = {
@@ -645,6 +682,10 @@ MapsGPX.prototype.initialize = function(map_id, map_options, options) {
 
   // stash for hooks
   this.hook = {
+    onShowMarker: [],
+    onShowPolyline: [],
+    onHideMarker: [],
+    onHidePolyline: [],
     onCreateLatlngbounds: [],
     onCreateMarker: [],
     onCreatePolyline: [],
@@ -653,6 +694,9 @@ MapsGPX.prototype.initialize = function(map_id, map_options, options) {
 
   // stash for input handlers by media types
   this.input_handler = {};
+
+  // stack for load plugins all at once
+  this.extentions = [];
 
   // reset all
   this._afterInitialize();
@@ -694,8 +738,17 @@ MapsGPX.prototype.fitBounds = function() {
   }
   return this;
 };
+MapsGPX.prototype._applyAppearOverlay = function(overlay, to_show) {
+  var visible  = to_show ? 'Show'   : 'Hide';
+  overlay.setMap(to_show ? this.map : null );
+  if ( overlay.constructor === MapsGPX.Marker ) {
+    this.applyHook('on'+ visible +'Marker', overlay);
+  } else if ( overlay.constructor === MapsGPX.Polyline ) {
+    this.applyHook('on'+ visible +'Polyline', overlay);
+  }
+};
 MapsGPX.prototype._appearOverlay = function() {
-  var to_show = arguments[0] ? this.map : null,
+  var to_show = arguments[0],
       elem    = arguments[1],
       keys    = Array.prototype.slice.call(arguments, 2),
       i, il, j, jl, k, kl, m, ml, elements;
@@ -703,13 +756,13 @@ MapsGPX.prototype._appearOverlay = function() {
     elements = this.data[keys[i]][elem];
     for ( j = 0, jl = elements.length; j < jl; ++j ) {
       if ( elements[j].overlay ){
-        elements[j].overlay.setMap( to_show );
+        this._applyAppearOverlay(elements[j].overlay, to_show);
       }
       for ( k in elements[j] ) {
         if ( elements[j][k] instanceof Array ) {
           for ( m = 0, ml = elements[j][k].length; m < ml; ++m ) {
             if ( elements[j][k][m].overlay ) {
-              elements[j][k][m].overlay.setMap( to_show );
+              this._applyAppearOverlay(elements[j][k][m].overlay, to_show);
             }
           }
         }
@@ -735,6 +788,18 @@ MapsGPX.prototype.showOverlayTrks = function() {
 };
 MapsGPX.prototype.hideOverlayTrks = function() {
   return this._appearOverlay(false, MapsGPX.ELEMENTS.TRK, Array.prototype.slice.call(arguments));
+};
+MapsGPX.prototype.showOverlayGpxs = function() {
+  var args = Array.prototype.slice.call(arguments);
+  this.showOverlayWpts(args);
+  this.showOverlayRtes(args);
+  this.showOverlayTrks(args);
+};
+MapsGPX.prototype.hideOverlayGpxs = function() {
+  var args = Array.prototype.slice.call(arguments);
+  this.hideOverlayWpts(args);
+  this.hideOverlayRtes(args);
+  this.hideOverlayTrks(args);
 };
 MapsGPX._guessType = function(src) {
   if ( typeof src == 'string' ) {
@@ -851,15 +916,32 @@ MapsGPX.prototype._build = function(gpx_text) {
 
   return gpx;
 };
-MapsGPX.prototype.use = function(plugin_name) {
-  var hook      = MapsGPX.plugin[plugin_name].hook,
-      callback  = MapsGPX.plugin[plugin_name].callback;
+MapsGPX.prototype.use = function(plugin_name, params) {
   try {
-    this._registerHook(hook, callback);
+    MapsGPX.plugin[plugin_name].callback.bind(this)(params);
   } catch(ex) {
-    console.log('Catch an exception on use('+ plugin_name + ') with hook "'+ hook +'"');
-    throw(ex);
+    console.error('Catch an exception on use "'+ plugin_name + '": '+ ex);
+    console.trace();
+    // don't throw
   }
+  return this;
+};
+MapsGPX.prototype.extend = function(plugin_name, params) {
+  this.extentions.push({ plugin_name: plugin_name, params: params || {} });
+  return this;
+};
+MapsGPX.prototype.extended = function(callback) {
+  var plugin_names = [], i, l;
+  for ( i = 0, l = this.extentions.length; i < l; ++i ) {
+    plugin_names.push(this.extentions[i]['plugin_name']);
+  }
+  MapsGPX.require_plugins.apply(this, plugin_names).then((function() {
+    var i, l;
+    for ( i = 0, l = this.extentions.length; i < l; ++i ) {
+      this.use(this.extentions[i]['plugin_name'], this.extentions[i]['params']);
+    }
+    this.extentions = [];
+  }).bind(this)).then(callback.bind(this));
   return this;
 };
 MapsGPX.prototype.register = function(hook, callback) {
@@ -867,6 +949,7 @@ MapsGPX.prototype.register = function(hook, callback) {
     this._registerHook(hook, callback);
   } catch(ex) {
     console.log('Catch an exception on register('+ hook +')');
+    console.trace();
     throw(ex);
   }
   return this;
@@ -887,25 +970,27 @@ MapsGPX.prototype.applyHook = function() {
       this.hook[name][i].apply(this, args);
     } catch(ex) {
       console.log('Catch an exception on applyHook "'+ name +'" with args ['+ args +']');
+      console.trace();
       throw(ex);
     }
   }
   return this;
 };
 
+//
 // plugin mechanism
+//
 MapsGPX.plugin = {};
-
 // define default plugins
 MapsGPX.plugin.SetTitleOnCreateMarker = {
-  callback: function() {
+  callback: function(params) {
     this.register('onCreateMarker', (function(marker) {
       marker.setTitle(marker.getSource().name);
     }).bind(this));
   }
 };
 MapsGPX.plugin.SetStrokeOptionOnCreatePolyline = {
-  callback: function() {
+  callback: function(params) {
     this.register('onCreatePolyline', (function(polyline) {
       if ( polyline.isRte() ) {
         polyline.setOptions({
@@ -923,20 +1008,18 @@ MapsGPX.plugin.SetStrokeOptionOnCreatePolyline = {
     }).bind(this));
   }
 };
-
-MapsGPX.load_script = function (src){
+MapsGPX.load_script = function(src) {
   // TODO: check whether it's read already.
   return new Promise(function(resolve, reject) {
     var $script = document.createElement('script');
-    $script.onload = function (){
+    $script.onload = function() {
       resolve();
     };
     $script.src = src;
     document.head.appendChild($script);
   });
-}
-
-MapsGPX.load_css = function (src){
+};
+MapsGPX.load_css = function(src) {
   return new Promise(function(resolve, reject) {
     var link = document.createElement('link');
     link.setAttribute('type', 'text/css');
@@ -947,14 +1030,18 @@ MapsGPX.load_css = function (src){
     };
     document.head.appendChild(link);
   });
-}
-
-MapsGPX.require_plugin = function (plugin_name){
-  var t = new Date().getTime(),
+};
+MapsGPX.require_plugin = function(plugin_name) {
+  var src,
+      t = new Date().getTime(),
       base = [MapsGPX.plugin_dir, plugin_name].join('/'),
-      src = [base, MapsGPX.scrip_loader +'?t='+ t].join('/'),
       stash = {plugin_name: plugin_name, base: base, t: t};
-  return MapsGPX.load_script(src).then((function (){
+  if ( MapsGPX.cache_script ) {
+    src = [base, MapsGPX.scrip_loader].join('/');
+  } else {
+    src = [base, MapsGPX.scrip_loader +'?t='+ t].join('/');
+  }
+  return MapsGPX.load_script(src).then((function() {
     var load_scripts = [], bundles, bundle, i, l;
     MapsGPX.plugin[this.plugin_name].path = this.base;
     bundles = MapsGPX.plugin[this.plugin_name].bundles || [];
@@ -962,7 +1049,11 @@ MapsGPX.require_plugin = function (plugin_name){
       if ( bundles[i].match(/\//) ) {
         bundle = bundles[i];
       } else {
-        bundle = [this.base, bundles[i] +'?t='+ this.t].join('/');
+        if ( MapsGPX.cache_script ) {
+          bundle = [this.base, bundles[i]].join('/');
+        } else {
+          bundle = [this.base, bundles[i] +'?t='+ this.t].join('/');
+        }
       }
       if ( bundles[i].match(/\.css$/) ) {
         load_scripts.push(MapsGPX.load_css(bundle));
@@ -973,31 +1064,30 @@ MapsGPX.require_plugin = function (plugin_name){
     return Promise.all(load_scripts);
   }).bind(stash));
 };
-
-MapsGPX.require_plugins = function (){
+MapsGPX.require_plugins = function() {
   // load each plugins serially
   var plugin_names = Array.prototype.map.call(arguments, function(cur) { return cur }),
       p = Promise.resolve(null), i, l;
   for ( i = 0, l = plugin_names.length; i < l; ++i ) {
-      p = p.then((function(){
+      p = p.then((function() {
             return MapsGPX.require_plugin(this.plugin_name);
           }).bind({plugin_name: plugin_names[i]}));
   }
   return p;
 };
 
-// 
+//
+// management of onload
+//
 MapsGPX._ready = false;
 MapsGPX._on_readies = [];
-
-MapsGPX.onReady = function (callback){
+MapsGPX.onReady = function(callback) {
   MapsGPX._on_readies.push(callback);
   if ( MapsGPX._ready ) {
     MapsGPX._emit();
   }
 };
-
-MapsGPX._emit = function (){
+MapsGPX._emit = function() {
   var cb;
   while ( true ) {
     cb = MapsGPX._on_readies.shift();
@@ -1008,33 +1098,9 @@ MapsGPX._emit = function (){
   }
   return this;
 };
-
 (function() {
   google.maps.event.addDomListener(window, 'load', function() {
-    var scripts = document.getElementsByTagName('script'),
-        re = new RegExp('maps-gpx\.js(.*)$'),
-        i, l, src, match, params, extensions;
-    for ( i = 0, l = scripts.length; i < l; ++i ){
-      src = scripts.item(i).getAttribute('src');
-      if ( re.test(src) ) {
-        match = RegExp.$1;
-        if ( match.indexOf('?') < 0 ) {
-          extensions = [];
-        } else {
-          params = MapsGPX.parseQueryString(match);
-          extensions = params['plugins'].split(',');
-        }
-        if ( extensions.length <= 0 ) {
-          extensions = MapsGPX.EXTENSIONS;
-        }
-        MapsGPX.require_plugins
-        .apply(MapsGPX, extensions)
-        .then(function(values) {
-          MapsGPX._ready = true;
-          MapsGPX._emit();
-        });
-        break;
-      }
-    }
+    MapsGPX._ready = true;
+    MapsGPX._emit();
   });
 })();
