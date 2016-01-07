@@ -10,25 +10,27 @@ function MapsGPX() {
 }
 
 // constants, do not change these value
-MapsGPX.VERSION = '4.0.0';
+MapsGPX.VERSION = '4.3.0';
 MapsGPX.EXTENSIONS = [
-  'GeoLocation',
-  'GeoLocationControl',
-  'DrawerCSS',
   'DescImage',
+  'DrawerCSS',
+  'Droppable',
   'EXIF',
   'EXIF2GPX',
   'EXIFMarker',
   'ElevationChart',
-  'Droppable',
-  'QueryURL',
+  'Exporter',
+  'FileClip',
+  'GeoLocation',
+  'GeoLocationControl',
   'InputFileControl',
-  'SearchControl',
   'Milestone',
-  'VertexInfo',
-  'VertexInfoWindow',
+  'QueryURL',
+  'SearchControl',
   'SidePanelControl',
-  'FileClip'
+  'ToggleOverlay',
+  'VertexInfo',
+  'VertexInfoWindow'
 ];
 MapsGPX.ELEMENTS = {
   AGEOFDGPSDATA: 'ageofdgpsdata',
@@ -98,6 +100,17 @@ MapsGPX.style_loader  = 'loader.css';
 //--------------------------------------
 // static methods - common util
 //
+MapsGPX.isSafari = function() {
+  return /Version\/[\d\.]+.*Safari/.test(navigator.userAgent) ? true : false;
+};
+MapsGPX.merge = function() {
+  var items = Array.prototype.slice.call(arguments), i, l, attr, merged = items[0] || {};
+  for( i = 1, l = items.length; i < l ; ++i )
+    for ( attr in items[i] )
+      if (items[i].hasOwnProperty(attr))
+        merged[attr] = items[i][attr];
+  return merged;
+};
 MapsGPX.parseQueryString = function(/* usually 'location.search' */qstring) {
   var params = {}, str, pairs, i, l, pair;
   if ( qstring ) {
@@ -393,13 +406,13 @@ MapsGPX.Marker.nextval = function() {
     return this._overlayed;
   };
   MapsGPX.Marker.prototype.isWpt = function() {
-    return this._element == MapsGPX.WPT ? true : false
+    return this._element == MapsGPX.ELEMENTS.WPT ? true : false
   };
   MapsGPX.Marker.prototype.isRte = function() {
-    return this._element == MapsGPX.RTE ? true : false
+    return this._element == MapsGPX.ELEMENTS.RTE ? true : false
   };
   MapsGPX.Marker.prototype.isTrk = function() {
-    return this._element == MapsGPX.TRK ? true : false
+    return this._element == MapsGPX.ELEMENTS.TRK ? true : false
   };
   MapsGPX.Marker.prototype.getSource = function() {
     return this._source;
@@ -692,6 +705,12 @@ MapsGPX.prototype.initialize = function(map_id, map_options, options) {
     onAddGPX: []
   };
 
+  // stash for filters
+  this.filters = {
+    onAppearOverlayShow: [],
+    onAppearOverlayHide: []
+  };
+
   // stash for input handlers by media types
   this.input_handler = {};
 
@@ -722,7 +741,7 @@ MapsGPX.prototype.getMapElement = function() {
 MapsGPX.prototype.getMapSettings = function() {
   return this.map_settings;
 };
-MapsGPX.prototype.fitBounds = function() {
+MapsGPX.prototype._bounds_of = function() {
   var keys = [], bnd, i, l;
   if ( 0 < arguments.length ) {
     keys = Array.prototype.slice.call(arguments);
@@ -734,35 +753,73 @@ MapsGPX.prototype.fitBounds = function() {
     for ( i = 1, l = keys.length; i < l; ++i ) {
       bnd.union( this.getGPX(keys[i]).metadata.latlngbounds );
     }
+    return bnd;
+  }
+  return null;
+}
+MapsGPX.prototype.fitBounds = function() {
+  var bnd = this._bounds_of.apply(this, arguments);
+  if( bnd ){
     this.getMap().fitBounds(bnd);
   }
   return this;
 };
-MapsGPX.prototype._applyAppearOverlay = function(overlay, to_show) {
-  var visible  = to_show ? 'Show'   : 'Hide';
-  overlay.setMap(to_show ? this.map : null );
-  if ( overlay.constructor === MapsGPX.Marker ) {
-    this.applyHook('on'+ visible +'Marker', overlay);
-  } else if ( overlay.constructor === MapsGPX.Polyline ) {
-    this.applyHook('on'+ visible +'Polyline', overlay);
+MapsGPX.prototype.panToBounds = function() {
+  var bnd = this._bounds_of.apply(this, arguments);
+  if( bnd ){
+    this.getMap().panToBounds(bnd);
+  }
+  return this;
+};
+MapsGPX.prototype._applyAppearOverlay = function(overlay, to_show, key) {
+  var show_and_apply_hook, hide_and_apply_hook;
+  show_and_apply_hook = function(overlay, key) {
+    overlay.setMap(this.getMap());
+    if ( overlay.constructor === MapsGPX.Marker ) {
+      this.applyHook('onShowMarker', overlay, key);
+    } else if ( overlay.constructor === MapsGPX.Polyline ) {
+      this.applyHook('onShowPolyline', overlay, key);
+    }
+  };
+  hide_and_apply_hook = function(overlay, key) {
+    overlay.setMap(null);
+    if ( overlay.constructor === MapsGPX.Marker ) {
+      this.applyHook('onShowMarker', overlay, key);
+    } else if ( overlay.constructor === MapsGPX.Polyline ) {
+      this.applyHook('onShowPolyline', overlay, key);
+    }
+  };
+  if ( to_show ) {
+    if ( this.isFilterEffective('onAppearOverlayShow', overlay, key) ) {
+      hide_and_apply_hook.call(this, overlay, key);
+    } else {
+      show_and_apply_hook.call(this, overlay, key);
+    }
+  } else {
+    if ( this.isFilterEffective('onAppearOverlayHide', overlay, key) ) {
+      show_and_apply_hook.call(this, overlay, key);
+    } else {
+      hide_and_apply_hook.call(this, overlay, key);
+    }
   }
 };
-MapsGPX.prototype._appearOverlay = function() {
-  var to_show = arguments[0],
-      elem    = arguments[1],
-      keys    = Array.prototype.slice.call(arguments, 2),
-      i, il, j, jl, k, kl, m, ml, elements;
-  for ( i = 0, il = keys.length; i < il; ++i ) {
+MapsGPX.prototype._appearOverlay = function(to_show, elem, keys) {
+  var i, il = keys.length, j, jl, k, kl, m, ml, elements;
+  if ( il < 1 ) {
+    keys = this.getKeysOfGPX();
+    il = keys.length;
+  }
+  for ( i = 0; i < il; ++i ) {
     elements = this.data[keys[i]][elem];
     for ( j = 0, jl = elements.length; j < jl; ++j ) {
       if ( elements[j].overlay ){
-        this._applyAppearOverlay(elements[j].overlay, to_show);
+        this._applyAppearOverlay(elements[j].overlay, to_show, keys[i]);
       }
       for ( k in elements[j] ) {
         if ( elements[j][k] instanceof Array ) {
           for ( m = 0, ml = elements[j][k].length; m < ml; ++m ) {
             if ( elements[j][k][m].overlay ) {
-              this._applyAppearOverlay(elements[j][k][m].overlay, to_show);
+              this._applyAppearOverlay(elements[j][k][m].overlay, to_show, keys[i]);
             }
           }
         }
@@ -772,34 +829,32 @@ MapsGPX.prototype._appearOverlay = function() {
   return this;
 };
 MapsGPX.prototype.showOverlayWpts = function() {
-  return this._appearOverlay( true, MapsGPX.ELEMENTS.WPT, Array.prototype.slice.call(arguments));
+  return this._appearOverlay.call(this,  true, MapsGPX.ELEMENTS.WPT, arguments);
 };
 MapsGPX.prototype.hideOverlayWpts = function() {
-  return this._appearOverlay(false, MapsGPX.ELEMENTS.WPT, Array.prototype.slice.call(arguments));
+  return this._appearOverlay.call(this, false, MapsGPX.ELEMENTS.WPT, arguments);
 };
 MapsGPX.prototype.showOverlayRtes = function() {
-  return this._appearOverlay( true, MapsGPX.ELEMENTS.RTE, Array.prototype.slice.call(arguments));
+  return this._appearOverlay.call(this,  true, MapsGPX.ELEMENTS.RTE, arguments);
 };
 MapsGPX.prototype.hideOverlayRtes = function() {
-  return this._appearOverlay(false, MapsGPX.ELEMENTS.RTE, Array.prototype.slice.call(arguments));
+  return this._appearOverlay.call(this, false, MapsGPX.ELEMENTS.RTE, arguments);
 };
 MapsGPX.prototype.showOverlayTrks = function() {
-  return this._appearOverlay( true, MapsGPX.ELEMENTS.TRK, Array.prototype.slice.call(arguments));
+  return this._appearOverlay.call(this,  true, MapsGPX.ELEMENTS.TRK, arguments);
 };
 MapsGPX.prototype.hideOverlayTrks = function() {
-  return this._appearOverlay(false, MapsGPX.ELEMENTS.TRK, Array.prototype.slice.call(arguments));
+  return this._appearOverlay.call(this, false, MapsGPX.ELEMENTS.TRK, arguments);
 };
 MapsGPX.prototype.showOverlayGpxs = function() {
-  var args = Array.prototype.slice.call(arguments);
-  this.showOverlayWpts(args);
-  this.showOverlayRtes(args);
-  this.showOverlayTrks(args);
+  this.showOverlayWpts.apply(this, arguments);
+  this.showOverlayRtes.apply(this, arguments);
+  this.showOverlayTrks.apply(this, arguments);
 };
 MapsGPX.prototype.hideOverlayGpxs = function() {
-  var args = Array.prototype.slice.call(arguments);
-  this.hideOverlayWpts(args);
-  this.hideOverlayRtes(args);
-  this.hideOverlayTrks(args);
+  this.hideOverlayWpts.apply(this, arguments);
+  this.hideOverlayRtes.apply(this, arguments);
+  this.hideOverlayTrks.apply(this, arguments);
 };
 MapsGPX._guessType = function(src) {
   if ( typeof src == 'string' ) {
@@ -857,7 +912,7 @@ MapsGPX.prototype.addGPX = function(key, gpx_text) {
   this.removeGPX(key);
   try {
     this.data[key] = this._build(gpx_text);
-    this.applyHook('onAddGPX', key);
+    this.applyHook('onAddGPX', key, gpx_text);
   } catch(e) {
     throw( new Error('Catch an exception at addGPX with '+ key +', reason: '+ e) );
   }
@@ -917,6 +972,11 @@ MapsGPX.prototype._build = function(gpx_text) {
   return gpx;
 };
 MapsGPX.prototype.use = function(plugin_name, params) {
+  // When the path was already set, it does not overwrite one
+  // bacause the setting at here is less reliable.
+  if ( ! MapsGPX.plugin[plugin_name].path ) {
+    MapsGPX.plugin[plugin_name].path = [MapsGPX.plugin_dir, plugin_name].join('/');
+  }
   try {
     MapsGPX.plugin[plugin_name].callback.bind(this)(params);
   } catch(ex) {
@@ -975,6 +1035,37 @@ MapsGPX.prototype.applyHook = function() {
     }
   }
   return this;
+};
+
+MapsGPX.prototype.addFilter = function(from, where, callback) {
+  this.filters[where][from] = callback;
+  return this;
+};
+MapsGPX.prototype.removeFilter = function(from, where) {
+  delete this.filters[where][from];
+  return this;
+};
+MapsGPX.prototype.isFilterEffective = function() {
+  var from, effective, any = null,
+      args = Array.prototype.slice.call(arguments),
+      where = args.shift();
+  for ( from in this.filters[where] ) {
+    effective = false;
+    try {
+      if ( typeof this.filters[where][from] == 'function' ) {
+        effective = this.filters[where][from].apply(this, args);
+      } else {
+        effective = this.filters[where][from] ? true : false;
+      }
+    } catch(ex) {
+      console.log('Catch an exception on isFilterEffective("'+ where +'") on "'+ from +'": '+ ex );
+    }
+    if ( effective ) {
+      any = true;
+      break;
+    }
+  }
+  return any;
 };
 
 //

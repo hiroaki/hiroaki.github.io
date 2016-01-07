@@ -4,7 +4,7 @@
   <title><![CDATA[Category: gpx | What hwat?]]></title>
   <link href="http://hiroaki.github.io/blog/categories/gpx/atom.xml" rel="self"/>
   <link href="http://hiroaki.github.io/"/>
-  <updated>2015-09-05T21:48:57+09:00</updated>
+  <updated>2016-01-08T00:54:59+09:00</updated>
   <id>http://hiroaki.github.io/</id>
   <author>
     <name><![CDATA[hiroaki]]></name>
@@ -12,6 +12,100 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Jikatabi - geolocation sharing service]]></title>
+    <link href="http://hiroaki.github.io/blog/2016/0105/jikatabi-geolocation-sharing-service/"/>
+    <updated>2016-01-05T20:21:28+09:00</updated>
+    <id>http://hiroaki.github.io/blog/2016/0105/jikatabi-geolocation-sharing-service</id>
+    <content type="html"><![CDATA[<p><a href="https://github.com/hiroaki/maps.gpx">maps.gpx</a> を利用した実験的な試みとして、 地理的位置情報を共有するためのサイトを作りました。サイトは「地靴旅 - Jikatabi 」と名付けました。その紹介記事になります。</p>
+
+<p><a href="http://maps.hwat.jp/">Jikatabi - Sharing geolocation</a> &lt;<a href="http://maps.hwat.jp/">http://maps.hwat.jp/</a>></p>
+
+<p><img class="center <a" src="href="http://blog.hwat.jp/assets/2016/01/05/catch.png">http://blog.hwat.jp/assets/2016/01/05/catch.png</a>" width="640" height="261" title="&lsquo;catch&rsquo; &lsquo;catch&rsquo;" ></p>
+
+<!-- more -->
+
+
+<h2>モチベーション</h2>
+
+<p>よく Twitter などで GPS ログ（トラック・ログ）をシェアしているのを見かけるのですが、それは殆どというか全てが、トラックの乗った地図の &ldquo;スクリーン・キャプチャ&rdquo; の画像がシェアされています。私はそれを目にするたびに、そのような切り取られたキャプチャ画像の中のログは、ログとは言えないのではないかと、常々思っておりました。──トラック・ログは生き物です。それを検証するために地図をズームしたり、ある区間のスプリット・タイムを調べてみたり、その真価である（と私が思っている）「動きを見る」ことが、失われてしまっているからです。</p>
+
+<p>尤も、足跡を示す概要としてインパクトを持った画像があればよい、そういう意図であれば、それはそれで十分ですし、おそらくはそのような意図なのかもしれません。また自宅の位置がわかってしまいかねないリスクを避けるためかもしれませんね。──上に述べたような思いは、私が勝手に惜しんでいるだけで、シェアしている方々にとっては大きなお世話であるというのは、弁えております。</p>
+
+<p>ただもし私が思うような、生き物としてのトラック・ログをシェアしたいならば、と思った時。その時のひとつの手段として、この「地靴旅」のようなサービスがあってもよいなと考えるのも自然な成り行きなのでした。</p>
+
+<h2>実装</h2>
+
+<p><a href="https://github.com/hiroaki/maps.gpx">maps.gpx</a> は、 GPX 形式の GPS データを地図上にオーバーレイする、クライアント（ブラウザ）だけで動作する JavaScript ライブラリです。
+これは私がここ最近の日曜プログラミングとして、コツコツといじっている課題の一つに過ぎないのですが、
+最近のアップデートで、エクスポートする機能を付けました。</p>
+
+<p>エクスポート先としてはデスクトップが当たり前なのですが、加えて、任意の URL へ POST する＝エクスポートすることもできるようになっていて、あとはその POST された GPS データを受けて保存するプログラムを書くだけでサイトは出来上がりました。（少し誇張していますが、サーバ側は、基本的にはデータを保存するだけのことです）。</p>
+
+<p>そのプログラムはデータを保存すると、それを読み出すための ID を発行し、クライアントへ返します。クライアント側、即ち <a href="https://github.com/hiroaki/maps.gpx">maps.gpx</a> は、任意の URL から GPX を取り込む機能があるので、 ID から URL を組み立てる工夫を少し足せば、 POST した GPX データを地図上に再現できるといった案配です。</p>
+
+<h2>シンプル・アップロード</h2>
+
+<p>もちろん、生きたトラックをシェアしようとするならば、たとえばひとつに Google に &ldquo;マイマップ&rdquo; なるサービスがありますから、それを用いることもできるでしょう。</p>
+
+<p>しかしながら私は GPS データを共有したいと思った時、 &ldquo;マイマップ&rdquo; を使うでしょうか。いいえ、使いません。なぜなら、シェアするまでの工程がすこぶる面倒だからです。</p>
+
+<p>「地靴旅」のコンセプトは、とにかくシンプルに、です。「地靴旅」では、アップロードのページを開いたら、（デスクトップ PC ならば） GPX ファイルをブラウザにドロップするだけで、シェアのリンクを得ることができます。モバイルのときは、ドラッグ＆ドロップができませんから、その代わりにファイル選択ダイアログを経由する必要がありますが、それによってファイルを選択するだけで、やはり、それだけで操作は完了です。</p>
+
+<div>
+<iframe width="640" height="480" src="https://www.youtube.com/embed/UJJH7m-gaC0?rel=0" frameborder="0" allowfullscreen></iframe>
+</div>
+
+
+<h2>Advanced アップロード</h2>
+
+<p>一方で、アップロードする前に、 GPX がオーバーレイされた地図がどんな様子になるのかを確認したいことも、あると思われます。その際には &ldquo;Advanced&rdquo; アップロード画面を開きます。</p>
+
+<p>これは、入力した GPX データをオーバーレイする、クライアント（ブラウザ）上だけで動作する地図です。 <a href="https://github.com/hiroaki/maps.gpx">maps.gpx</a> に同梱されている <code>viewer.html</code> とほぼ同等で、幾つかのプラグインが省かれているだけのものです。この地図にてオーバーレイの状態を確認してからアップロードすることができます。</p>
+
+<p>左に半開きになるサイド・ペインには入力したファイルがリストされ、選択的に GPX データを非表示にすることができ、その場合はアップロードから除外されます。トラックのみ、ウェイポイントのみ、といった選択もでき、結果として地図上に表示されているオブジェクトだけがアップロード対象になります。</p>
+
+<p>そうしてシェアされた URL の地図は、アップロードする時と同じ状態で、再現されることでしょう。 &ldquo;Advanced&rdquo; アップロード時の地図と、シェアされた URL の地図は、同じ <a href="https://github.com/hiroaki/maps.gpx">maps.gpx</a> によって処理されているからです。</p>
+
+<div>
+<iframe width="640" height="480" src="https://www.youtube.com/embed/yUbnnbPSigg?rel=0" frameborder="0" allowfullscreen></iframe>
+</div>
+
+
+<h2>モバイル版 Google Chrome についての注意</h2>
+
+<p>モバイル版 Google Chrome には、その設定メニューに「帯域幅」という項目があります。この中の「データセーバー」がオンになっていると、オーバーレイが表示されず、ただの何もない地図が表示されてしまうという問題があります。そして残念なことに、デフォルトの設定がオンになっているのです。</p>
+
+<p>デスクトップ版の Google Chrome にはそのようなメニューはありませんし、また「データセーバ」をオフにするとその問題は発生しないことから、これは「データセーバー」に問題があるとみて Google には報告済みなのですが、 Google がそれを問題だと見なすかどうかは分かりません。</p>
+
+<p>もし、万が一にもサイト「地靴旅」が流行るようなことになったならば、サイトを SSL 化することでこの問題は回避できる見込みはありますが、現状は実験的なサイトということで SSL 化はしません。従いましてはモバイル版 Google Chrome に対してこのような残念な問題があることをご了承ください。</p>
+
+<h2>その他</h2>
+
+<p>サイト「地靴旅」は実験的なものでありますが、誰もが利用することができます。利用規約はサイト上の &ldquo;About&rdquo; のページを参照してください。（いわゆる「お約束ごと」です。）</p>
+
+<p>アップロードされたデータは私個人が管理しているサーバ内に保存され、その URL を知る人は誰でも閲覧することができるようになります。ただしリソースに限りがあるため、ある程度の期間が経過したものは削除することにしていますのでご了承ください。</p>
+
+<p>ある程度の期間、それは気まぐれではありますが、少なくとも一週間、長くとも一ヶ月ぐらいの期間をいまは想像しています。シェアされる URL は、それが一過性の話題のタネとして利用できれば良い、それくらいの鮮度のものとしてご利用ください。</p>
+
+<p>もし、長期的に GPX データをシェアしたい考えがおありでしたらば、ライブラリ <a href="https://github.com/hiroaki/maps.gpx">maps.gpx</a> を利用者自身のサイトに埋め込むことができますので、トライしてみてください。その折には次の紹介記事も参考にしてください。</p>
+
+<ul>
+<li><a href="/blog/2015/0429/gpx-casual-viewer-v3/">GPX Casual Viewer v3</a></li>
+<li><a href="/blog/2015/0721/maps-dot-gpx-a-dot-k-a-gpx-casual-viewer/">maps.gpx a.k.a. GPX Casual Viewer v3</a></li>
+</ul>
+
+
+<p>あともう一点。サイト「地靴旅」にアップロードした GPX データからは時刻の情報を、サーバ側で削っています。これはプライバシーを考慮してのことですが、この削除機能は将来、なくすかもしれません。（もしくは、ユーザが削除するか否かを選べるようにするのがベターでしょう）</p>
+
+<h2></h2>
+
+<p>──この、サイト「地靴旅」の試みは <a href="https://github.com/hiroaki/maps.gpx">maps.gpx</a> のひとつの実装例でもありましょうか。こうした実例を拵えてみることは、プログラムの弱点や、 API の使い勝手などが実際に手応えとしてわかることもあり、客観的にソースを見直すきっかけを得るよい機会にもなりました。</p>
+
+<p><a href="https://github.com/hiroaki/maps.gpx">maps.gpx</a> の現在のバージョンはまだ発展途上にあります。追加したい機能はたくさんあるのですが、なかなか進捗しません。日曜日がもっとたくさんあれば、いいのですけれども。</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[maps.gpx a.k.a. GPX Casual Viewer v3]]></title>

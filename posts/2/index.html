@@ -9,7 +9,7 @@
   <meta name="author" content="hiroaki">
 
   
-  <meta name="description" content="ちょっと前に Carton もバージョン 1.0 がリリースとなり、 plenv や cpanm らを組み合わせた Perl の環境構築は、ひと昔前のそれと比べてずいぶん簡単になりました。 昔話をするつもりはないのですが、大量のモジュールを使ったプロダクトをデプロイするときなど、 perl &hellip;">
+  <meta name="description" content="先日書きました Carton そのもののインストールについて、それ自身が依存するモジュールが多すぎて大変、という内容の記事でしたが、そのつぶやきを Carton 作者の @miyagawa 氏が拾って下さり、じぶんの不明を正して下さいました。 carton bundle を実行してバンドルされた（ &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -73,6 +73,44 @@
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+  
+    
+      <h1 class="entry-title"><a href="/blog/2013/0926/the-carton-bundled-a-carton/">The Carton bundles a carton</a></h1>
+      
+      
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2013-09-26T23:31:00+09:00'><span class='date'>2013-09-26</span> <span class='time'>23:31</span></time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>先日書きました Carton そのもののインストールについて、それ自身が依存するモジュールが多すぎて大変、という内容の記事でしたが、そのつぶやきを Carton 作者の @miyagawa 氏が拾って下さり、じぶんの不明を正して下さいました。</p>
+
+<p><code>carton bundle</code> を実行してバンドルされた（モジュールのソースが集められた） vendor ディレクトリの中には、 carton コマンド（スクリプト）が同梱されます！ vendor/bin ディレクトリを覗いてみて下さい。</p>
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2013/0926/the-carton-bundled-a-carton/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
   
   
     <article>
@@ -241,6 +279,10 @@
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2016/0105/jikatabi-geolocation-sharing-service/">Jikatabi - geolocation sharing service</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2015/0808/drawercss/">DrawerCSS</a>
       </li>
     
@@ -254,10 +296,6 @@
     
       <li class="post">
         <a href="/blog/2015/0205/mime-expander-v0-dot-02-is-released/">MIME::Expander 0.02 is released</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2014/1227/install-shared-mime-info-on-os-x-yosemite/">Install shared-mime-info on OS X Yosemite</a>
       </li>
     
   </ul>
@@ -302,7 +340,7 @@
     </div>
   </div>
   <footer role="contentinfo"><p>
-  Copyright &copy; 2015 - hiroaki <br/>
+  Copyright &copy; 2016 - hiroaki <br/>
   <span class="credit">Powered by <a href="http://octopress.org">Octopress</a>, customized with <a href="https://github.com/mjhea0/whiterspace">whiterspace</a>.</span>
 </p>
 

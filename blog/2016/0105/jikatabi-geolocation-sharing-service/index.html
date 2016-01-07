@@ -1,0 +1,327 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Jikatabi - geolocation sharing service - What hwat?</title>
+  <meta name="author" content="hiroaki">
+
+  
+  <meta name="description" content="maps.gpx を利用した実験的な試みとして、 地理的位置情報を共有するためのサイトを作りました。サイトは「地靴旅 - Jikatabi 」と名付けました。その紹介記事になります。 Jikatabi - Sharing geolocation &lt;http://maps.hwat.jp/> &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://hiroaki.github.io/blog/2016/0105/jikatabi-geolocation-sharing-service">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="What hwat?" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/lib/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href='http://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet' type='text/css'>
+<link href='http://fonts.googleapis.com/css?family=Fjalla+One' rel='stylesheet' type='text/css'>
+  
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-299060-4']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+
+
+</head>
+
+<body   class="collapse-sidebar sidebar-footer" >
+  <header role="banner">
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="https://www.google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:hiroaki.github.io" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+  <li><a href="/about">About</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+  
+    
+      <h1 class="entry-title">Jikatabi - geolocation sharing service</h1>
+    
+  
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2016-01-05T20:21:28+09:00'><span class='date'>2016-01-05</span> <span class='time'>20:21</span></time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p><a href="https://github.com/hiroaki/maps.gpx">maps.gpx</a> を利用した実験的な試みとして、 地理的位置情報を共有するためのサイトを作りました。サイトは「地靴旅 - Jikatabi 」と名付けました。その紹介記事になります。</p>
+
+<p><a href="http://maps.hwat.jp/">Jikatabi - Sharing geolocation</a> &lt;<a href="http://maps.hwat.jp/">http://maps.hwat.jp/</a>></p>
+
+<p><img class="center" src="http://blog.hwat.jp/assets/2016/01/05/catch.png" width="640" height="261" title="catch" alt="catch"></p>
+
+<!-- more -->
+
+
+<h2>モチベーション</h2>
+
+<p>よく Twitter などで GPS ログ（トラック・ログ）をシェアしているのを見かけるのですが、それは殆どというか全てが、トラックの乗った地図の &ldquo;スクリーン・キャプチャ&rdquo; の画像がシェアされています。私はそれを目にするたびに、そのような切り取られたキャプチャ画像の中のログは、ログとは言えないのではないかと、常々思っておりました。──トラック・ログは生き物です。それを検証するために地図をズームしたり、ある区間のスプリット・タイムを調べてみたり、その真価である（と私が思っている）「動きを見る」ことが、失われてしまっているからです。</p>
+
+<p>尤も、足跡を示す概要としてインパクトを持った画像があればよい、そういう意図であれば、それはそれで十分ですし、おそらくはそのような意図なのかもしれません。また自宅の位置がわかってしまいかねないリスクを避けるためかもしれませんね。──上に述べたような思いは、私が勝手に惜しんでいるだけで、シェアしている方々にとっては大きなお世話であるというのは、弁えております。</p>
+
+<p>ただもし私が思うような、生き物としてのトラック・ログをシェアしたいならば、と思った時。その時のひとつの手段として、この「地靴旅」のようなサービスがあってもよいなと考えるのも自然な成り行きなのでした。</p>
+
+<h2>実装</h2>
+
+<p><a href="https://github.com/hiroaki/maps.gpx">maps.gpx</a> は、 GPX 形式の GPS データを地図上にオーバーレイする、クライアント（ブラウザ）だけで動作する JavaScript ライブラリです。
+これは私がここ最近の日曜プログラミングとして、コツコツといじっている課題の一つに過ぎないのですが、
+最近のアップデートで、エクスポートする機能を付けました。</p>
+
+<p>エクスポート先としてはデスクトップが当たり前なのですが、加えて、任意の URL へ POST する＝エクスポートすることもできるようになっていて、あとはその POST された GPS データを受けて保存するプログラムを書くだけでサイトは出来上がりました。（少し誇張していますが、サーバ側は、基本的にはデータを保存するだけのことです）。</p>
+
+<p>そのプログラムはデータを保存すると、それを読み出すための ID を発行し、クライアントへ返します。クライアント側、即ち <a href="https://github.com/hiroaki/maps.gpx">maps.gpx</a> は、任意の URL から GPX を取り込む機能があるので、 ID から URL を組み立てる工夫を少し足せば、 POST した GPX データを地図上に再現できるといった案配です。</p>
+
+<h2>シンプル・アップロード</h2>
+
+<p>もちろん、生きたトラックをシェアしようとするならば、たとえばひとつに Google に &ldquo;マイマップ&rdquo; なるサービスがありますから、それを用いることもできるでしょう。</p>
+
+<p>しかしながら私は GPS データを共有したいと思った時、 &ldquo;マイマップ&rdquo; を使うでしょうか。いいえ、使いません。なぜなら、シェアするまでの工程がすこぶる面倒だからです。</p>
+
+<p>「地靴旅」のコンセプトは、とにかくシンプルに、です。「地靴旅」では、アップロードのページを開いたら、（デスクトップ PC ならば） GPX ファイルをブラウザにドロップするだけで、シェアのリンクを得ることができます。モバイルのときは、ドラッグ＆ドロップができませんから、その代わりにファイル選択ダイアログを経由する必要がありますが、それによってファイルを選択するだけで、やはり、それだけで操作は完了です。</p>
+
+<div>
+<iframe width="640" height="480" src="https://www.youtube.com/embed/UJJH7m-gaC0?rel=0" frameborder="0" allowfullscreen></iframe>
+</div>
+
+
+<h2>Advanced アップロード</h2>
+
+<p>一方で、アップロードする前に、 GPX がオーバーレイされた地図がどんな様子になるのかを確認したいことも、あると思われます。その際には &ldquo;Advanced&rdquo; アップロード画面を開きます。</p>
+
+<p>これは、入力した GPX データをオーバーレイする、クライアント（ブラウザ）上だけで動作する地図です。 <a href="https://github.com/hiroaki/maps.gpx">maps.gpx</a> に同梱されている <code>viewer.html</code> とほぼ同等で、幾つかのプラグインが省かれているだけのものです。この地図にてオーバーレイの状態を確認してからアップロードすることができます。</p>
+
+<p>左に半開きになるサイド・ペインには入力したファイルがリストされ、選択的に GPX データを非表示にすることができ、その場合はアップロードから除外されます。トラックのみ、ウェイポイントのみ、といった選択もでき、結果として地図上に表示されているオブジェクトだけがアップロード対象になります。</p>
+
+<p>そうしてシェアされた URL の地図は、アップロードする時と同じ状態で、再現されることでしょう。 &ldquo;Advanced&rdquo; アップロード時の地図と、シェアされた URL の地図は、同じ <a href="https://github.com/hiroaki/maps.gpx">maps.gpx</a> によって処理されているからです。</p>
+
+<div>
+<iframe width="640" height="480" src="https://www.youtube.com/embed/yUbnnbPSigg?rel=0" frameborder="0" allowfullscreen></iframe>
+</div>
+
+
+<h2>モバイル版 Google Chrome についての注意</h2>
+
+<p>モバイル版 Google Chrome には、その設定メニューに「帯域幅」という項目があります。この中の「データセーバー」がオンになっていると、オーバーレイが表示されず、ただの何もない地図が表示されてしまうという問題があります。そして残念なことに、デフォルトの設定がオンになっているのです。</p>
+
+<p>デスクトップ版の Google Chrome にはそのようなメニューはありませんし、また「データセーバ」をオフにするとその問題は発生しないことから、これは「データセーバー」に問題があるとみて Google には報告済みなのですが、 Google がそれを問題だと見なすかどうかは分かりません。</p>
+
+<p>もし、万が一にもサイト「地靴旅」が流行るようなことになったならば、サイトを SSL 化することでこの問題は回避できる見込みはありますが、現状は実験的なサイトということで SSL 化はしません。従いましてはモバイル版 Google Chrome に対してこのような残念な問題があることをご了承ください。</p>
+
+<h2>その他</h2>
+
+<p>サイト「地靴旅」は実験的なものでありますが、誰もが利用することができます。利用規約はサイト上の &ldquo;About&rdquo; のページを参照してください。（いわゆる「お約束ごと」です。）</p>
+
+<p>アップロードされたデータは私個人が管理しているサーバ内に保存され、その URL を知る人は誰でも閲覧することができるようになります。ただしリソースに限りがあるため、ある程度の期間が経過したものは削除することにしていますのでご了承ください。</p>
+
+<p>ある程度の期間、それは気まぐれではありますが、少なくとも一週間、長くとも一ヶ月ぐらいの期間をいまは想像しています。シェアされる URL は、それが一過性の話題のタネとして利用できれば良い、それくらいの鮮度のものとしてご利用ください。</p>
+
+<p>もし、長期的に GPX データをシェアしたい考えがおありでしたらば、ライブラリ <a href="https://github.com/hiroaki/maps.gpx">maps.gpx</a> を利用者自身のサイトに埋め込むことができますので、トライしてみてください。その折には次の紹介記事も参考にしてください。</p>
+
+<ul>
+<li><a href="/blog/2015/0429/gpx-casual-viewer-v3/">GPX Casual Viewer v3</a></li>
+<li><a href="/blog/2015/0721/maps-dot-gpx-a-dot-k-a-gpx-casual-viewer/">maps.gpx a.k.a. GPX Casual Viewer v3</a></li>
+</ul>
+
+
+<p>あともう一点。サイト「地靴旅」にアップロードした GPX データからは時刻の情報を、サーバ側で削っています。これはプライバシーを考慮してのことですが、この削除機能は将来、なくすかもしれません。（もしくは、ユーザが削除するか否かを選べるようにするのがベターでしょう）</p>
+
+<h2></h2>
+
+<p>──この、サイト「地靴旅」の試みは <a href="https://github.com/hiroaki/maps.gpx">maps.gpx</a> のひとつの実装例でもありましょうか。こうした実例を拵えてみることは、プログラムの弱点や、 API の使い勝手などが実際に手応えとしてわかることもあり、客観的にソースを見直すきっかけを得るよい機会にもなりました。</p>
+
+<p><a href="https://github.com/hiroaki/maps.gpx">maps.gpx</a> の現在のバージョンはまだ発展途上にあります。追加したい機能はたくさんあるのですが、なかなか進捗しません。日曜日がもっとたくさんあれば、いいのですけれども。</p>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">hiroaki</span></span>
+
+      
+
+
+
+
+<time class='entry-date' datetime='2016-01-05T20:21:28+09:00'><span class='date'>2016-01-05</span> <span class='time'>20:21</span></time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/gpx/'>gpx</a>, <a class='category' href='/blog/categories/maps/'>maps</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="http://twitter.com/share" class="twitter-share-button" data-url="http://hiroaki.github.io/blog/2016/0105/jikatabi-geolocation-sharing-service/" data-via="hwatattama" data-counturl="http://hiroaki.github.io/blog/2016/0105/jikatabi-geolocation-sharing-service/" >Tweet</a>
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2015/0808/drawercss/" title="Previous Post: DrawerCSS">&laquo; DrawerCSS</a>
+      
+      
+    </p>
+  </footer>
+</article>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2016/0105/jikatabi-geolocation-sharing-service/">Jikatabi - geolocation sharing service</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2015/0808/drawercss/">DrawerCSS</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2015/0721/maps-dot-gpx-a-dot-k-a-gpx-casual-viewer/">maps.gpx a.k.a. GPX Casual Viewer v3</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2015/0429/gpx-casual-viewer-v3/">GPX Casual Viewer v3</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2015/0205/mime-expander-v0-dot-02-is-released/">MIME::Expander 0.02 is released</a>
+      </li>
+    
+  </ul>
+</section>
+
+<section>
+  <h1>GitHub Repos</h1>
+  <ul id="gh_repos">
+    <li class="loading">Status updating...</li>
+  </ul>
+  
+  <a href="https://github.com/hiroaki">@hiroaki</a> on GitHub
+  
+  <script type="text/javascript">
+    $(document).ready(function(){
+        if (!window.jXHR){
+            var jxhr = document.createElement('script');
+            jxhr.type = 'text/javascript';
+            jxhr.src = '/javascripts/libs/jXHR.js';
+            var s = document.getElementsByTagName('script')[0];
+            s.parentNode.insertBefore(jxhr, s);
+        }
+
+        github.showRepos({
+            user: 'hiroaki',
+            count: 0,
+            skip_forks: true,
+            target: '#gh_repos'
+        });
+    });
+  </script>
+  <script src="/javascripts/github.js" type="text/javascript"> </script>
+</section>
+
+
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2016 - hiroaki <br/>
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a>, customized with <a href="https://github.com/mjhea0/whiterspace">whiterspace</a>.</span>
+</p>
+
+</footer>
+  
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = 'http://platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>

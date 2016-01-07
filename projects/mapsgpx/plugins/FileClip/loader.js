@@ -1,56 +1,76 @@
 MapsGPX.plugin.FileClip = {
+  defaults: {
+    classUl: 'menu',
+    classLabel: 'menu-item',
+    classLi: null
+  },
   callback: function(params) {
+    var $ul, settings = MapsGPX.merge({}, MapsGPX.plugin.FileClip.defaults, params || {});
+
     if ( ! this.context['SidePanelControl'] ) {
       console.log('The plugin "FileClip" requires "SidePanelControl"');
       return;
     }
 
-    this.register('onAddGPX', function(key) {
-      var drawer = this.context['SidePanelControl'];
-
-      var $pane = drawer.getElementDrawer();
-      // remove all children
-      while ($pane.firstChild) {
-        $pane.removeChild($pane.firstChild);
+    if ( this.context['FileClip'] ) {
+      $ul = this.context['FileClip'].getElementsByTagName('ul').item(0);
+    } else {
+      this.context['FileClip'] = document.createElement('div');
+      this.context['SidePanelControl'].getElementDrawer().appendChild(this.context['FileClip']);
+      $ul = document.createElement('ul');
+      this.context['FileClip'].appendChild($ul);
+      if ( settings.classUl ) {
+        $ul.className = settings.classUl;
       }
+    }
 
-      var $ul = document.createElement('ul');
-      var regexp = new RegExp('([^/]+)$');
-      var keys = this.getKeysOfGPX();
-      for ( var i = 0, l = keys.length; i < l; ++i ) {
-
-        var $cb = document.createElement('input');
-        $cb.setAttribute('type', 'checkbox');
-        $cb.setAttribute('value', keys[i]);
-        $cb.setAttribute('checked', 'checked');
-        google.maps.event.addDomListener($cb, 'change', (function(ev) {
-          if ( this.element.checked ) {
-            this.app.showOverlayGpxs(this.element.value);
+    this.addFilter('FileClip', 'onAppearOverlayShow', (function(overlay, key) {
+      var i, l, $cb_list = this.context['FileClip'].getElementsByTagName('input');
+      for ( i = 0, l = $cb_list.length; i < l; ++i ) {
+        if ( $cb_list.item(i).value == key ) {
+          if ( $cb_list.item(i).checked ) {
+            return false;
           } else {
-            this.app.hideOverlayGpxs(this.element.value);
+            return true;
           }
-        }).bind({app:this,element:$cb}));
-
-        var text = keys[i];
-        if ( regexp.test(text) ) {
-          text = RegExp.$1;
         }
-        var contents = document.createTextNode(text);
+      }
+      return false;
+    }).bind(this));
 
-        var $label = document.createElement('label');
-        $label.appendChild($cb);
-        $label.appendChild(contents);
+    this.register('onAddGPX', function(key) {
+      var $cb, $label, $li, name;
+      $cb = document.createElement('input');
+      $cb.setAttribute('type', 'checkbox');
+      $cb.setAttribute('value', key);
+      $cb.checked = true;
+      google.maps.event.addDomListener($cb, 'change', (function(ev) {
+        if ( ev.target.checked ) {
+          this.showOverlayGpxs(ev.target.value);
+        } else {
+          this.hideOverlayGpxs(ev.target.value);
+        }
+      }).bind(this));
 
-        var $li = document.createElement('li');
-        $li.appendChild($label);
-
-        $ul.appendChild($li);
+      name = key;
+      if ( new RegExp('([^/]+)$').test(name) ) {
+        name = RegExp.$1;
       }
 
-      var $container = document.createElement('div');
-      $container.appendChild($ul);
-      $pane.appendChild($container);
-    });
+      $label = document.createElement('label');
+      $label.appendChild($cb);
+      $label.appendChild(document.createTextNode(name));
+      if ( settings.classLabel ) {
+        $label.className = settings.classLabel;
+      }
 
+      $li = document.createElement('li');
+      $li.appendChild($label);
+      if ( settings.classLi ) {
+        $li.className = settings.classLi;
+      }
+
+      this.context['FileClip'].getElementsByTagName('ul').item(0).appendChild($li);
+    });
   }
 };
