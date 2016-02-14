@@ -4,7 +4,7 @@
   <title><![CDATA[Category: perl | What hwat?]]></title>
   <link href="http://hiroaki.github.io/blog/categories/perl/atom.xml" rel="self"/>
   <link href="http://hiroaki.github.io/"/>
-  <updated>2016-01-08T01:28:41+09:00</updated>
+  <updated>2016-02-14T14:48:59+09:00</updated>
   <id>http://hiroaki.github.io/</id>
   <author>
     <name><![CDATA[hiroaki]]></name>
@@ -12,6 +12,64 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Teng-Plugin-QueryBuilder]]></title>
+    <link href="http://hiroaki.github.io/blog/2016/0214/teng-plugin-querybuilder/"/>
+    <updated>2016-02-14T14:47:34+09:00</updated>
+    <id>http://hiroaki.github.io/blog/2016/0214/teng-plugin-querybuilder</id>
+    <content type="html"><![CDATA[<p>Perl の ORM の代表的なひとつである <a href="http://search.cpan.org/dist/Teng/">Teng</a> は <a href="http://search.cpan.org/dist/DBIx-Skinny/">DBIx::Skinny</a> の後継にあたりますが、 DBIx::Skinny にあった <code>resultset</code> に当たる機能が Teng に無いので、 Teng プラグインとして移植したという話です。</p>
+
+<p><a href="https://github.com/hiroaki/Teng-Plugin-QueryBuilder">Teng-Plugin-QueryBuilder</a></p>
+
+<!-- more -->
+
+
+<h2>モチベーション</h2>
+
+<p>気がつけばもう４、５年くらい使っている、個人趣味のための Web インタフェースのツールがあるのですが、最初から適当に機能を拡張していったツケが溜まり溜まって、もはや拡張不能なくらいコードがスパゲッティになってしまっていました。手元のディレクトリでは、リポジトリにコミットしていない宙ぶらりんのファイルの散らかりが、 &ldquo;行き詰まった&rdquo; 感を無力に物語っています。</p>
+
+<p>それでも必要なので使っているしこれからも使うつもりなのですが、使っているからにはやはり改良のアイデアがちょこちょこ出てきます。でも、直せない。直せないので、使うたびにイライラが募ります。この状況が健康に良くないのは明らかですから、じゃあ書きなおそうかと思い立ったのが──いつだったか。しかし最近モチベーションが少し上がってきたので、少しづつ手を動かし始めた次第です。</p>
+
+<p>そのツールは外部に公開しないサイトなので、いたる所じゆうです。 WAF は Mojolicious を使って書いていました。 ORM には DBIx::Skinny 。 DBIx::Skinny にしたことに理由は特に無く、当時、仕事の関係で <a href="http://search.cpan.org/dist/DBIx-Class/">DBIx::Class</a> に辟易していたじぶんはもっとシンプルな、手軽なものがいいなと思っていたところでしたから、しぜんなチョイスだったことと思います。日本語のチュートリアルがあったのも、そして全体像が把握しきれる大きさだったのも、食指を動かす動機になったと思います。</p>
+
+<p>そのツールを作り直すに当たって、 DBIx::Skinny については Teng に置き換えることになります。──当たり前のように述べましたが、その作者自身が DBIx::Skinny に行き詰まりを感じて書き直したのが Teng なので（ですよね？）、つまりその後 DBIx::Skinny はメンテされなくなることが予見できたので、将来性のあるほうを選択することに躊躇う余地はありませんでした。（実際、 DBIx::Skinny は最後のリリースが 2011 年 9 月です。）</p>
+
+<h2>課題</h2>
+
+<p>ところがいざ移植作業を始めてみると、すぐに課題に突き当たりました。</p>
+
+<p>Teng は DBIx::Skinny の API をすべて受け継いでいるわけではありません。いわゆる単純な CRUD については問題無いのですが、じぶんのツールでは <code>resultset</code> メソッドが提供するクエリ・ビルダを多用していたのですが、まずこれがありません。また Teng は JOIN をサポートしておらず、これもじぶんでなんとかしなければなりません。などなど。</p>
+
+<p>もちろん Teng の設計ポリシーとしてそれらは事前に覚悟されることではありましたが、いざその場面に直面した時、選択肢としてあるだろうひとつとして SQL の直書き、そしてもうひとつの希望として、プラグインの存在に思いが馳せます。</p>
+
+<p>前者はやりたくないので（そのための ORM ですし）それは最終手段として、さてプラグインを探してみると、 <a href="http://search.cpan.org/dist/Teng-Plugin-ResultSet/">Teng::Plugin::ResultSet</a> という、その名もずばりのものがありました。──が、そう思ったのもつかの間、これはまったく別の代物でした。正直何のためのものかわかりませんでしたが、とにかく違うことは明らかでしたので、ほかを当たらなければなりません。しかし、見つかりません。なければ、──じぶんで書くほかないということになります。</p>
+
+<p>ただ、あまり手間をかけたくない、一から書こうとするには &ldquo;軽量 ORM&rdquo; として釣り合いが取れないのでは無いか、ということもあり、いったんは DBIx::Skinny に戻ろうかとも考えました。そこで思いついたのが、 DBIx::Skinny のソースから <code>resultset</code> だけ移植ができないか、ということです。</p>
+
+<h2>実装</h2>
+
+<p>中身を見てみると、さいわいなことに見通しが得られました。 <code>resultset</code> は、 SQL を部分部分で組み立てながら最終的に &ldquo;生 SQL&rdquo; の文字列を生成するだけで、とくに DBIx::Skinny のインスタンスに頼っている部分も無く、これをそのまま持っていければ、 Teng でも使えそうでした。ならば物は試しでと、中身を詳しく精査することもせずに、メソッドの部分のソースコードをコピーし、それをテキストエディタにぺたりと貼って、 Teng （のプラグインとしての体裁を整えながら、それ）に持って行ってみたら、なんということか、あっけなく動いてしまったではありませんか。</p>
+
+<p>これはまさしく、 &ldquo;軽量な ORM&rdquo; という売り文句、その思想を裏切らない柔軟かつシンプルな設計の賜物に違いありません。</p>
+
+<p>じぶんは名前空間を変えたことと、メソッド名を <code>resultset</code> から <code>query</code> へと変更したこと以外は、殆ど何もいじらずにその機能を手に入れることができました。そしてその成果を Teng プラグインとしてまとめました。</p>
+
+<p><a href="https://github.com/hiroaki/Teng-Plugin-QueryBuilder">Teng-Plugin-QueryBuilder</a></p>
+
+<p>SQL 実行後に返却されるイテレータが DBIx::Skinny と Teng とでは、その機能が若干異なるので完璧とまでは言えませんが、それはプラグインの範疇を超えるところです。クエリ・ビルダとしては DBIx::Skinny のオリジナルと比較しても遜色無いでしょう（そう、コピペですから）。</p>
+
+<h2>展望</h2>
+
+<p>DBIx::Skinny から Teng へ移植することは、これでできそうです。この先もまだ気づいていない問題が出ないとも限らないので油断はできませんが、どんな課題が出ようとも、じぶんが ORM に求めていた &ldquo;生 SQL&rdquo; を書かずにいられるという最大の要件を満たすことと比較すれば些細なことに過ぎないので、まずは御の字といったところでしょうか。</p>
+
+<p>しかしながら、この Teng についてですが、じつは別の方面での心配が、まだあります。</p>
+
+<p>DBIx::Skinny と比較して「将来性のあるほうを選択することに疑う余地はありませんでした。」と上に述べたところでしたが、 Teng 自身も現在の状況を見るに、あまりその将来性が芳しくありません。これはじぶんの主観なのですが、そのいちばんの根拠は、 Teng のメイン・リポジトリである Github のプロジェクト・ページを覗いたところでは、 ISSUE はあれども活動がほとんど止まっている状況に見えることです。これが意味することは、言うまでもないでしょう。ただ、そもそも Teng ばかりでなくその土台である Perl のいまある状況こそ気がかりにせざるをえない、とも言えるのかもしれません。</p>
+
+<p>そのような現実に直面しながら、その上でなおツールの移植を考えるならば、まずは Perl から脱することを最初に検討するべきなのかもしれません。しかしながら、じぶんの目下の取り組みは、プライベートなツールです。責任のある仕事じゃありませんから、ならば、書いていて楽しい Perl で続けるのがいいに決まっていますから、そういったネガティブな状況についてシリアスに考えることは余計なことなのかもしれません。</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[MIME::Expander 0.02 is released]]></title>
@@ -224,90 +282,6 @@ $
 <p>たとえばある言語をこれから初めて使ってみよう思うデベロッパ・ユーザが、（依存モジュールが多くて）何回も make しないと使えない環境下でそのモジュールが使えるようになるまでのストレスを想像できますでしょうか。本番環境に持って行った時にバージョンが違っていたらどうしようという心配は誰もしていないのでしょうか。 Ruby には Bundler がありました。</p>
 
 <p>でもこれからの Perl には Carton があるのです。</p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Install Carton without Carton?]]></title>
-    <link href="http://hiroaki.github.io/blog/2013/0921/install-carton-without-carton/"/>
-    <updated>2013-09-21T22:04:00+09:00</updated>
-    <id>http://hiroaki.github.io/blog/2013/0921/install-carton-without-carton</id>
-    <content type="html"><![CDATA[<p>ちょっと前に <a href="https://github.com/miyagawa/carton">Carton</a> もバージョン 1.0 がリリースとなり、 plenv や cpanm らを組み合わせた Perl の環境構築は、ひと昔前のそれと比べてずいぶん簡単になりました。</p>
-
-<p>昔話をするつもりはないのですが、大量のモジュールを使ったプロダクトをデプロイするときなど、 <code>perl Makefile.PL; make; make install</code> の定型文をそれはもう腱鞘炎になるほどタイプし続けては、それだけで半日つぶす事もままあったりもしました。このコマンド・セットをタイプする大会があったなら、じぶんはおそらく上位に入賞する事でしょう。</p>
-
-<!-- more -->
-
-
-<p>だいたいそんなことになる前に、そのようなルーチン・ワークはバッチ・スクリプトを組んでおくなりすればよかったのですが、──実際それを作った事もありましたが、開発中にいろいろなモジュールを試したりしている中で、そもそも、最終的にどのモジュール（と、そのバージョン）が必要で、それが依存しているモジュールはなんだったっけ？　となる事が多く、いったんそうなったが最後、依存関係を探して必要なモジュールをダウンロードして集めては、という茨の作業が始まるのが常でした。つまるところじぶんは、モジュールを管理する上手い方法を知らなかったし、編み出さなかった。</p>
-
-<p>Carton を使うとしても、必要なモジュールがどれかは管理しておかなければならないことに変わりはありませんが、 cpanfile というメモ帳に、「使うモジュール」だけを記しておけばそれでよく、そのモジュールが依存する他のモジュールまで気にしなくていいのが大きな得物です。それどころか cpanm とのコラボレーションで、ダウンロードからインストールまで、すべて面倒をみてくれます。腱鞘炎を心配する事もありません。</p>
-
-<p>そんな Carton のいい事尽くめなところは、あちこちの Perl ユーザが記事にしているので、ここでは繰り返すことはせず、興味を持たれた方はそれらを参照して頂ければと思います。</p>
-
-<p>──ただひとつ、どの記事にも記されていない秘密の？事柄に、じぶは気付きました。なので、それを記してみたいと思います。</p>
-
-<p>Carton は、いちどダウンロードしてインストールしたモジュールを &ldquo;bundle&rdquo; しておくことで、 CPAN ネットワークへ接続できない（ファイア・ウォール内などの）環境にもそれらを再構築できる素晴らしい機能を持っているのですが、さて、その機能を使うためには、 Carton がインストールされていなければなりません。</p>
-
-<p>Carton のインストール、 CPAN （モジュール配布サイト）へ繋ぐ事ができれば <code>cpanm Carton</code> とするだけで終わるのではありますが、それができない環境では、 Carton の配布を別途ダウンロードしてそれを対象の環境へアップロード、そして <code>perl Makefile.PL; make; make install</code> とタイプします。もし、依存するモジュールがあれば、先にそれをインストールしておかなければなりません。</p>
-
-<p>これが茨の道の始まりである事は Carton のおかげで過去のこととなった筈なのですが、あろうことか、 Carton 自身が必要とする依存モジュールが、あるわあるわで、終わってみれば、じぶんは Carton-v1.0.11 を含めて 36 個ものモジュールを手動でインストールしていたのでした（補足： Perl 5.18.1 のコアで）。ちょっと、多すぎます。Carton を利用するにあたって唯一ネガティブなところがここにありました。</p>
-
-<p><strong>Carton を Carton を使ってインストールできないでしょうか？</strong></p>
-
-<p>──もちろん、それから以後は Carton の恩恵にあやかるところが甚大ですから、これに怖じ気づいてインストールしない手はないのですが、願わくば、依存モジュールがもう少し減ってくれればとは思うのは正直な所です。</p>
-
-<p>Perl 5.18.1 の中に Carton-v1.0.11 をインストールするためには、つぎの順番でモジュールをインストールする必要がありました（じぶんの手元の環境で、バージョンは現時点での最新版）。</p>
-
-<ul>
-<li>App-FatPacker-0.009018</li>
-<li>App-cpanminus-1.7001</li>
-<li>Class-Data-Inheritable-0.08</li>
-<li>Devel-StackTrace-1.30</li>
-<li>Exception-Class-1.37</li>
-<li>File-pushd-1.005</li>
-<li>JSON-2.59</li>
-<li>Module-Build-0.4007</li>
-<li>Module-CPANfile-1.0002</li>
-<li>Module-Reader-0.002000</li>
-<li>Try-Tiny-0.18</li>
-<li>autodie-2.21</li>
-<li>Path-Tiny-0.033</li>
-<li>strictures-1.004004</li>
-<li>Module-Runtime-0.013</li>
-<li>Capture-Tiny-0.22</li>
-<li>Test-Pod-1.48</li>
-<li>Test-Fatal-0.012</li>
-<li>Role-Tiny-1.003002</li>
-<li>ExtUtils-Config-0.007</li>
-<li>ExtUtils-Helpers-0.021</li>
-<li>ExtUtils-InstallPaths-0.009</li>
-<li>Module-Build-Tiny-0.027</li>
-<li>Test-Tester-0.109</li>
-<li>Test-NoWarnings-1.04</li>
-<li>Test-Deep-0.110</li>
-<li>CPAN-Meta-Check-0.007</li>
-<li>Test-CheckDeps-0.007</li>
-<li>Test-Warnings-0.009</li>
-<li>Class-Method-Modifiers-2.06</li>
-<li>Sub-Exporter-Progressive-0.001010</li>
-<li>Devel-GlobalDestruction-0.11</li>
-<li>List-MoreUtils-0.33</li>
-<li>Dist-CheckConflicts-0.09</li>
-<li>Moo-1.003001</li>
-<li>Carton-v1.0.11</li>
-</ul>
-
-
-<p>じぶんは昔の苦い手首の思い出を繰り返すまいと、今回はちゃんと、モジュールをインストールする順番をメモしておきました。あとはこれをもとにバッチス・クリプトを書いて、これらを一発でインストールできるように整えておけば準備万端と言うものです。</p>
-
-<p>おそらく、このことに気付いた方もいるでしょうから、なにかほかにいい手だてがあるのかも知れません（追記：あります！）。もし知っていたら、教えて頂きたいと思うのですが、さもなくば、 Github にそのバッチ・スクリプトを置きましたので、いっしょにメンテナンスして頂ければと思います。</p>
-
-<p><del>perl-carton - <a href="https://github.com/hiroaki/perl-carton">https://github.com/hiroaki/perl-carton</a></del></p>
-
-<p>追記：ほかにいい手だてがありました。というより、じぶんが迂闊だっただけかもしれません。この記事を読んで<del>しまっていたら</del>くださったのならば、是非、次の記事も読まなければなりません！</p>
-
-<p><a href="http://hiroaki.github.io/blog/2013/0926/the-carton-bundled-a-carton/">The Carton Bundled a Carton</a></p>
 ]]></content>
   </entry>
   
