@@ -4,7 +4,7 @@
   <title><![CDATA[Category: perl | What hwat?]]></title>
   <link href="http://hiroaki.github.io/blog/categories/perl/atom.xml" rel="self"/>
   <link href="http://hiroaki.github.io/"/>
-  <updated>2016-03-17T00:30:00+09:00</updated>
+  <updated>2016-03-17T00:37:15+09:00</updated>
   <id>http://hiroaki.github.io/</id>
   <author>
     <name><![CDATA[hiroaki]]></name>
@@ -43,7 +43,7 @@ echo $HOME/Local
 
 <p>そして、コマンド・サーチパスの通ったディレクトリに <code>brew</code> という名前で保存し、実行権を与えました。──これでどうやらごまかせそうです。実際、うまくごまかせました。</p>
 
-<p>ただ、これはあとから知ることとなったのですが、 Homebrew でも /usr/local 以外の場所を使うことはできるそうで、本当の brew でもやりくりできるのかもしれません。 Makefile.PL には次のようにして readline の場所を知ろうとしているのでした。</p>
+<p>ただ、これはあとから知ることとなったのですが、 Homebrew でも /usr/local 以外の場所を使うことはできるそうで、本当の brew でもやりくりできるのかもしれません。 Makefile.PL は次のようにして readline の場所を知ろうとしているのでした。</p>
 
 <pre><code class="perl">brew --prefix readline
 </code></pre>

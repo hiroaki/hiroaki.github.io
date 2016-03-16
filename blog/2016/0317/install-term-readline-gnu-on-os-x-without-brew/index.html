@@ -122,7 +122,7 @@
 
 <p>そして、コマンド・サーチパスの通ったディレクトリに <code>brew</code> という名前で保存し、実行権を与えました。──これでどうやらごまかせそうです。実際、うまくごまかせました。</p>
 
-<p>ただ、これはあとから知ることとなったのですが、 Homebrew でも /usr/local 以外の場所を使うことはできるそうで、本当の brew でもやりくりできるのかもしれません。 Makefile.PL には次のようにして readline の場所を知ろうとしているのでした。</p>
+<p>ただ、これはあとから知ることとなったのですが、 Homebrew でも /usr/local 以外の場所を使うことはできるそうで、本当の brew でもやりくりできるのかもしれません。 Makefile.PL は次のようにして readline の場所を知ろうとしているのでした。</p>
 
 <figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 </pre></td><td class='code'><pre><code class='perl'><span class='line'><span class="n">brew</span> <span class="o">--</span><span class="n">prefix</span> <span class="nb">readline</span>
