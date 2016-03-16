@@ -4,7 +4,7 @@
   <title><![CDATA[What hwat?]]></title>
   <link href="http://hiroaki.github.io/atom.xml" rel="self"/>
   <link href="http://hiroaki.github.io/"/>
-  <updated>2016-02-14T15:07:01+09:00</updated>
+  <updated>2016-03-17T00:30:00+09:00</updated>
   <id>http://hiroaki.github.io/</id>
   <author>
     <name><![CDATA[hiroaki]]></name>
@@ -12,6 +12,52 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    
+    <title type="html"><![CDATA[Install Term::ReadLine::Gnu on OS X without brew?]]></title>
+    <link href="http://hiroaki.github.io/blog/2016/0317/install-term-readline-gnu-on-os-x-without-brew/"/>
+    
+    <updated>2016-03-17T00:19:35+09:00</updated>
+    <id>http://hiroaki.github.io/blog/2016/0317/install-term-readline-gnu-on-os-x-without-brew</id>
+    
+    <content type="html"><![CDATA[<p>またまた、ごく局所的な問題に対するワークアラウンドな記事になります。誰の役に立つというものではありません。</p>
+
+<p>Perl の <a href="http://search.cpan.org/dist/Term-ReadLine-Gnu/">Term::ReadLine::Gnu</a> というモジュールを、 OS X (El Capitan) にインストールするためのノートです。</p>
+
+<!-- more -->
+
+
+<p>詳細は端折りますが、一言で言うならば OS X 特有の性質によって、モジュール Term::ReadLine::Gnu を素直にインストールすることができません。</p>
+
+<p>Google でこの問題について訊いてみると、たいていは Homebrew というパッケージ管理システムを用いて、やってしまうようです。これの意味するところは、 /usr/local に readline をインストールすることに着地するのだと思います。</p>
+
+<p>しかしながら、私は brew も /usr/local も使いたくありませんし、 readline はソースからビルドしたやつが、すでにホームディレクトリの下にインストールしてあるのです。なので、それを Makefile.PL が検出してくれれば、または検出してくれるように仕向けることができれば、取るに足らないことに違いなかったのですが──。</p>
+
+<p>Term::ReadLine::Gnu の <a href="http://cpansearch.perl.org/src/HAYASHI/Term-ReadLine-Gnu-1.31/Makefile.PL">Makefile.PL</a> の中を覗いてみたところ、コマンドラインから Makefile.PL を実行する際にパラメータとして readline の位置を伝える手段があるにはあるのですが、 Carton を用いて Term::ReadLine::Gnu をインストールしようとしている場合はコマンドライン・パラメータ経由でそれを与える方法がありません（ですよね？　私が cpanfile の仕様を知らないだけかも）。代わりにパラメータを環境変数ででも受け付けてくれれば、と思ったのですが、その手段は提供されてはいませんでした。</p>
+
+<p>しかし、希望の見える道もありました。 Term::ReadLine::Gnu の最近のアップデート（ 1.27 2015-09-06 ）で、 OS X の環境では <code>brew</code> コマンド (Homebrew) が入っていればその機能を呼び出して、 readline のライブラリの位置を得るようになっているようでした。</p>
+
+<p>しからばと、じぶんの環境に Homebrew がないことを逆手にとって、次のようなシェルスクリプトを書きました。私の環境では、ホーム下にあるディレクトリ Local に readline がインストールされています（ $HOME/Local を prefix として readline をインストールしてある）：</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='sh'><span class='line'><span class="c">#!/bin/sh</span>
+</span><span class='line'><span class="nb">echo</span> <span class="nv">$HOME</span>/Local
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>そして、コマンド・サーチパスの通ったディレクトリに <code>brew</code> という名前で保存し、実行権を与えました。──これでどうやらごまかせそうです。実際、うまくごまかせました。</p>
+
+<p>ただ、これはあとから知ることとなったのですが、 Homebrew でも /usr/local 以外の場所を使うことはできるそうで、本当の brew でもやりくりできるのかもしれません。 Makefile.PL には次のようにして readline の場所を知ろうとしているのでした。</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='perl'><span class='line'><span class="n">brew</span> <span class="o">--</span><span class="n">prefix</span> <span class="nb">readline</span>
+</span></code></pre></td></tr></table></div></figure>
+
+]]></content>
+    
+  </entry>
   
   <entry>
     

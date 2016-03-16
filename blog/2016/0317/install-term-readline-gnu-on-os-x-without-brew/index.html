@@ -1,0 +1,275 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Install Term::ReadLine::Gnu on OS X without brew? - What hwat?</title>
+  <meta name="author" content="hiroaki">
+
+  
+  <meta name="description" content="またまた、ごく局所的な問題に対するワークアラウンドな記事になります。誰の役に立つというものではありません。 Perl の Term::ReadLine::Gnu というモジュールを、 OS X (El Capitan) にインストールするためのノートです。 詳細は端折りますが、一言で言うならば &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://hiroaki.github.io/blog/2016/0317/install-term-readline-gnu-on-os-x-without-brew">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="What hwat?" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/lib/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href='http://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet' type='text/css'>
+<link href='http://fonts.googleapis.com/css?family=Fjalla+One' rel='stylesheet' type='text/css'>
+  
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-299060-4']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+
+
+</head>
+
+<body   class="collapse-sidebar sidebar-footer" >
+  <header role="banner">
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="https://www.google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="sitesearch" value="hiroaki.github.io" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+  <li><a href="/about">About</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+  
+    
+      <h1 class="entry-title">Install Term::ReadLine::Gnu on OS X without brew?</h1>
+    
+  
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2016-03-17T00:19:35+09:00'><span class='date'>2016-03-17</span> <span class='time'>00:19</span></time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>またまた、ごく局所的な問題に対するワークアラウンドな記事になります。誰の役に立つというものではありません。</p>
+
+<p>Perl の <a href="http://search.cpan.org/dist/Term-ReadLine-Gnu/">Term::ReadLine::Gnu</a> というモジュールを、 OS X (El Capitan) にインストールするためのノートです。</p>
+
+<!-- more -->
+
+
+<p>詳細は端折りますが、一言で言うならば OS X 特有の性質によって、モジュール Term::ReadLine::Gnu を素直にインストールすることができません。</p>
+
+<p>Google でこの問題について訊いてみると、たいていは Homebrew というパッケージ管理システムを用いて、やってしまうようです。これの意味するところは、 /usr/local に readline をインストールすることに着地するのだと思います。</p>
+
+<p>しかしながら、私は brew も /usr/local も使いたくありませんし、 readline はソースからビルドしたやつが、すでにホームディレクトリの下にインストールしてあるのです。なので、それを Makefile.PL が検出してくれれば、または検出してくれるように仕向けることができれば、取るに足らないことに違いなかったのですが──。</p>
+
+<p>Term::ReadLine::Gnu の <a href="http://cpansearch.perl.org/src/HAYASHI/Term-ReadLine-Gnu-1.31/Makefile.PL">Makefile.PL</a> の中を覗いてみたところ、コマンドラインから Makefile.PL を実行する際にパラメータとして readline の位置を伝える手段があるにはあるのですが、 Carton を用いて Term::ReadLine::Gnu をインストールしようとしている場合はコマンドライン・パラメータ経由でそれを与える方法がありません（ですよね？　私が cpanfile の仕様を知らないだけかも）。代わりにパラメータを環境変数ででも受け付けてくれれば、と思ったのですが、その手段は提供されてはいませんでした。</p>
+
+<p>しかし、希望の見える道もありました。 Term::ReadLine::Gnu の最近のアップデート（ 1.27 2015-09-06 ）で、 OS X の環境では <code>brew</code> コマンド (Homebrew) が入っていればその機能を呼び出して、 readline のライブラリの位置を得るようになっているようでした。</p>
+
+<p>しからばと、じぶんの環境に Homebrew がないことを逆手にとって、次のようなシェルスクリプトを書きました。私の環境では、ホーム下にあるディレクトリ Local に readline がインストールされています（ $HOME/Local を prefix として readline をインストールしてある）：</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='sh'><span class='line'><span class="c">#!/bin/sh</span>
+</span><span class='line'><span class="nb">echo</span> <span class="nv">$HOME</span>/Local
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>そして、コマンド・サーチパスの通ったディレクトリに <code>brew</code> という名前で保存し、実行権を与えました。──これでどうやらごまかせそうです。実際、うまくごまかせました。</p>
+
+<p>ただ、これはあとから知ることとなったのですが、 Homebrew でも /usr/local 以外の場所を使うことはできるそうで、本当の brew でもやりくりできるのかもしれません。 Makefile.PL には次のようにして readline の場所を知ろうとしているのでした。</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='perl'><span class='line'><span class="n">brew</span> <span class="o">--</span><span class="n">prefix</span> <span class="nb">readline</span>
+</span></code></pre></td></tr></table></div></figure>
+
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">hiroaki</span></span>
+
+      
+
+
+
+
+<time class='entry-date' datetime='2016-03-17T00:19:35+09:00'><span class='date'>2016-03-17</span> <span class='time'>00:19</span></time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/perl/'>perl</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="http://twitter.com/share" class="twitter-share-button" data-url="http://hiroaki.github.io/blog/2016/0317/install-term-readline-gnu-on-os-x-without-brew/" data-via="hwatattama" data-counturl="http://hiroaki.github.io/blog/2016/0317/install-term-readline-gnu-on-os-x-without-brew/" >Tweet</a>
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2016/0214/teng-plugin-querybuilder/" title="Previous Post: Teng-Plugin-QueryBuilder">&laquo; Teng-Plugin-QueryBuilder</a>
+      
+      
+    </p>
+  </footer>
+</article>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2016/0317/install-term-readline-gnu-on-os-x-without-brew/">Install Term::ReadLine::Gnu on OS X without brew?</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/0214/teng-plugin-querybuilder/">Teng-Plugin-QueryBuilder</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/0105/jikatabi-geolocation-sharing-service/">Jikatabi - geolocation sharing service</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2015/0808/drawercss/">DrawerCSS</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2015/0721/maps-dot-gpx-a-dot-k-a-gpx-casual-viewer/">maps.gpx a.k.a. GPX Casual Viewer v3</a>
+      </li>
+    
+  </ul>
+</section>
+
+<section>
+  <h1>GitHub Repos</h1>
+  <ul id="gh_repos">
+    <li class="loading">Status updating...</li>
+  </ul>
+  
+  <a href="https://github.com/hiroaki">@hiroaki</a> on GitHub
+  
+  <script type="text/javascript">
+    $(document).ready(function(){
+        if (!window.jXHR){
+            var jxhr = document.createElement('script');
+            jxhr.type = 'text/javascript';
+            jxhr.src = '/javascripts/libs/jXHR.js';
+            var s = document.getElementsByTagName('script')[0];
+            s.parentNode.insertBefore(jxhr, s);
+        }
+
+        github.showRepos({
+            user: 'hiroaki',
+            count: 0,
+            skip_forks: true,
+            target: '#gh_repos'
+        });
+    });
+  </script>
+  <script src="/javascripts/github.js" type="text/javascript"> </script>
+</section>
+
+
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2016 - hiroaki <br/>
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a>, customized with <a href="https://github.com/mjhea0/whiterspace">whiterspace</a>.</span>
+</p>
+
+</footer>
+  
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = 'http://platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>

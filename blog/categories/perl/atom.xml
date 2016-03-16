@@ -4,7 +4,7 @@
   <title><![CDATA[Category: perl | What hwat?]]></title>
   <link href="http://hiroaki.github.io/blog/categories/perl/atom.xml" rel="self"/>
   <link href="http://hiroaki.github.io/"/>
-  <updated>2016-02-14T15:07:01+09:00</updated>
+  <updated>2016-03-17T00:30:00+09:00</updated>
   <id>http://hiroaki.github.io/</id>
   <author>
     <name><![CDATA[hiroaki]]></name>
@@ -12,6 +12,43 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Install Term::ReadLine::Gnu on OS X without brew?]]></title>
+    <link href="http://hiroaki.github.io/blog/2016/0317/install-term-readline-gnu-on-os-x-without-brew/"/>
+    <updated>2016-03-17T00:19:35+09:00</updated>
+    <id>http://hiroaki.github.io/blog/2016/0317/install-term-readline-gnu-on-os-x-without-brew</id>
+    <content type="html"><![CDATA[<p>またまた、ごく局所的な問題に対するワークアラウンドな記事になります。誰の役に立つというものではありません。</p>
+
+<p>Perl の <a href="http://search.cpan.org/dist/Term-ReadLine-Gnu/">Term::ReadLine::Gnu</a> というモジュールを、 OS X (El Capitan) にインストールするためのノートです。</p>
+
+<!-- more -->
+
+
+<p>詳細は端折りますが、一言で言うならば OS X 特有の性質によって、モジュール Term::ReadLine::Gnu を素直にインストールすることができません。</p>
+
+<p>Google でこの問題について訊いてみると、たいていは Homebrew というパッケージ管理システムを用いて、やってしまうようです。これの意味するところは、 /usr/local に readline をインストールすることに着地するのだと思います。</p>
+
+<p>しかしながら、私は brew も /usr/local も使いたくありませんし、 readline はソースからビルドしたやつが、すでにホームディレクトリの下にインストールしてあるのです。なので、それを Makefile.PL が検出してくれれば、または検出してくれるように仕向けることができれば、取るに足らないことに違いなかったのですが──。</p>
+
+<p>Term::ReadLine::Gnu の <a href="http://cpansearch.perl.org/src/HAYASHI/Term-ReadLine-Gnu-1.31/Makefile.PL">Makefile.PL</a> の中を覗いてみたところ、コマンドラインから Makefile.PL を実行する際にパラメータとして readline の位置を伝える手段があるにはあるのですが、 Carton を用いて Term::ReadLine::Gnu をインストールしようとしている場合はコマンドライン・パラメータ経由でそれを与える方法がありません（ですよね？　私が cpanfile の仕様を知らないだけかも）。代わりにパラメータを環境変数ででも受け付けてくれれば、と思ったのですが、その手段は提供されてはいませんでした。</p>
+
+<p>しかし、希望の見える道もありました。 Term::ReadLine::Gnu の最近のアップデート（ 1.27 2015-09-06 ）で、 OS X の環境では <code>brew</code> コマンド (Homebrew) が入っていればその機能を呼び出して、 readline のライブラリの位置を得るようになっているようでした。</p>
+
+<p>しからばと、じぶんの環境に Homebrew がないことを逆手にとって、次のようなシェルスクリプトを書きました。私の環境では、ホーム下にあるディレクトリ Local に readline がインストールされています（ $HOME/Local を prefix として readline をインストールしてある）：</p>
+
+<pre><code class="sh">#!/bin/sh
+echo $HOME/Local
+</code></pre>
+
+<p>そして、コマンド・サーチパスの通ったディレクトリに <code>brew</code> という名前で保存し、実行権を与えました。──これでどうやらごまかせそうです。実際、うまくごまかせました。</p>
+
+<p>ただ、これはあとから知ることとなったのですが、 Homebrew でも /usr/local 以外の場所を使うことはできるそうで、本当の brew でもやりくりできるのかもしれません。 Makefile.PL には次のようにして readline の場所を知ろうとしているのでした。</p>
+
+<pre><code class="perl">brew --prefix readline
+</code></pre>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Teng-Plugin-QueryBuilder]]></title>
@@ -250,40 +287,6 @@ $
 <p>尤も、いくつか TODO にしていた内部の実装にも手を入れて、少しは見通し易くなったとも思います。それは Net::NicoVideo::Response と Net::NicoVideo::Content のところですが、いままでコンテンツの内容も Response が扱っていましたが、 Content のほうにあるべきなので、移しました。ただし、フロントエンドの Net::NicoVideo のインスタンスを扱うクライアントは気にしなくていい所です。</p>
 
 <p>それから samples フォルダの中のスクリプトも見直しました。──テストの t が乏しいかわりに、この samples にあるスクリプトを全部動かしてテストはしています。本来 t のほうを充実させるべきなのですが、なかなか捗りません。</p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[The Carton bundles a carton]]></title>
-    <link href="http://hiroaki.github.io/blog/2013/0926/the-carton-bundled-a-carton/"/>
-    <updated>2013-09-26T23:31:00+09:00</updated>
-    <id>http://hiroaki.github.io/blog/2013/0926/the-carton-bundled-a-carton</id>
-    <content type="html"><![CDATA[<p>先日書きました Carton そのもののインストールについて、それ自身が依存するモジュールが多すぎて大変、という内容の記事でしたが、そのつぶやきを Carton 作者の @miyagawa 氏が拾って下さり、じぶんの不明を正して下さいました。</p>
-
-<p><code>carton bundle</code> を実行してバンドルされた（モジュールのソースが集められた） vendor ディレクトリの中には、 carton コマンド（スクリプト）が同梱されます！ vendor/bin ディレクトリを覗いてみて下さい。</p>
-
-<!-- more -->
-
-
-<p>そのスクリプトは Carton 配布とは違うものではあるのですが、これを使えば別途 Carton 配布を用意して＋ビルドして＋インストールしなくても、バンドルされたすべてのモジュールをインストールすることが出来ます。</p>
-
-<p>方やもう一件、 JPA の @lestrrat 氏からも CPAN のミラーをローカルホスト上に作るのはどうかという旨のコメントを頂きました。いつも使うモジュールを集めておいたり、リポジトリにさまざまな Perl のプロジェクトがあってモジュールの管理を一括したいようなときに、これも知っておくべき手段ではないでしょうか。</p>
-
-<p>ただ先日書いたじぶんの記事では明らかではありませんでしたが、実際の問題として、じぶんはお客さんのところに設置することを想定していました。</p>
-
-<p>そこは外界へのネットワークもなく、かつツールを置く自由に望みが薄い厳しいところです。挙げ句にじぶんは、モジュールのバージョンをインストール順に書き込んだバッチスクリプト作成という not good な方向を突っ走ってしまっていたのですが、そのような塞がった環境では、 Carton の &ldquo;bundle&rdquo; による機能がアドバンテージを遺憾なく発揮する事でしょう。</p>
-
-<p>詳細については @miyagawa 氏の記事が上がっていますので、そちらを参照下さればと思います。（もしかしたら迷える私のようなユーザのために書いて下さった？としたらまったく有難い事です。ありがとうございます）</p>
-
-<p><a href="http://weblog.bulknews.net/post/62299851941/miyagawa-cpan-module-bootstrap">miyagawa/cpan-module-bootstrap - Tatsuhiko Miyagawa&rsquo;s blog</a></p>
-
-<p>Carton ──時事ネタ的に言えば、なんておもてなしが行き届いていることでしょう。</p>
-
-<p>少し大袈裟な物言いかもしれませんが、 Carton は Perl の今後を左右しかねない革命的なツールだとじぶんは思っています。尤もその始まりは Ruby の Bundler の存在があってのことでもあったのかも知れませんが、それ同等の環境が整ったことは Perl にとって──一般的には廃れてしまったと認知されていることを否めない Perl にとって、これからもモダンであり実用可能であることの必要条件だったのではないでしょうか。逆に厳しい目で見れば、いままでそのような環境が整っていなかったのは不幸だったと思います。</p>
-
-<p>たとえばある言語をこれから初めて使ってみよう思うデベロッパ・ユーザが、（依存モジュールが多くて）何回も make しないと使えない環境下でそのモジュールが使えるようになるまでのストレスを想像できますでしょうか。本番環境に持って行った時にバージョンが違っていたらどうしようという心配は誰もしていないのでしょうか。 Ruby には Bundler がありました。</p>
-
-<p>でもこれからの Perl には Carton があるのです。</p>
 ]]></content>
   </entry>
   
