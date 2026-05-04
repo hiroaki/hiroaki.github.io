@@ -212,6 +212,8 @@
         flex-direction: column;
         min-height: 0;
         height: 100%;
+        -webkit-user-select: none;
+        user-select: none;
       }
 
       .tilia-elevation-panel-main {
@@ -369,6 +371,8 @@
         display: flex;
         justify-content: flex-end;
         margin: 8px;
+        -webkit-user-select: none;
+        user-select: none;
       }
 
       .tilia-layer-clear-button {
@@ -389,6 +393,8 @@
         border: 1px solid #e7e5e4;
         border-radius: 12px;
         background: #ffffff;
+        -webkit-user-select: none;
+        user-select: none;
       }
 
       .tilia-layer-card:hover {
@@ -760,10 +766,6 @@
       }
 
       @media (max-width: 640px) {
-        .tilia-control-panel {
-          width: min(240px, 70vw);
-        }
-
         .tilia-side-panel {
           left: 12px;
           width: auto;
