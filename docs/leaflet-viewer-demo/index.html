@@ -1,80 +1,12 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>maps.gpx Leaflet Viewer</title>
-  <link
-    rel="stylesheet"
-    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
-    crossorigin=""
-  />
-  <link rel="stylesheet" href="./viewer.css" />
+  <title>/Tilia/viewer/</title>
+  <meta charset="utf-8" />
 </head>
 <body>
-  <div class="app-shell">
-    <aside class="panel" aria-label="操作パネル">
-      <div class="panel-header">
-        <div>
-          <p class="eyebrow">Leaflet / OpenStreetMap</p>
-          <h1>maps.gpx viewer</h1>
-        </div>
-        <button id="clear-all" class="ghost-button" type="button">全削除</button>
-      </div>
-
-      <section class="panel-card panel-card-accent">
-        <p class="panel-title">入力</p>
-        <p class="panel-copy">
-          GPX と JPEG をまとめてドラッグ&amp;ドロップできます。JPEG は EXIF の GPS 情報、または読み込み済み GPX の時刻から位置を推定します。
-        </p>
-        <div class="actions">
-          <label class="primary-button" for="file-input">ファイルを選ぶ</label>
-          <input id="file-input" type="file" multiple />
-          <button id="fit-all" class="ghost-button" type="button">全体表示</button>
-        </div>
-      </section>
-
-      <section class="panel-card compact-card">
-        <p class="panel-title">読み込み URL</p>
-        <div class="url-form">
-          <input id="url-input" type="url" placeholder="https://example.com/track.gpx" />
-          <button id="load-url" class="ghost-button" type="button">追加</button>
-        </div>
-        <p class="panel-note">クエリ文字列の <code>?url=...</code> にも対応します。</p>
-      </section>
-
-      <section class="panel-card compact-card">
-        <p class="panel-title">表示切替</p>
-        <div id="type-filters" class="type-filters"></div>
-      </section>
-
-      <section class="panel-card fill-card">
-        <div class="section-head">
-          <p class="panel-title">レイヤー</p>
-          <span id="status-text" class="panel-note">まだデータはありません</span>
-        </div>
-        <div id="layer-list" class="layer-list" aria-live="polite"></div>
-      </section>
-    </aside>
-
-    <main class="map-shell">
-      <div id="drop-overlay" class="drop-overlay" aria-hidden="true">
-        <div class="drop-overlay__card">
-          <p class="drop-overlay__eyebrow">Drop files</p>
-          <p class="drop-overlay__title">GPX と JPEG をここへ</p>
-        </div>
-      </div>
-      <div id="map"></div>
-    </main>
-  </div>
-
-  <script
-    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
-    crossorigin=""
-  ></script>
-  <script src="https://cdn.jsdelivr.net/npm/exifr/dist/lite.umd.js"></script>
-  <script src="./viewer.js" defer></script>
+  <h1>/Tilia/viewer/</h1>
+  <p>ここにあったコンテンツは整理しました。</p>
+  <a href="../Tilia/index.html">../index.html</a>を参照してください。
 </body>
 </html>

@@ -214,9 +214,9 @@
     </div>
 
     <script type="module">
-      import { createBaseMap, createTiliaCore } from "../../src/index.js";
+      import { createDefaultTiliaApp } from "../../src/index.js";
 
-      async function loadIntoCore(core, url) {
+      async function loadIntoApp(app, url) {
         // Fetch the asset and hand it to Tilia through the same File-based path as local input.
         const response = await fetch(url);
         const blob = await response.blob();
@@ -224,7 +224,7 @@
         const file = new File([blob], name, {
           type: blob.type,
         });
-        return core.registry.dispatch(core.context, file);
+        return app.load(file);
       }
 
       function setStatus(node, text) {
@@ -237,11 +237,10 @@
         const statusNode = card.querySelector(".story-status");
 
         // Each content block creates its own independent map and Tilia core.
-        const { map } = createBaseMap(mapNode);
-        const core = createTiliaCore(map);
+        const app = createDefaultTiliaApp(mapNode);
 
         // The GPX URL comes from the card's data attribute.
-        const result = await loadIntoCore(core, gpxUrl);
+        const result = await loadIntoApp(app, gpxUrl);
         setStatus(statusNode, `Loaded ${result.name}: ${result.summary}`);
       }
 
@@ -252,10 +251,9 @@
         const statusNode = card.querySelector(".story-status");
 
         // Photo cards follow the same flow; only the source data attribute changes.
-        const { map } = createBaseMap(mapNode);
-        const core = createTiliaCore(map);
+        const app = createDefaultTiliaApp(mapNode);
 
-        const result = await loadIntoCore(core, photoUrl);
+        const result = await loadIntoApp(app, photoUrl);
         setStatus(statusNode, `Loaded ${result.name}: ${result.summary}`);
       }
 
