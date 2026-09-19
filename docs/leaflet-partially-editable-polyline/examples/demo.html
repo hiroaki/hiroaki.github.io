@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Leaflet Partially Editable Polyline (For Leaflet v2)</title>
+
+<script type="importmap">
+  {
+    "imports": {
+      "leaflet": "https://unpkg.com/leaflet@2.0.0-alpha.1/dist/leaflet.js"
+    }
+  }
+</script>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@2.0.0-alpha.1/dist/leaflet.css" />
+<link rel="stylesheet" href="../src/leaflet-partially-editable-polyline.css" />
+<style>
+  html,
+  body {
+    height: 100%;
+    margin: 0;
+  }
+
+  body {
+    display: flex;
+    flex-direction: column;
+    font-family: sans-serif;
+  }
+
+  #info {
+    flex: 0 0 auto;
+    padding: 10px 14px;
+    border-bottom: 1px solid #ccc;
+    background: #fff;
+    line-height: 1.5;
+  }
+
+  #map {
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+</style>
+</head>
+<body>
+<div id="info">
+  <div>
+    <strong>Leaflet Partially Editable Polyline (For Leaflet v2)</strong>
+  </div>
+  <div>
+    Click the polyline to start editing around the nearest point. /
+    Drag points to move them, or drag a midpoint to insert a new point. /
+    Right-click (or long-press on touch devices) a point to delete it. /
+    Click elsewhere on the map to stop editing.
+  </div>
+  <hr />
+  <div>
+    Editing:
+    <label>
+      <input type="radio" name="editing-enabled" value="enabled" checked />
+      Enabled
+    </label>
+    <label>
+      <input type="radio" name="editing-enabled" value="disabled" />
+      Disabled
+    </label>
+   </div>
+  <div id="status">
+    Points: -
+  </div>
+</div>
+
+<div id="map"></div>
+
+<script type="module">
+  import {
+    Map,
+    TileLayer,
+  } from "leaflet";
+
+  import {
+    PartiallyEditablePolyline,
+  } from "../src/leaflet-partially-editable-polyline.js";
+
+  /*
+    * Create a large test track.
+    *
+    * 10,000 points are deliberately used here to make it easy to
+    * observe the difference between rendering all point markers and
+    * rendering only the local editing window.
+    */
+  const points = [];
+
+  const centerLat = 35.6812;
+  const centerLng = 139.7671;
+
+  for (let i = 0; i < 10000; i += 1) {
+    const t = i / 9999;
+    const angle = t * Math.PI * 12;
+
+    const lat =
+      centerLat +
+      Math.sin(angle) * 0.08 +
+      t * 0.12;
+
+    const lng =
+      centerLng +
+      Math.cos(angle) * 0.12;
+
+    points.push([lat, lng]);
+  }
+
+  /*
+    * Leaflet v2 uses constructors rather than the old L.* factory API.
+    */
+  const map = new Map("map");
+
+  new TileLayer(
+    "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+    {
+      attribution:
+        '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+      maxZoom: 19,
+    },
+  ).addTo(map);
+
+  /*
+    * The editor is a Polyline subclass.
+    *
+    * By default:
+    *   clicked point ±100 points
+    *
+    * become editable.
+    */
+  const editor = new PartiallyEditablePolyline(points, {
+    color: "#3388ff",
+    weight: 3,
+    editablePointRadius: 100,
+  });
+
+  editor.addTo(map);
+
+  /*
+    * Fit the map to the complete track.
+    */
+  map.fitBounds(editor.getBounds());
+
+  /*
+    * Display editor state.
+    */
+  const status = document.querySelector("#status");
+
+  let pointCount = points.length;
+  let editingEnabled = true;
+  let editing = false;
+
+  function updateStatus(message) {
+    status.textContent =
+      `Points: ${pointCount} — ${editingEnabled ? "enabled" : "disabled"} — ${message}`;
+  }
+
+  /*
+    * Clicking elsewhere on the map ends the current editing session.
+    *
+    * Clicks handled by the editor itself are stopped by Leaflet's
+    * event propagation before reaching this handler.
+    */
+  map.on("click", () => {
+    if (editing) {
+      editor.endEditing();
+    }
+  });
+
+  editor.on("editingstart", () => {
+    editing = true;
+    updateStatus("editing");
+  });
+
+  editor.on("editingend", () => {
+    editing = false;
+    updateStatus("not editing");
+  });
+
+  editor.on("pointchange", () => {
+    updateStatus("editing");
+  });
+
+  editor.on("pointdelete", () => {
+    pointCount -= 1;
+    updateStatus("editing");
+  });
+
+  editor.on("pointinsert", () => {
+    pointCount += 1;
+    updateStatus("editing");
+  });
+
+  editor.on("editingerror", ({ error }) => {
+    updateStatus(`error: ${error.message}`);
+  });
+
+  const editingEnabledInputs =
+    document.querySelectorAll('input[name="editing-enabled"]');
+
+  editingEnabledInputs.forEach((input) => {
+    input.addEventListener("change", () => {
+      if (input.value === "enabled") {
+        editor.enableEditing();
+        editingEnabled = true;
+        updateStatus(editing ? "editing" : "not editing");
+      } else {
+        editingEnabled = false;
+        editor.disableEditing();
+        updateStatus("not editing");
+      }
+    });
+  });
+
+  updateStatus("not editing");
+</script>
+</body>
+</html>
