@@ -217,6 +217,10 @@
   });
 
   updateStatus("not editing");
+
+  editor.on("click", (event) => {
+    editor.startEditing(event.latlng);
+  });
 </script>
 </body>
 </html>

@@ -18,8 +18,7 @@ export class EditingDisabledError extends Error {
  * The consumer remains responsible for application data such as elevation,
  * timestamps, GPX structure, and persistence.
  *
- * A click on the polyline starts editing around the nearest point. Only a
- * bounded neighborhood is represented by Leaflet markers, which keeps large
+ * Only a bounded neighborhood is represented by Leaflet markers, which keeps large
  * polylines responsive. During a drag, only short helper lines are updated;
  * the complete polyline is committed when the drag ends.
  */
@@ -48,6 +47,8 @@ export class PartiallyEditablePolyline extends Polyline {
       bubblingPointerEvents: false,
     });
 
+    super.setLatLngs(this._normalizeLatLngs(this.getLatLngs()));
+
     this._editorOptions = {
       ...PartiallyEditablePolyline.defaultOptions,
       ...options,
@@ -65,25 +66,31 @@ export class PartiallyEditablePolyline extends Polyline {
   }
 
   /**
+   * Not supported. Always throws.
+   *
+   * This polyline is an editing copy of geometry owned by the application, so
+   * the copy must not be changed independently of the application's data.
+   * Update your own data first, then replace the geometry with setLatLngs().
+   */
+  addLatLng() {
+    throw new Error(
+      "addLatLng() is not supported. Update your own data and call setLatLngs().",
+    );
+  }
+
+  /**
    * Replace this Polyline's geometry and synchronize the editor state.
    *
    * External geometry replacement invalidates all existing marker indices, so
    * an active editing session is ended before the new points are recorded.
    */
   setLatLngs(latlngs) {
-    // Polyline's constructor may call this override before this subclass has
-    // initialized its editor state.
-    const hasEditorState = Array.isArray(this._pointRecords);
-
-    if (hasEditorState && this._editing) {
+    if (this._editing) {
       this.endEditing();
     }
 
-    super.setLatLngs(latlngs);
-
-    if (hasEditorState) {
-      this._replacePointRecords(this.getLatLngs());
-    }
+    super.setLatLngs(this._normalizeLatLngs(latlngs));
+    this._replacePointRecords(this.getLatLngs());
 
     return this;
   }
@@ -93,12 +100,10 @@ export class PartiallyEditablePolyline extends Polyline {
 
     this._map = map;
     this._initializePointRecords();
-    this._installHandlers();
   }
 
   onRemove(map) {
     this.endEditing();
-    this._removeHandlers();
     this._clearPointMarkers();
     this._map = null;
 
@@ -202,29 +207,14 @@ export class PartiallyEditablePolyline extends Polyline {
 
   _replacePointRecords(latlngs) {
     this._pointRecords = latlngs.map((latlng) => ({
-      latlng: this._toLatLng(latlng),
+      latlng: this._cloneLatLng(latlng),
       marker: null,
       newPointMarker: null,
     }));
   }
 
-  _installHandlers() {
-    this._onPolylineClick = (event) => {
-      this.startEditing(event.latlng);
-    };
-
-    this.on("click", this._onPolylineClick, this);
-  }
-
-  _removeHandlers() {
-    if (this._onPolylineClick) {
-      this.off("click", this._onPolylineClick, this);
-      this._onPolylineClick = null;
-    }
-  }
-
   _findNearestPointIndex(latlng) {
-    const target = this._toLatLng(latlng);
+    const target = this._cloneLatLng(latlng);
     let nearestIndex = -1;
     let nearestDistance = Infinity;
 
@@ -379,7 +369,7 @@ export class PartiallyEditablePolyline extends Polyline {
     }
 
     const previousLatLng = this._pointRecords[index].latlng;
-    const latlng = this._toLatLng(marker.getLatLng());
+    const latlng = this._cloneLatLng(marker.getLatLng());
 
     this._pointRecords[index].latlng = latlng;
     this._commitGeometry();
@@ -488,7 +478,7 @@ export class PartiallyEditablePolyline extends Polyline {
       return;
     }
 
-    const latlng = this._toLatLng(marker.getLatLng());
+    const latlng = this._cloneLatLng(marker.getLatLng());
     const index = nextIndex;
 
     this._pointRecords.splice(index, 0, {
@@ -580,18 +570,21 @@ export class PartiallyEditablePolyline extends Polyline {
   _commitGeometry() {
     // Do not use this.setLatLngs(): it is the public synchronization API and
     // would end the active session and rebuild point records.
-    super.setLatLngs(this._pointRecords.map((record) => record.latlng));
+    super.setLatLngs(this._pointRecords.map((record) => this._cloneLatLng(record.latlng)));
   }
 
   _midpoint(a, b) {
     return new LatLng((a.lat + b.lat) / 2, (a.lng + b.lng) / 2);
   }
 
-  _toLatLng(value) {
-    return this._cloneLatLng(value);
+  _normalizeLatLngs(latlngs) {
+    return latlngs.map((value) => {
+      const latlng = new LatLng(value); // Accept array or object format as well
+      return new LatLng(latlng.lat, latlng.lng);
+    });
   }
 
   _cloneLatLng(latlng) {
-    return new LatLng(latlng.lat, latlng.lng, latlng.alt);
+    return new LatLng(latlng.lat, latlng.lng);
   }
 }
