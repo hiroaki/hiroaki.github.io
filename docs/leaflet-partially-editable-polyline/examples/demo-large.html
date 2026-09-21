@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Leaflet Partially Editable Polyline (For Leaflet v2)</title>
+<title>Leaflet Partially Editable Polyline - Large polyline (For Leaflet v2)</title>
 
 <script type="importmap">
   {
@@ -45,12 +45,12 @@
 <body>
 <div id="info">
   <div>
-    <strong>Leaflet Partially Editable Polyline (For Leaflet v2)</strong>
+    <strong>Leaflet Partially Editable Polyline - Large polyline (For Leaflet v2)</strong>
   </div>
   <div>
-    Click the polyline to start editing around the nearest point. /
-    Drag points to move them, or drag a midpoint to insert a new point. /
-    Right-click (or long-press on touch devices) a point to delete it. /
+    Click the polyline to start editing around the nearest point.
+    Drag points to move them, or drag a midpoint to insert a new point.
+    Right-click (or long-press on touch devices) a point to delete it.
     Click elsewhere on the map to stop editing.
   </div>
   <hr />
@@ -64,7 +64,21 @@
       <input type="radio" name="editing-enabled" value="disabled" />
       Disabled
     </label>
-   </div>
+  </div>
+  <div>
+    <label>
+      Editable range:
+      <select id="editable-radius">
+        <option value="5">5</option>
+        <option value="20">20</option>
+        <option value="100" selected>100</option>
+        <option value="500">500</option>
+        <option value="2000">2000</option>
+        <option value="all">all (slow)</option>
+      </select>
+      points before and after the clicked point (applies from the next editing session)
+    </label>
+  </div>
   <div id="status">
     Points: -
   </div>
@@ -127,10 +141,10 @@
   /*
     * The editor is a Polyline subclass.
     *
-    * By default:
-    *   clicked point ±100 points
-    *
-    * become editable.
+    * editablePointRadius in the constructor is the default editable range:
+    * the clicked point ±100 points. It can be overridden for each editing
+    * session with startEditing(latlng, { editablePointRadius }), which is
+    * what the selector above does.
     */
   const editor = new PartiallyEditablePolyline(points, {
     color: "#3388ff",
@@ -219,7 +233,15 @@
   updateStatus("not editing");
 
   editor.on("click", (event) => {
-    editor.startEditing(event.latlng);
+    const radiusSelect = document.querySelector("#editable-radius");
+
+    editor.on("click", (event) => {
+      const value = radiusSelect.value;
+
+      editor.startEditing(event.latlng, {
+        editablePointRadius: value === "all" ? Infinity : Number(value),
+      });
+    });
   });
 </script>
 </body>

@@ -60,6 +60,7 @@ export class PartiallyEditablePolyline extends Polyline {
     this._pointRecords = [];
     this._editableStart = -1;
     this._editableEnd = -1;
+    this._editableRadius = this._editorOptions.editablePointRadius;
     this._pointMarkers = [];
     this._newPointMarkers = [];
     this._dragHelpers = [];
@@ -97,16 +98,12 @@ export class PartiallyEditablePolyline extends Polyline {
 
   onAdd(map) {
     super.onAdd(map);
-
-    this._map = map;
     this._initializePointRecords();
   }
 
   onRemove(map) {
     this.endEditing();
     this._clearPointMarkers();
-    this._map = null;
-
     super.onRemove(map);
   }
 
@@ -133,12 +130,23 @@ export class PartiallyEditablePolyline extends Polyline {
 
   /**
    * Start an editing session around the point nearest to `latlng`.
+   *
+   * `options.editablePointRadius` overrides the value given to the
+   * constructor for this session only. It applies to the whole session,
+   * including the ranges recomputed after an insertion or a deletion.
    */
-  startEditing(latlng) {
+  startEditing(latlng, options) {
     this._assertEditingEnabled();
 
     if (!(latlng instanceof LatLng)) {
       throw new TypeError("startEditing() requires a Leaflet LatLng.");
+    }
+
+    const radius =
+      options?.editablePointRadius ?? this._editorOptions.editablePointRadius;
+
+    if (radius !== Infinity && !(Number.isInteger(radius) && radius >= 0)) {
+      throw new RangeError("editablePointRadius must be a non-negative integer.");
     }
 
     if (!this._map || this._pointRecords.length === 0) {
@@ -154,14 +162,8 @@ export class PartiallyEditablePolyline extends Polyline {
     this.endEditing();
 
     this._editing = true;
-    this._editableStart = Math.max(
-      0,
-      index - this._editorOptions.editablePointRadius,
-    );
-    this._editableEnd = Math.min(
-      this._pointRecords.length - 1,
-      index + this._editorOptions.editablePointRadius,
-    );
+    this._editableRadius = radius;
+    this._updateEditableRange(index);
 
     this.fire("editingstart", {
       index,
@@ -227,6 +229,14 @@ export class PartiallyEditablePolyline extends Polyline {
     }
 
     return nearestIndex;
+  }
+
+  _updateEditableRange(centerIndex) {
+    this._editableStart = Math.max(0, centerIndex - this._editableRadius);
+    this._editableEnd = Math.min(
+      this._pointRecords.length - 1,
+      centerIndex + this._editableRadius,
+    );
   }
 
   _rebuildEditableMarkers() {
@@ -410,14 +420,7 @@ export class PartiallyEditablePolyline extends Polyline {
     }
 
     const replacementIndex = Math.min(index, this._pointRecords.length - 1);
-    this._editableStart = Math.max(
-      0,
-      replacementIndex - this._editorOptions.editablePointRadius,
-    );
-    this._editableEnd = Math.min(
-      this._pointRecords.length - 1,
-      replacementIndex + this._editorOptions.editablePointRadius,
-    );
+    this._updateEditableRange(replacementIndex);
     this._rebuildEditableMarkers();
   }
 
@@ -496,14 +499,7 @@ export class PartiallyEditablePolyline extends Polyline {
       latlng: this._cloneLatLng(latlng),
     });
 
-    this._editableStart = Math.max(
-      0,
-      index - this._editorOptions.editablePointRadius,
-    );
-    this._editableEnd = Math.min(
-      this._pointRecords.length - 1,
-      index + this._editorOptions.editablePointRadius,
-    );
+    this._updateEditableRange(index);
     this._rebuildEditableMarkers();
   }
 

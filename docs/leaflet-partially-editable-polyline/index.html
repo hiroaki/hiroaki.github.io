@@ -1,9 +1,197 @@
-<h1>leaflet-partially-editable-polyline</h1>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>leaflet-partially-editable-polyline</title>
+<style>
+  body {
+    max-width: 44rem;
+    margin: 0 auto;
+    padding: 24px 16px 40px;
+    font-family: sans-serif;
+    line-height: 1.6;
+    color: #222;
+  }
 
-<p>
-  <a href="https://github.com/hiroaki/leaflet-partially-editable-polyline">Repository</a>
-</p>
+  h1 {
+    margin: 0 0 4px;
+    font-size: 1.5rem;
+    overflow-wrap: anywhere;
+  }
 
-<p>
-  <a href="./examples/demo.html">Live Demo</a> (version: <span>43fc529</span>)</p>
+  h2 {
+    margin: 32px 0 8px;
+    font-size: 1.15rem;
+  }
 
+  h3 {
+    margin: 0;
+    font-size: 1rem;
+  }
+
+  .demos {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .demos li {
+    padding: 12px 0;
+    border-bottom: 1px solid #ddd;
+  }
+
+  .demos li:first-child {
+    border-top: 1px solid #ddd;
+  }
+
+  .demos p {
+    margin: 2px 0 0;
+  }
+
+  .demos dl {
+    display: grid;
+    grid-template-columns: 6rem 1fr;
+    gap: 4px 12px;
+    margin: 8px 0 0;
+  }
+
+  .demos dt {
+    font-weight: bold;
+    color: #555;
+  }
+
+  .demos dd {
+    margin: 0;
+    color: #444;
+  }
+
+  @media (max-width: 30rem) {
+    .demos dl {
+      grid-template-columns: 1fr;
+      gap: 0;
+    }
+
+    .demos dd {
+      margin-bottom: 6px;
+    }
+  }
+
+  footer {
+    margin-top: 32px;
+    color: #777;
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>leaflet-partially-editable-polyline</h1>
+
+  <p>
+    A Leaflet v2 plugin for editing only a local portion of a large polyline.
+  </p>
+
+  <p>
+    <a href="https://github.com/hiroaki/leaflet-partially-editable-polyline">Repository</a>
+  </p>
+</header>
+
+<main>
+  <h2>Demos</h2>
+
+  <p>
+    Each demo lists what the library provides and what the application,
+    here the demo's own code, implements.
+  </p>
+
+  <ul class="demos">
+    <li>
+      <h3><a href="./examples/demo-large.html">Large polyline</a></h3>
+      <p>Editing a 10,000-point track.</p>
+      <dl>
+        <dt>Library</dt>
+        <dd>
+          Editor markers only for the points around the selected point (up to
+          201), so the map stays responsive. Dragging a point moves it,
+          dragging a midpoint inserts a new point, and right-clicking
+          (long-press on touch devices) a point deletes it.
+          Editing can be enabled and disabled,
+          and the editable range can be set for each editing session.
+        </dd>
+        <dt>Application</dt>
+        <dd>
+          Starts editing when the line is clicked and ends it when the map is
+          clicked. Provides the enable/disable toggle and the editable-range selector.
+        </dd>
+      </dl>
+    </li>
+
+    <li>
+      <h3><a href="./examples/demo-sync.html">Syncing application data</a></h3>
+      <p>
+        The polyline is only a temporary editing aid; the application owns
+        the data.
+      </p>
+      <dl>
+        <dt>Library</dt>
+        <dd>
+          Reports each move, insertion and deletion as an event with the
+          point's index and coordinates, and accepts new geometry through
+          <code>setLatLngs()</code>. It handles latitude and longitude only,
+          not elevation.
+        </dd>
+        <dt>Application</dt>
+        <dd>
+          Keeps the data, including elevation. Draws the original line, swaps
+          in the editor when it is clicked, applies each event to the data
+          using its index (interpolating the elevation of inserted points),
+          and shows the result in the table.
+        </dd>
+      </dl>
+    </li>
+
+    <li>
+      <h3><a href="./examples/demo-undo.html">Undo / redo</a></h3>
+      <p>Undo and redo of point moves, insertions and deletions.</p>
+      <dl>
+        <dt>Library</dt>
+        <dd>
+          Reports each operation as an event with its index and, for moves,
+          the previous and new coordinates, and accepts new geometry through
+          <code>setLatLngs()</code>. It has no undo or redo of its own.
+        </dd>
+        <dt>Application</dt>
+        <dd>
+          Records the history, replays each operation in reverse or forward
+          on its own data, pushes the result back with
+          <code>setLatLngs()</code>, and provides the buttons and keyboard
+          shortcuts (Ctrl/Cmd+Z, Ctrl/Cmd+Shift+Z or Ctrl+Y).
+        </dd>
+      </dl>
+    </li>
+
+    <li>
+      <h3><a href="./examples/demo-multi.html">Multiple polylines</a></h3>
+      <p>Several routes, each with its own data.</p>
+      <dl>
+        <dt>Library</dt>
+        <dd>
+          Each polyline is an independent editor with its own editing session
+          and events. Editing can be enabled and disabled per polyline.
+        </dd>
+        <dt>Application</dt>
+        <dd>
+          Keeps each route's data, switches the editing target by ending the
+          current session and starting the next, tracks which route is being
+          edited, and provides the lock checkboxes.
+        </dd>
+      </dl>
+    </li>
+  </ul>
+</main>
+
+<footer>
+  <small>version: <span>v0.1.0</span></small>
+</footer>
+</body>
+</html>

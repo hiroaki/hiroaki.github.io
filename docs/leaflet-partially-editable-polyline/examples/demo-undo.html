@@ -1,0 +1,432 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Leaflet Partially Editable Polyline - Undo / redo (For Leaflet v2)</title>
+
+<script type="importmap">
+  {
+    "imports": {
+      "leaflet": "https://unpkg.com/leaflet@2.0.0-alpha.1/dist/leaflet.js"
+    }
+  }
+</script>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@2.0.0-alpha.1/dist/leaflet.css" />
+<link rel="stylesheet" href="../src/leaflet-partially-editable-polyline.css" />
+<style>
+  html,
+  body {
+    height: 100%;
+    margin: 0;
+  }
+
+  body {
+    display: flex;
+    flex-direction: column;
+    font-family: sans-serif;
+  }
+
+  #info {
+    flex: 0 0 auto;
+    padding: 10px 14px;
+    border-bottom: 1px solid #ccc;
+    background: #fff;
+    line-height: 1.5;
+  }
+
+  #toolbar {
+    margin-top: 4px;
+  }
+
+  #content {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+  }
+
+  #map {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  #side {
+    flex: 0 0 clamp(300px, 30vw, 400px);
+    box-sizing: border-box;
+    overflow: auto;
+    scrollbar-gutter: stable;
+    padding: 10px 14px;
+    border-left: 1px solid #ccc;
+    background: #fff;
+    font-size: 13px;
+    line-height: 1.5;
+  }
+
+  #side h2 {
+    margin: 12px 0 4px;
+    font-size: 14px;
+  }
+
+  #side h2:first-child {
+    margin-top: 0;
+  }
+
+  #status {
+    margin: 2px 0;
+  }
+
+  #history {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    font-family: ui-monospace, Menlo, Consolas, monospace;
+    font-size: 12px;
+    white-space: pre;
+  }
+
+  #history li {
+    padding: 1px 6px;
+    border-bottom: 1px solid #eee;
+  }
+
+  #history li.undone {
+    color: #999;
+    text-decoration: line-through;
+  }
+
+  #history li.empty {
+    color: #777;
+    border-bottom: 0;
+  }
+
+  @media (max-width: 800px) {
+    #content {
+      flex-direction: column;
+    }
+
+    #side {
+      flex: 0 0 40%;
+      border-left: 0;
+      border-top: 1px solid #ccc;
+    }
+  }
+</style>
+</head>
+<body>
+<div id="info">
+  <div>
+    <strong>Leaflet Partially Editable Polyline - Undo / redo</strong>
+  </div>
+  <div>
+    Click the line to start editing, then drag points, drag a midpoint to insert one,
+    or right-click (or long-press) a point to delete it.
+    The library has no undo of its own: the application records each editing event
+    and replays it in reverse.
+  </div>
+  <div id="toolbar">
+    <button type="button" id="undo">Undo</button>
+    <button type="button" id="redo">Redo</button>
+    <button type="button" id="reset">Reset data</button>
+    <span>(Ctrl/Cmd+Z: undo, Ctrl/Cmd+Shift+Z or Ctrl+Y: redo)</span>
+  </div>
+</div>
+
+<div id="content">
+  <div id="map"></div>
+
+  <div id="side">
+    <h2>Application data</h2>
+    <div id="status"></div>
+
+    <h2>History (oldest first)</h2>
+    <ol id="history"></ol>
+  </div>
+</div>
+
+<script type="module">
+  import {
+    LatLng,
+    Map,
+    TileLayer,
+  } from "leaflet";
+
+  import {
+    PartiallyEditablePolyline,
+  } from "../src/leaflet-partially-editable-polyline.js";
+
+  /*
+    * The application's own data: the source of truth.
+    */
+  const initialPoints = Array.from({ length: 12 }, (_, i) => ({
+    lat: Number((35.68 + i * 0.0025 + Math.sin(i * 0.9) * 0.002).toFixed(5)),
+    lng: Number((139.76 + i * 0.0035 + Math.cos(i * 0.9) * 0.002).toFixed(5)),
+  }));
+
+  let appPoints = initialPoints.map((point) => ({ ...point }));
+
+  const toCoords = () => appPoints.map((point) => [point.lat, point.lng]);
+
+  /*
+    * Map and base layer.
+    */
+  const map = new Map("map");
+
+  new TileLayer(
+    "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+    {
+      attribution:
+        '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+      maxZoom: 19,
+    },
+  ).addTo(map);
+
+  /*
+    * The editor stays on the map. Its geometry is a copy of appPoints.
+    */
+  const editor = new PartiallyEditablePolyline(toCoords(), {
+    color: "#3388ff",
+    weight: 5,
+    editablePointRadius: 5,
+  });
+
+  editor.addTo(map);
+  map.fitBounds(editor.getBounds(), { padding: [30, 30] });
+
+  /*
+    * History kept by the application.
+    *
+    * Each entry describes one completed editing operation, using the index
+    * reported by the editing event:
+    *
+    *   { type: "move",   index, before, after }
+    *   { type: "insert", index, point }
+    *   { type: "delete", index, point }
+    *
+    * undoStack holds the operations currently applied, oldest first.
+    * redoStack holds the undone ones, the most recently undone last.
+    */
+  const undoStack = [];
+  const redoStack = [];
+
+  /*
+    * Apply an operation to the application's data, forward or in reverse.
+    */
+  function applyForward(op) {
+    switch (op.type) {
+      case "move":
+        appPoints[op.index] = { ...op.after };
+        break;
+      case "insert":
+        appPoints.splice(op.index, 0, { ...op.point });
+        break;
+      case "delete":
+        appPoints.splice(op.index, 1);
+        break;
+    }
+  }
+
+  function applyInverse(op) {
+    switch (op.type) {
+      case "move":
+        appPoints[op.index] = { ...op.before };
+        break;
+      case "insert":
+        appPoints.splice(op.index, 1);
+        break;
+      case "delete":
+        appPoints.splice(op.index, 0, { ...op.point });
+        break;
+    }
+  }
+
+  /*
+    * Push the application's data back into the editor.
+    *
+    * setLatLngs() is the only supported way to do this. It ends the current
+    * editing session, so editing is started again around the affected point
+    * to show what changed.
+    */
+  function syncEditor(index) {
+    editor.setLatLngs(toCoords());
+
+    const point = appPoints[Math.min(index, appPoints.length - 1)];
+
+    if (point) {
+      editor.startEditing(new LatLng(point.lat, point.lng));
+    }
+
+    render();
+  }
+
+  function undo() {
+    const op = undoStack.pop();
+
+    if (!op) {
+      return;
+    }
+
+    applyInverse(op);
+    redoStack.push(op);
+    syncEditor(op.index);
+  }
+
+  function redo() {
+    const op = redoStack.pop();
+
+    if (!op) {
+      return;
+    }
+
+    applyForward(op);
+    undoStack.push(op);
+    syncEditor(op.index);
+  }
+
+  function reset() {
+    appPoints = initialPoints.map((point) => ({ ...point }));
+    undoStack.length = 0;
+    redoStack.length = 0;
+
+    editor.setLatLngs(toCoords());
+    render();
+  }
+
+  /*
+    * A new operation invalidates everything that was undone.
+    */
+  function record(op) {
+    undoStack.push(op);
+    redoStack.length = 0;
+    render();
+  }
+
+  /*
+    * Editing events: the application applies each one to its own data and
+    * records it. previousLatLng and latlng are independent snapshots, so
+    * they can be kept as they are.
+    */
+  editor.on("pointchange", ({ index, previousLatLng, latlng }) => {
+    const before = { lat: previousLatLng.lat, lng: previousLatLng.lng };
+    const after = { lat: latlng.lat, lng: latlng.lng };
+
+    if (before.lat === after.lat && before.lng === after.lng) {
+      return;
+    }
+
+    appPoints[index] = { ...after };
+    record({ type: "move", index, before, after });
+  });
+
+  editor.on("pointinsert", ({ index, latlng }) => {
+    const point = { lat: latlng.lat, lng: latlng.lng };
+
+    appPoints.splice(index, 0, { ...point });
+    record({ type: "insert", index, point });
+  });
+
+  editor.on("pointdelete", ({ index, latlng }) => {
+    const point = { lat: latlng.lat, lng: latlng.lng };
+
+    appPoints.splice(index, 1);
+    record({ type: "delete", index, point });
+  });
+
+  /*
+    * The application decides when editing starts and ends.
+    */
+  let editing = false;
+
+  editor.on("click", (event) => {
+    editor.startEditing(event.latlng);
+  });
+
+  map.on("click", () => {
+    editor.endEditing();
+  });
+
+  editor.on("editingstart", () => {
+    editing = true;
+    render();
+  });
+
+  editor.on("editingend", () => {
+    editing = false;
+    render();
+  });
+
+  /*
+    * Display.
+    */
+  const statusEl = document.querySelector("#status");
+  const historyEl = document.querySelector("#history");
+  const undoButton = document.querySelector("#undo");
+  const redoButton = document.querySelector("#redo");
+  const resetButton = document.querySelector("#reset");
+
+  function describe(op, number) {
+    return `${String(number).padStart(2, " ")}. ${op.type.padEnd(6, " ")} index ${op.index}`;
+  }
+
+  function render() {
+    statusEl.textContent =
+      `Points: ${appPoints.length} - ${editing ? "editing" : "not editing"}` +
+      ` - undo ${undoStack.length} / redo ${redoStack.length}`;
+
+    // Applied operations first, then the undone ones in the order they were made.
+    const applied = undoStack.map((op) => ({ op, undone: false }));
+    const undone = redoStack.slice().reverse().map((op) => ({ op, undone: true }));
+
+    const items = [...applied, ...undone].map(({ op, undone: isUndone }, i) => {
+      const item = document.createElement("li");
+      item.textContent = describe(op, i + 1);
+
+      if (isUndone) {
+        item.className = "undone";
+      }
+
+      return item;
+    });
+
+    if (items.length === 0) {
+      const empty = document.createElement("li");
+      empty.className = "empty";
+      empty.textContent = "(no operations yet)";
+      items.push(empty);
+    }
+
+    historyEl.replaceChildren(...items);
+
+    undoButton.disabled = undoStack.length === 0;
+    redoButton.disabled = redoStack.length === 0;
+  }
+
+  undoButton.addEventListener("click", undo);
+  redoButton.addEventListener("click", redo);
+  resetButton.addEventListener("click", reset);
+
+  document.addEventListener("keydown", (event) => {
+    if (!(event.ctrlKey || event.metaKey)) {
+      return;
+    }
+
+    const key = event.key.toLowerCase();
+
+    if (key === "z") {
+      event.preventDefault();
+
+      if (event.shiftKey) {
+        redo();
+      } else {
+        undo();
+      }
+    } else if (key === "y") {
+      event.preventDefault();
+      redo();
+    }
+  });
+
+  render();
+</script>
+</body>
+</html>

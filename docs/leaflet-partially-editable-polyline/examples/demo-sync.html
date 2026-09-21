@@ -1,0 +1,475 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Leaflet Partially Editable Polyline - Syncing application data (For Leaflet v2)</title>
+
+<script type="importmap">
+  {
+    "imports": {
+      "leaflet": "https://unpkg.com/leaflet@2.0.0-alpha.1/dist/leaflet.js"
+    }
+  }
+</script>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@2.0.0-alpha.1/dist/leaflet.css" />
+<link rel="stylesheet" href="../src/leaflet-partially-editable-polyline.css" />
+<style>
+  html,
+  body {
+    height: 100%;
+    margin: 0;
+  }
+
+  body {
+    display: flex;
+    flex-direction: column;
+    font-family: sans-serif;
+  }
+
+  #info {
+    flex: 0 0 auto;
+    padding: 10px 14px;
+    border-bottom: 1px solid #ccc;
+    background: #fff;
+    line-height: 1.5;
+  }
+
+  #content {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+  }
+
+  #map {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  #side {
+    flex: 0 0 clamp(440px, 46vw, 600px);
+    box-sizing: border-box;
+    overflow: auto;
+    scrollbar-gutter: stable;
+    padding: 10px 14px;
+    border-left: 1px solid #ccc;
+    background: #fff;
+    font-size: 13px;
+    line-height: 1.5;
+  }
+
+  #side h2 {
+    margin: 12px 0 4px;
+    font-size: 14px;
+  }
+
+  #side h2:first-child {
+    margin-top: 0;
+  }
+
+  #status,
+  #sync {
+    margin: 2px 0;
+  }
+
+  #sync.ok {
+    color: #1a7f37;
+  }
+
+  #sync.ng {
+    color: #b42318;
+    font-weight: bold;
+  }
+
+  /*
+    * Fixed table layout: the column widths do not depend on the values, so
+    * digits stay in the same place before and after an edit.
+    */
+  table {
+    width: 100%;
+    table-layout: fixed;
+    border-collapse: collapse;
+  }
+
+  th,
+  td {
+    padding: 2px 6px;
+    border-bottom: 1px solid #eee;
+    text-align: right;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  td {
+    font-family: ui-monospace, Menlo, Consolas, monospace;
+  }
+
+  th {
+    border-bottom-color: #ccc;
+    font-weight: normal;
+    color: #555;
+  }
+
+  th.idx {
+    width: 3em;
+  }
+
+  th.num {
+    width: 6.5em;
+  }
+
+  th.ele {
+    width: 5em;
+  }
+
+  th.note,
+  td.note {
+    text-align: left;
+  }
+
+  td.note {
+    font-family: sans-serif;
+    color: #555;
+  }
+
+  tr.moved td {
+    background: #fff3cd;
+  }
+
+  tr.inserted td {
+    background: #d4edda;
+  }
+
+  #log {
+    margin: 0;
+    white-space: pre-wrap;
+    font-family: monospace;
+    font-size: 12px;
+    color: #333;
+  }
+
+  @media (max-width: 800px) {
+    #content {
+      flex-direction: column;
+    }
+
+    #side {
+      flex: 0 0 45%;
+      border-left: 0;
+      border-top: 1px solid #ccc;
+    }
+  }
+</style>
+</head>
+<body>
+<div id="info">
+  <div>
+    <strong>Leaflet Partially Editable Polyline - Syncing application data</strong>
+  </div>
+  <div>
+    The blue line is drawn from the application's own data (the table).
+    Click it to swap in the orange editor, then drag points, drag a midpoint to insert one,
+    or right-click (or long-press) a point to delete it.
+    Click elsewhere on the map to stop editing.
+    The application updates its data from the editing events, using their <code>index</code>.
+    <button type="button" id="reset">Reset data</button>
+  </div>
+</div>
+
+<div id="content">
+  <div id="map"></div>
+
+  <div id="side">
+    <h2>Application data</h2>
+    <div id="status"></div>
+    <div id="sync"></div>
+    <table>
+      <thead>
+        <tr>
+          <th scope="col" class="idx">#</th>
+          <th scope="col" class="num">lat</th>
+          <th scope="col" class="num">lng</th>
+          <th scope="col" class="ele">ele (m)</th>
+          <th scope="col" class="note">last change</th>
+        </tr>
+      </thead>
+      <tbody id="points"></tbody>
+    </table>
+
+    <h2>Events (newest first)</h2>
+    <pre id="log"></pre>
+  </div>
+</div>
+
+<script type="module">
+  import {
+    Map,
+    TileLayer,
+    Polyline,
+  } from "leaflet";
+
+  import {
+    PartiallyEditablePolyline,
+  } from "../src/leaflet-partially-editable-polyline.js";
+
+  /*
+    * The application's own data: the source of truth.
+    *
+    * The library only knows latitude and longitude. Elevation (ele) lives
+    * here, and it is the application that decides what to do with it when
+    * a point is moved or inserted.
+    */
+  const initialPoints = [
+    { lat: 35.6812, lng: 139.7671, ele: 4.0 },
+    { lat: 35.6835, lng: 139.7702, ele: 6.5 },
+    { lat: 35.6862, lng: 139.7728, ele: 9.0 },
+    { lat: 35.6890, lng: 139.7741, ele: 12.5 },
+    { lat: 35.6921, lng: 139.7735, ele: 18.0 },
+    { lat: 35.6948, lng: 139.7712, ele: 22.5 },
+    { lat: 35.6966, lng: 139.7679, ele: 27.0 },
+    { lat: 35.6971, lng: 139.7642, ele: 31.5 },
+    { lat: 35.6958, lng: 139.7608, ele: 36.0 },
+    { lat: 35.6935, lng: 139.7582, ele: 41.0 },
+  ];
+
+  let appPoints = initialPoints.map((point) => ({ ...point }));
+
+  const toCoords = () => appPoints.map((point) => [point.lat, point.lng]);
+
+  /*
+    * Map and base layer.
+    */
+  const map = new Map("map");
+
+  new TileLayer(
+    "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+    {
+      attribution:
+        '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+      maxZoom: 19,
+    },
+  ).addTo(map);
+
+  /*
+    * The original: a plain Polyline drawn from the application's data.
+    *
+    * bubblingPointerEvents is disabled so that a click on the line does
+    * not also reach the map's click handler below, which ends editing.
+    */
+  const original = new Polyline(toCoords(), {
+    color: "#3388ff",
+    weight: 5,
+    bubblingPointerEvents: false,
+  }).addTo(map);
+
+  map.fitBounds(original.getBounds(), { padding: [30, 30] });
+
+  /*
+    * The editor: a temporary editing aid, not the original data.
+    *
+    * It is created once and kept off the map while idle. Each editing
+    * session starts by handing it the application's current data with
+    * setLatLngs(). editablePointRadius is 5, so with 10 points, editing
+    * near either end covers only part of the line.
+    * 
+    * The geometry is not given here: each editing session starts by handing
+    * it the application's current data with setLatLngs().
+    */
+  const editor = new PartiallyEditablePolyline([], {
+    color: "#e67e22",
+    weight: 5,
+    editablePointRadius: 5,
+  });
+
+  /*
+    * Page state and display.
+    */
+  const statusEl = document.querySelector("#status");
+  const syncEl = document.querySelector("#sync");
+  const pointsEl = document.querySelector("#points");
+  const logEl = document.querySelector("#log");
+  const resetButton = document.querySelector("#reset");
+
+  let editing = false;
+
+  const logLines = [];
+  let logCount = 0;
+
+  function log(text) {
+    logCount += 1;
+    logLines.unshift(`#${logCount} ${text}`);
+    logLines.length = Math.min(logLines.length, 12);
+    logEl.textContent = logLines.join("\n");
+  }
+
+  /*
+    * Compare the editor's geometry with the application's data.
+    *
+    * The editing events are fired after the editor's own geometry has been
+    * updated, so once the application has applied an event, the two must match.
+    */
+  function isInSync() {
+    const latlngs = editor.getLatLngs();
+
+    return (
+      latlngs.length === appPoints.length &&
+      latlngs.every(
+        (latlng, i) =>
+          latlng.lat === appPoints[i].lat && latlng.lng === appPoints[i].lng,
+      )
+    );
+  }
+
+  function updateStatus() {
+    statusEl.textContent =
+      `Points: ${appPoints.length} - ${editing ? "editing" : "not editing"}`;
+
+    if (!editing) {
+      syncEl.textContent = "Editor geometry matches the data: -";
+      syncEl.className = "";
+      return;
+    }
+
+    const ok = isInSync();
+    syncEl.textContent =
+      `Editor geometry matches the data: ${ok ? "yes" : "NO"}`;
+    syncEl.className = ok ? "ok" : "ng";
+  }
+
+  function render(highlight) {
+    const rows = appPoints.map((point, i) => {
+      const row = document.createElement("tr");
+      const cells = [
+        String(i),
+        point.lat.toFixed(5),
+        point.lng.toFixed(5),
+        point.ele.toFixed(1),
+      ];
+
+      for (const text of cells) {
+        const cell = document.createElement("td");
+        cell.textContent = text;
+        row.append(cell);
+      }
+
+      const note = document.createElement("td");
+      note.className = "note";
+
+      if (highlight && highlight.index === i) {
+        row.className = highlight.kind;
+        note.textContent = highlight.note;
+      }
+
+      row.append(note);
+      return row;
+    });
+
+    pointsEl.replaceChildren(...rows);
+    updateStatus();
+  }
+
+  /*
+    * Start editing: replace the original with the editor.
+    *
+    * The original is hidden, the editor is given the application's current
+    * data, and editing starts around the clicked position.
+    */
+  original.on("click", (event) => {
+    original.remove();
+
+    editor.setLatLngs(toCoords());
+    editor.addTo(map);
+    editor.startEditing(event.latlng);
+  });
+
+  /*
+    * Stop editing when the map itself is clicked.
+    *
+    * Clicks on the original and on the editor's own layers do not reach
+    * this handler.
+    */
+  map.on("click", () => {
+    if (editing) {
+      editor.endEditing();
+    }
+  });
+
+  /*
+    * Editing events: the application applies each one to its own data.
+    *
+    * index is a global index into the complete list, and each event describes
+    * the state after the previous one, just like Array assignment and splice().
+    */
+  editor.on("editingstart", ({ index }) => {
+    editing = true;
+    log(`editingstart index=${index}`);
+    render();
+  });
+
+  editor.on("pointchange", ({ index, latlng }) => {
+    // latlng[index] = latlng. The application keeps the previous elevation.
+    appPoints[index] = { ...appPoints[index], lat: latlng.lat, lng: latlng.lng };
+
+    log(`pointchange index=${index}`);
+    render({ index, kind: "moved", note: "moved, ele kept" });
+  });
+
+  editor.on("pointinsert", ({ index, latlng }) => {
+    // latlngs.splice(index, 0, latlng). The library reports no elevation, so
+    // the application interpolates one from the neighboring points.
+    const before = appPoints[index - 1];
+    const after = appPoints[index];
+    const ele = Math.round(((before.ele + after.ele) / 2) * 10) / 10;
+
+    appPoints.splice(index, 0, { lat: latlng.lat, lng: latlng.lng, ele });
+
+    log(`pointinsert index=${index}`);
+    render({ index, kind: "inserted", note: "inserted, ele interpolated" });
+  });
+
+  editor.on("pointdelete", ({ index }) => {
+    // latlngs.splice(index, 1)
+    appPoints.splice(index, 1);
+
+    log(`pointdelete index=${index}`);
+    render();
+  });
+
+  /*
+    * The session is over: the editor goes away and the original is drawn
+    * again from the application's (possibly updated) data.
+    */
+  editor.on("editingend", () => {
+    editing = false;
+
+    map.removeLayer(editor);
+    original.setLatLngs(toCoords());
+    original.addTo(map);
+
+    log("editingend");
+    render();
+  });
+
+  /*
+    * Reset the application's data to its initial state.
+    */
+  resetButton.addEventListener("click", () => {
+    appPoints = initialPoints.map((point) => ({ ...point }));
+
+    if (editing) {
+      // editingend redraws the original from the restored data.
+      editor.endEditing();
+    } else {
+      original.setLatLngs(toCoords());
+    }
+
+    log("reset");
+    render();
+  });
+
+  render();
+</script>
+</body>
+</html>

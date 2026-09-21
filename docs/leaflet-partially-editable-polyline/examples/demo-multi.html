@@ -1,0 +1,449 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Leaflet Partially Editable Polyline - Multiple polylines (For Leaflet v2)</title>
+
+<script type="importmap">
+  {
+    "imports": {
+      "leaflet": "https://unpkg.com/leaflet@2.0.0-alpha.1/dist/leaflet.js"
+    }
+  }
+</script>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@2.0.0-alpha.1/dist/leaflet.css" />
+<link rel="stylesheet" href="../src/leaflet-partially-editable-polyline.css" />
+<style>
+  html,
+  body {
+    height: 100%;
+    margin: 0;
+  }
+
+  body {
+    display: flex;
+    flex-direction: column;
+    font-family: sans-serif;
+  }
+
+  #info {
+    flex: 0 0 auto;
+    padding: 10px 14px;
+    border-bottom: 1px solid #ccc;
+    background: #fff;
+    line-height: 1.5;
+  }
+
+  #content {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+  }
+
+  #map {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  #side {
+    flex: 0 0 clamp(340px, 34vw, 440px);
+    box-sizing: border-box;
+    overflow: auto;
+    scrollbar-gutter: stable;
+    padding: 10px 14px;
+    border-left: 1px solid #ccc;
+    background: #fff;
+    font-size: 13px;
+    line-height: 1.5;
+  }
+
+  #side h2 {
+    margin: 12px 0 4px;
+    font-size: 14px;
+  }
+
+  #side h2:first-child {
+    margin-top: 0;
+  }
+
+  #status {
+    margin: 2px 0 6px;
+  }
+
+  /*
+    * Fixed table layout: the column widths do not depend on the values.
+    */
+  table {
+    width: 100%;
+    table-layout: fixed;
+    border-collapse: collapse;
+  }
+
+  th,
+  td {
+    padding: 2px 6px;
+    border-bottom: 1px solid #eee;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  th {
+    border-bottom-color: #ccc;
+    font-weight: normal;
+    color: #555;
+    text-align: left;
+  }
+
+  th.count {
+    width: 4.5em;
+    text-align: right;
+  }
+
+  th.state {
+    width: 5.5em;
+  }
+
+  th.lock {
+    width: 3.5em;
+    text-align: center;
+  }
+
+  td.count {
+    text-align: right;
+    font-family: ui-monospace, Menlo, Consolas, monospace;
+  }
+
+  td.lock {
+    text-align: center;
+  }
+
+  tr.active td {
+    background: #fff3cd;
+  }
+
+  .swatch {
+    display: inline-block;
+    width: 0.9em;
+    height: 0.9em;
+    margin-right: 0.5em;
+    border-radius: 2px;
+    vertical-align: -1px;
+  }
+
+  #log {
+    margin: 0;
+    white-space: pre-wrap;
+    font-family: monospace;
+    font-size: 12px;
+    color: #333;
+  }
+
+  @media (max-width: 800px) {
+    #content {
+      flex-direction: column;
+    }
+
+    #side {
+      flex: 0 0 45%;
+      border-left: 0;
+      border-top: 1px solid #ccc;
+    }
+  }
+</style>
+</head>
+<body>
+<div id="info">
+  <div>
+    <strong>Leaflet Partially Editable Polyline - Multiple polylines</strong>
+  </div>
+  <div>
+    Click a line to edit it. Each polyline is an independent editor, so switching to another one is up to the application:
+    it ends the current session and starts the next.
+    Click elsewhere on the map to stop editing.
+    A locked route has editing disabled, and clicking it is refused.
+  </div>
+</div>
+
+<div id="content">
+  <div id="map"></div>
+
+  <div id="side">
+    <h2>Routes</h2>
+    <div id="status"></div>
+    <table>
+      <thead>
+        <tr>
+          <th scope="col">route</th>
+          <th scope="col" class="count">points</th>
+          <th scope="col" class="state">state</th>
+          <th scope="col" class="lock">lock</th>
+        </tr>
+      </thead>
+      <tbody id="routes"></tbody>
+    </table>
+
+    <h2>Events (newest first)</h2>
+    <pre id="log"></pre>
+  </div>
+</div>
+
+<script type="module">
+  import {
+    Map,
+    TileLayer,
+  } from "leaflet";
+
+  import {
+    EditingDisabledError,
+    PartiallyEditablePolyline,
+  } from "../src/leaflet-partially-editable-polyline.js";
+
+  const IDLE_WEIGHT = 4;
+  const EDITING_WEIGHT = 7;
+
+  /*
+    * The application's own data: one list of points per route.
+    * Each polyline below is only an editing copy of one of these lists.
+    */
+  function makePoints({ lat, lng, count, dLat, dLng, amplitude }) {
+    return Array.from({ length: count }, (_, i) => ({
+      lat: Number((lat + i * dLat + Math.sin(i * 0.8) * amplitude).toFixed(5)),
+      lng: Number((lng + i * dLng + Math.cos(i * 0.8) * amplitude).toFixed(5)),
+    }));
+  }
+
+  const routes = [
+    {
+      name: "Route A",
+      color: "#3388ff",
+      points: makePoints({
+        lat: 35.700, lng: 139.740, count: 12,
+        dLat: 0.0015, dLng: 0.0040, amplitude: 0.0015,
+      }),
+    },
+    {
+      name: "Route B",
+      color: "#e67e22",
+      points: makePoints({
+        lat: 35.690, lng: 139.735, count: 10,
+        dLat: 0.0030, dLng: 0.0035, amplitude: 0.0020,
+      }),
+    },
+    {
+      name: "Route C",
+      color: "#8e44ad",
+      points: makePoints({
+        lat: 35.715, lng: 139.790, count: 9,
+        dLat: -0.0025, dLng: -0.0035, amplitude: 0.0015,
+      }),
+    },
+  ];
+
+  const toCoords = (route) => route.points.map((p) => [p.lat, p.lng]);
+
+  /*
+    * Map and base layer.
+    */
+  const map = new Map("map");
+
+  new TileLayer(
+    "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+    {
+      attribution:
+        '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+      maxZoom: 19,
+    },
+  ).addTo(map);
+
+  map.fitBounds(routes.flatMap((route) => toCoords(route)), {
+    padding: [30, 30],
+  });
+
+  /*
+    * The route being edited, or null.
+    *
+    * Every editor keeps its own session. Nothing in the library ends the
+    * session of one editor when another one starts, so the application
+    * keeps track of the active route itself.
+    */
+  let active = null;
+
+  /*
+    * Display.
+    */
+  const statusEl = document.querySelector("#status");
+  const routesEl = document.querySelector("#routes");
+  const logEl = document.querySelector("#log");
+
+  const logLines = [];
+  let logCount = 0;
+
+  function log(route, text) {
+    logCount += 1;
+    logLines.unshift(`#${logCount} ${route.name}: ${text}`);
+    logLines.length = Math.min(logLines.length, 14);
+    logEl.textContent = logLines.join("\n");
+  }
+
+  function render() {
+    statusEl.textContent = `Editing: ${active ? active.name : "none"}`;
+
+    for (const route of routes) {
+      route.ui.row.className = route === active ? "active" : "";
+      route.ui.count.textContent = String(route.points.length);
+      route.ui.state.textContent =
+        route === active ? "editing" : route.locked ? "locked" : "-";
+    }
+  }
+
+  function createRow(route) {
+    const row = document.createElement("tr");
+
+    const name = document.createElement("td");
+    const swatch = document.createElement("span");
+    swatch.className = "swatch";
+    swatch.style.background = route.color;
+    name.append(swatch, route.name);
+
+    const count = document.createElement("td");
+    count.className = "count";
+
+    const state = document.createElement("td");
+
+    const lockCell = document.createElement("td");
+    lockCell.className = "lock";
+    const lock = document.createElement("input");
+    lock.type = "checkbox";
+    lock.setAttribute("aria-label", `Lock ${route.name}`);
+    lockCell.append(lock);
+
+    row.append(name, count, state, lockCell);
+    routesEl.append(row);
+
+    return { row, count, state, lock };
+  }
+
+  /*
+    * One editor per route.
+    *
+    * The handlers close over their own route, so each editing event updates
+    * the right list of points.
+    */
+  function setUpRoute(route) {
+    route.locked = false;
+    route.ui = createRow(route);
+
+    const editor = new PartiallyEditablePolyline(toCoords(route), {
+      color: route.color,
+      weight: IDLE_WEIGHT,
+      editablePointRadius: 5,
+    });
+
+    route.editor = editor;
+    editor.addTo(map);
+
+    /*
+      * Start editing this route.
+      *
+      * The new session is started first: if it is refused (the route is
+      * locked), the current session stays untouched. Only then is the
+      * previously active route's session ended.
+      */
+    editor.on("click", (event) => {
+      const previous = active;
+
+      try {
+        editor.startEditing(event.latlng);
+      } catch (error) {
+        if (error instanceof EditingDisabledError) {
+          // Already reported through the editingerror event below.
+          return;
+        }
+        throw error;
+      }
+
+      if (previous && previous !== route) {
+        previous.editor.endEditing();
+      }
+    });
+
+    editor.on("editingstart", ({ index }) => {
+      active = route;
+      editor.setStyle({ weight: EDITING_WEIGHT });
+      editor.bringToFront();
+
+      log(route, `editingstart index=${index}`);
+      render();
+    });
+
+    editor.on("editingend", () => {
+      if (active === route) {
+        active = null;
+      }
+      editor.setStyle({ weight: IDLE_WEIGHT });
+
+      log(route, "editingend");
+      render();
+    });
+
+    editor.on("editingerror", ({ error }) => {
+      log(route, `editingerror (${error.message})`);
+    });
+
+    editor.on("pointchange", ({ index, latlng }) => {
+      route.points[index] = { lat: latlng.lat, lng: latlng.lng };
+
+      log(route, `pointchange index=${index}`);
+      render();
+    });
+
+    editor.on("pointinsert", ({ index, latlng }) => {
+      route.points.splice(index, 0, { lat: latlng.lat, lng: latlng.lng });
+
+      log(route, `pointinsert index=${index}`);
+      render();
+    });
+
+    editor.on("pointdelete", ({ index }) => {
+      route.points.splice(index, 1);
+
+      log(route, `pointdelete index=${index}`);
+      render();
+    });
+
+    route.ui.lock.addEventListener("change", () => {
+      route.locked = route.ui.lock.checked;
+
+      if (route.locked) {
+        // Ends the route's session if it is being edited.
+        editor.disableEditing();
+      } else {
+        editor.enableEditing();
+      }
+
+      log(route, route.locked ? "locked" : "unlocked");
+      render();
+    });
+  }
+
+  routes.forEach(setUpRoute);
+
+  /*
+    * Clicking the map itself ends the current session.
+    *
+    * Clicks on the polylines and on the editor markers do not reach this
+    * handler.
+    */
+  map.on("click", () => {
+    if (active) {
+      active.editor.endEditing();
+    }
+  });
+
+  render();
+</script>
+</body>
+</html>
