@@ -1,0 +1,525 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>Pan Direction Algorithm Comparison</title>
+
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@2.0.0-alpha.1/dist/leaflet.css"
+  >
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+    }
+
+    body {
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr);
+      font-family: sans-serif;
+    }
+
+    #header {
+      padding: 14px 20px 12px;
+      border-bottom: 1px solid #ccc;
+    }
+
+    #header h1 {
+      margin: 0 0 4px;
+      font-size: 20px;
+    }
+
+    #header p {
+      margin: 0;
+      font-size: 14px;
+      line-height: 1.4;
+    }
+
+    #workspace {
+      min-height: 0;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 400px;
+    }
+
+    #map {
+      min-width: 0;
+      min-height: 0;
+    }
+
+    #panel {
+      min-height: 0;
+      padding: 16px 18px;
+      border-left: 1px solid #ccc;
+      overflow-y: auto;
+    }
+
+    #toolbar {
+      margin-bottom: 16px;
+    }
+
+    button {
+      padding: 6px 12px;
+    }
+
+    h2 {
+      margin: 18px 0 8px;
+      font-size: 14px;
+    }
+
+    h2:first-of-type {
+      margin-top: 0;
+    }
+
+    #metadata {
+      min-height: 54px;
+      padding: 8px 10px;
+      background: #f5f5f5;
+      font-family: monospace;
+      font-size: 12px;
+      line-height: 1.5;
+      white-space: pre;
+    }
+
+    #results {
+      font-family: monospace;
+      font-size: 13px;
+    }
+
+    .result {
+      display: grid;
+      grid-template-columns: 17ch 7ch 2ch 3ch;
+      column-gap: 1ch;
+      align-items: center;
+      height: 28px;
+      white-space: nowrap;
+    }
+
+    .result-name {
+      overflow: hidden;
+    }
+
+    .result-heading {
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .result-direction {
+      width: 2ch;
+      text-align: left;
+    }
+
+    .result-arrow {
+      display: inline-block;
+      width: 1em;
+      text-align: center;
+      font-family: sans-serif;
+      font-size: 20px;
+      line-height: 1;
+      transform-origin: 50% 50%;
+    }
+
+    .muted {
+      color: #777;
+    }
+
+    #trajectory {
+      display: block;
+      width: 100%;
+      height: 190px;
+      border: 1px solid #bbb;
+    }
+
+    @media (max-width: 800px) {
+      body {
+        height: auto;
+        min-height: 100%;
+      }
+
+      #workspace {
+        grid-template-columns: 1fr;
+        grid-template-rows: 60vh auto;
+      }
+
+      #panel {
+        border-top: 1px solid #ccc;
+        border-left: 0;
+      }
+    }
+  </style>
+
+  <script type="importmap">
+    {
+      "imports": {
+        "leaflet": "https://unpkg.com/leaflet@2.0.0-alpha.1/dist/leaflet.js"
+      }
+    }
+  </script>
+</head>
+
+<body>
+  <header id="header">
+    <h1>Pan Direction Algorithm Comparison</h1>
+    <p>
+      Drag the map to compare heading algorithms.
+      Curved and L-shaped gestures are especially useful.
+    </p>
+  </header>
+
+  <main id="workspace">
+    <div id="map"></div>
+
+    <aside id="panel">
+      <div id="toolbar">
+        <button id="reset" type="button">Reset</button>
+      </div>
+
+      <h2>Gesture</h2>
+
+      <div id="metadata" class="muted">No gesture recorded</div>
+
+      <h2>Heading algorithms</h2>
+
+      <div id="results"></div>
+
+      <h2>Map-center trajectory</h2>
+
+      <canvas
+        id="trajectory"
+        width="360"
+        height="190"
+      ></canvas>
+    </aside>
+  </main>
+
+  <script type="module">
+    import { Map, TileLayer } from "leaflet";
+    import { calculateBearing } from "../src/bearing.js";
+    import {
+      calculateAdaptiveHeading,
+      calculateLastSegmentHeading,
+      calculateRecentDistanceHeading,
+      calculateRecentTimeHeading,
+      calculateWholeGestureHeading,
+    } from "../src/headingAlgorithms.js";
+
+    const map = new Map("map", {
+      inertia: true,
+    }).setView([35.6812, 139.7671], 14);
+
+    new TileLayer(
+      "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+      {
+        maxZoom: 19,
+      },
+    ).addTo(map);
+
+    const canvas = document.querySelector("#trajectory");
+    const context = canvas.getContext("2d");
+    const resultsElement = document.querySelector("#results");
+    const metadataElement = document.querySelector("#metadata");
+    const resetButton = document.querySelector("#reset");
+
+    let samples = [];
+    const MIN_SIGNIFICANT_MOVEMENT = 1;
+
+    const algorithms = [
+      {
+        name: "Whole gesture",
+        calculate: calculateWholeGestureHeading,
+      },
+      {
+        name: "Recent 80 px",
+        calculate: (samples) =>
+          calculateRecentDistanceHeading(samples, 80),
+      },
+      {
+        name: "Recent 40 px",
+        calculate: (samples) =>
+          calculateRecentDistanceHeading(samples, 40),
+      },
+      {
+        name: "Recent 20 px",
+        calculate: (samples) =>
+          calculateRecentDistanceHeading(samples, 20),
+      },
+      {
+        name: "Adaptive 5%",
+        calculate: calculateAdaptiveHeading,
+      },
+      {
+        name: "Recent 800 ms",
+        calculate: (samples) =>
+          calculateRecentTimeHeading(samples, 800),
+      },
+      {
+        name: "Recent 400 ms",
+        calculate: (samples) =>
+          calculateRecentTimeHeading(samples, 400),
+      },
+      {
+        name: "Last segment",
+        calculate: calculateLastSegmentHeading,
+      },
+    ];
+
+    function createSample() {
+      const center = map.getCenter();
+      const point = map.project(center, map.getZoom());
+
+      return {
+        latlng: {
+          lat: center.lat,
+          lng: center.lng,
+        },
+        point: {
+          x: point.x,
+          y: point.y,
+        },
+        time: performance.now(),
+      };
+    }
+
+    function pointDistance(a, b) {
+      return Math.hypot(
+        b.point.x - a.point.x,
+        b.point.y - a.point.y,
+      );
+    }
+
+    function cardinalDirection(heading) {
+      const directions = [
+        "N",
+        "NE",
+        "E",
+        "SE",
+        "S",
+        "SW",
+        "W",
+        "NW",
+      ];
+
+      return directions[
+        Math.round(heading / 45) % directions.length
+      ];
+    }
+
+    function renderResults() {
+      resultsElement.replaceChildren();
+
+      for (const algorithm of algorithms) {
+        const heading = algorithm.calculate(samples);
+
+        const row = document.createElement("div");
+        row.className = "result";
+
+        const name = document.createElement("span");
+        name.className = "result-name";
+        name.textContent = algorithm.name;
+
+        const value = document.createElement("span");
+        value.className = "result-heading";
+
+        const direction = document.createElement("span");
+        direction.className = "result-direction";
+
+        const arrow = document.createElement("span");
+        arrow.className = "result-arrow";
+
+        if (heading === null) {
+          value.textContent = "—";
+          direction.textContent = "";
+          arrow.textContent = "—";
+          arrow.classList.add("muted");
+        } else {
+          value.textContent =
+            `${heading.toFixed(1).padStart(5)}°`;
+
+          direction.textContent =
+            cardinalDirection(heading);
+
+          arrow.textContent = "↑";
+          arrow.style.transform =
+            `rotate(${heading}deg)`;
+        }
+
+        row.append(name, value, direction, arrow);
+        resultsElement.append(row);
+      }
+    }
+
+    function renderTrajectory() {
+      context.clearRect(
+        0,
+        0,
+        canvas.width,
+        canvas.height,
+      );
+
+      if (samples.length === 0) {
+        return;
+      }
+
+      const padding = 20;
+
+      const xs = samples.map(
+        (sample) => sample.point.x,
+      );
+
+      const ys = samples.map(
+        (sample) => sample.point.y,
+      );
+
+      const minX = Math.min(...xs);
+      const maxX = Math.max(...xs);
+      const minY = Math.min(...ys);
+      const maxY = Math.max(...ys);
+
+      const width = Math.max(maxX - minX, 1);
+      const height = Math.max(maxY - minY, 1);
+
+      const scale = Math.min(
+        (canvas.width - padding * 2) / width,
+        (canvas.height - padding * 2) / height,
+        1,
+      );
+
+      const drawingWidth = width * scale;
+      const drawingHeight = height * scale;
+
+      const offsetX =
+        (canvas.width - drawingWidth) / 2;
+
+      const offsetY =
+        (canvas.height - drawingHeight) / 2;
+
+      function canvasPoint(sample) {
+        return {
+          x:
+            offsetX +
+            (sample.point.x - minX) * scale,
+          y:
+            offsetY +
+            (sample.point.y - minY) * scale,
+        };
+      }
+
+      if (samples.length >= 2) {
+        context.beginPath();
+
+        const first = canvasPoint(samples[0]);
+
+        context.moveTo(first.x, first.y);
+
+        for (const sample of samples.slice(1)) {
+          const point = canvasPoint(sample);
+          context.lineTo(point.x, point.y);
+        }
+
+        context.stroke();
+      }
+
+      const start = canvasPoint(samples[0]);
+      const end = canvasPoint(samples.at(-1));
+
+      context.beginPath();
+      context.arc(
+        start.x,
+        start.y,
+        4,
+        0,
+        Math.PI * 2,
+      );
+      context.fill();
+
+      context.fillText(
+        "start",
+        start.x + 7,
+        start.y - 7,
+      );
+
+      context.beginPath();
+      context.arc(
+        end.x,
+        end.y,
+        4,
+        0,
+        Math.PI * 2,
+      );
+      context.fill();
+
+      context.fillText(
+        "end",
+        end.x + 7,
+        end.y - 7,
+      );
+    }
+
+    function renderMetadata() {
+      if (samples.length < 2) {
+        metadataElement.textContent =
+          "No gesture recorded";
+        return;
+      }
+
+      let pathLength = 0;
+
+      for (
+        let index = 1;
+        index < samples.length;
+        index += 1
+      ) {
+        pathLength += pointDistance(
+          samples[index - 1],
+          samples[index],
+        );
+      }
+
+      const duration =
+        samples.at(-1).time - samples[0].time;
+
+      metadataElement.textContent =
+        `samples:  ${String(samples.length).padStart(6)}\n` +
+        `path:     ${pathLength.toFixed(1).padStart(6)} px\n` +
+        `duration: ${duration.toFixed(0).padStart(6)} ms`;
+    }
+
+    function render() {
+      renderTrajectory();
+      renderResults();
+      renderMetadata();
+    }
+
+    map.on("dragstart", () => {
+      samples = [createSample()];
+      render();
+    });
+
+    map.on("drag", () => {
+      samples.push(createSample());
+      render();
+    });
+
+    map.on("dragend", () => {
+      samples.push(createSample());
+      render();
+    });
+
+    resetButton.addEventListener("click", () => {
+      samples = [];
+      render();
+    });
+
+    render();
+  </script>
+</body>
+</html>
