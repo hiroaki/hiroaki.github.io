@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>leaflet-pan-direction</title>
+<style>
+  body {
+    max-width: 44rem;
+    margin: 0 auto;
+    padding: 24px 16px 40px;
+    font-family: sans-serif;
+    line-height: 1.6;
+    color: #222;
+  }
+
+  h1 {
+    margin: 0 0 4px;
+    font-size: 1.5rem;
+    overflow-wrap: anywhere;
+  }
+
+  h2 {
+    margin: 32px 0 8px;
+    font-size: 1.15rem;
+  }
+
+  h3 {
+    margin: 0;
+    font-size: 1rem;
+  }
+
+  .demos {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .demos li {
+    padding: 12px 0;
+    border-bottom: 1px solid #ddd;
+  }
+
+  .demos li:first-child {
+    border-top: 1px solid #ddd;
+  }
+
+  .demos p {
+    margin: 2px 0 0;
+  }
+
+  .demos dl {
+    display: grid;
+    grid-template-columns: 6rem 1fr;
+    gap: 4px 12px;
+    margin: 8px 0 0;
+  }
+
+  .demos dt {
+    font-weight: bold;
+    color: #555;
+  }
+
+  .demos dd {
+    margin: 0;
+    color: #444;
+  }
+
+  @media (max-width: 30rem) {
+    .demos dl {
+      grid-template-columns: 1fr;
+      gap: 0;
+    }
+
+    .demos dd {
+      margin-bottom: 6px;
+    }
+  }
+
+  footer {
+    margin-top: 32px;
+    color: #777;
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>leaflet-pan-direction</h1>
+  <p>
+    A small Leaflet v2 library for deriving a geographic heading from the user's most recent map drag gesture.
+  </p>
+  <p>
+    <a href="https://github.com/hiroaki/leaflet-pan-direction">Repository</a>
+  </p>
+</header>
+<main>
+  <div class="markdown-heading" dir="auto">
+    <h2 tabindex="-1" class="heading-element" dir="auto">Demo</h2>
+  </div>
+  <ul dir="auto">
+    <li><a href="./examples/basic.html"><code>examples/basic.html</code></a> — compares several heading algorithms and visualizes their results.</li>
+    <li><a href="./examples/street-view.html"><code>examples/street-view.html</code></a> — uses the most recent pan direction as the initial heading for Google Street View.</li>
+  </ul>
+  <p dir="auto">The Street View demo also allows the viewing direction to be adjusted after selecting a location: pan the Leaflet map again and the heading, direction indicator, and Street View link update while the selected location remains fixed.</p>
+</main>
+</body>
+</html>

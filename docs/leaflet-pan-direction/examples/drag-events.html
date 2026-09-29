@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>Leaflet Pan Event Probe</title>
+
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@2.0.0-alpha.1/dist/leaflet.css"
+  >
+
+  <style>
+    html,
+    body {
+      margin: 0;
+      height: 100%;
+    }
+
+    body {
+      display: grid;
+      grid-template-columns: 1fr 360px;
+      font-family: sans-serif;
+    }
+
+    #map {
+      min-width: 0;
+    }
+
+    #panel {
+      box-sizing: border-box;
+      padding: 16px;
+      overflow: auto;
+    }
+
+    #log {
+      white-space: pre-wrap;
+      font-family: monospace;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+  </style>
+
+  <script type="importmap">
+    {
+      "imports": {
+        "leaflet": "https://unpkg.com/leaflet@2.0.0-alpha.1/dist/leaflet.js"
+      }
+    }
+  </script>
+</head>
+
+<body>
+  <div id="map"></div>
+
+  <aside id="panel">
+    <h1>Pan Event Probe</h1>
+    <p>Drag the map, including a fast drag that produces inertia.</p>
+    <button id="clear" type="button">Clear</button>
+    <pre id="log"></pre>
+  </aside>
+
+  <script type="module">
+    import { Map, TileLayer } from "leaflet";
+
+    const map = new Map("map", {
+      inertia: true,
+    }).setView([35.6812, 139.7671], 15);
+
+    new TileLayer(
+      "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+      {
+        maxZoom: 19,
+      },
+    ).addTo(map);
+
+    const logElement = document.querySelector("#log");
+    const clearButton = document.querySelector("#clear");
+
+    const startedAt = performance.now();
+
+    function log(type) {
+      const elapsed = performance.now() - startedAt;
+      const center = map.getCenter();
+
+      const line =
+        `${elapsed.toFixed(1).padStart(8)} ms  ` +
+        `${type.padEnd(10)}  ` +
+        `${center.lat.toFixed(6)}, ${center.lng.toFixed(6)}`;
+
+      console.log(line);
+      logElement.textContent += `${line}\n`;
+      logElement.scrollTop = logElement.scrollHeight;
+    }
+
+    for (const type of [
+      "movestart",
+      "dragstart",
+      "drag",
+      "dragend",
+      "moveend",
+    ]) {
+      map.on(type, () => log(type));
+    }
+
+    clearButton.addEventListener("click", () => {
+      logElement.textContent = "";
+    });
+  </script>
+</body>
+</html>
