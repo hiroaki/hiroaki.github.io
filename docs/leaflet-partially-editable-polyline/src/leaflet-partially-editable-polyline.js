@@ -15,12 +15,12 @@ export class EditingDisabledError extends Error {
  * A small Leaflet v2 polyline editor.
  *
  * Editing is deliberately limited to the two-dimensional LatLng geometry.
- * The consumer remains responsible for application data such as elevation,
- * timestamps, GPX structure, and persistence.
+ * The consumer remains responsible for application-specific data and
+ * persistence.
  *
- * Only a bounded neighborhood is represented by Leaflet markers, which keeps large
- * polylines responsive. During a drag, only short helper lines are updated;
- * the complete polyline is committed when the drag ends.
+ * Only a bounded neighborhood is represented by Leaflet markers, which keeps
+ * large polylines responsive. During a drag, only short helper lines are
+ * updated; the complete polyline is committed when the drag ends.
  */
 export class PartiallyEditablePolyline extends Polyline {
   static defaultPointIcon = new DivIcon({
@@ -45,6 +45,7 @@ export class PartiallyEditablePolyline extends Polyline {
     super(latlngs, {
       ...options,
       bubblingPointerEvents: false,
+      bubblingMouseEvents: false,
     });
 
     super.setLatLngs(this._normalizeLatLngs(this.getLatLngs()));
@@ -164,13 +165,32 @@ export class PartiallyEditablePolyline extends Polyline {
     this._editing = true;
     this._editableRadius = radius;
     this._updateEditableRange(index);
+    this._rebuildEditableMarkers();
 
     this.fire("editingstart", {
       index,
     });
 
-    this._rebuildEditableMarkers();
     return this;
+  }
+
+  /**
+   * Return the inclusive indices of the existing points that are currently
+   * editable, or null when there is no current editable point range.
+   */
+  getEditablePointRange() {
+    if (
+      !this._editing ||
+      this._editableStart < 0 ||
+      this._editableEnd < this._editableStart
+    ) {
+      return null;
+    }
+
+    return {
+      startIndex: this._editableStart,
+      endIndex: this._editableEnd,
+    };
   }
 
   /**
@@ -242,7 +262,12 @@ export class PartiallyEditablePolyline extends Polyline {
   _rebuildEditableMarkers() {
     this._clearPointMarkers();
 
-    if (!this._editing || !this._map) {
+    if (
+      !this._editing ||
+      !this._map ||
+      this._editableStart < 0 ||
+      this._editableEnd < this._editableStart
+    ) {
       return;
     }
 
@@ -261,10 +286,15 @@ export class PartiallyEditablePolyline extends Polyline {
       options.icon = this._editorOptions.pointIcon;
     }
 
+    if (this._editorOptions.handlePane !== undefined) {
+      options.pane = this._editorOptions.handlePane;
+    }
+
     const marker = new Marker(record.latlng, options);
 
     record.marker = marker;
     marker._editablePointIndex = index;
+    marker.on("click", this._handleMarkerClick, this);
     marker.on("dragstart", this._handlePointDragStart, this);
     marker.on("drag", this._handlePointDrag, this);
     marker.on("dragend", this._handlePointDragEnd, this);
@@ -291,10 +321,15 @@ export class PartiallyEditablePolyline extends Polyline {
       options.icon = this._editorOptions.newPointIcon;
     }
 
+    if (this._editorOptions.handlePane !== undefined) {
+      options.pane = this._editorOptions.handlePane;
+    }
+
     const marker = new Marker(this._midpoint(previous.latlng, next.latlng), options);
 
     marker._editablePreviousIndex = previousIndex;
     marker._editableNextIndex = nextIndex;
+    marker.on("click", this._handleMarkerClick, this);
     marker.on("dragstart", this._handleNewPointDragStart, this);
     marker.on("drag", this._handleNewPointDrag, this);
     marker.on("dragend", this._handleNewPointDragEnd, this);
@@ -330,6 +365,18 @@ export class PartiallyEditablePolyline extends Polyline {
 
     this._pointMarkers = [];
     this._newPointMarkers = [];
+  }
+
+  _handleMarkerClick(event) {
+    const index = event.target._editablePointIndex;
+    if (index == null || !this._pointRecords[index]) {
+      return;
+    }
+
+    this.fire("pointclick", {
+      index,
+      latlng: this._cloneLatLng(this._pointRecords[index].latlng),
+    });
   }
 
   _handlePointDragStart(event) {
@@ -409,6 +456,16 @@ export class PartiallyEditablePolyline extends Polyline {
 
     this._commitGeometry();
 
+    if (this._pointRecords.length === 0) {
+      this._editableStart = -1;
+      this._editableEnd = -1;
+      this._rebuildEditableMarkers();
+    } else {
+      const replacementIndex = Math.min(index, this._pointRecords.length - 1);
+      this._updateEditableRange(replacementIndex);
+      this._rebuildEditableMarkers();
+    }
+
     this.fire("pointdelete", {
       index,
       latlng: this._cloneLatLng(deletedLatLng),
@@ -418,10 +475,6 @@ export class PartiallyEditablePolyline extends Polyline {
       this.endEditing();
       return;
     }
-
-    const replacementIndex = Math.min(index, this._pointRecords.length - 1);
-    this._updateEditableRange(replacementIndex);
-    this._rebuildEditableMarkers();
   }
 
   _handleNewPointDragStart(event) {
@@ -493,14 +546,13 @@ export class PartiallyEditablePolyline extends Polyline {
     this._commitGeometry();
     this._busy = false;
     this._removeDragHelpers();
+    this._updateEditableRange(index);
+    this._rebuildEditableMarkers();
 
     this.fire("pointinsert", {
       index,
       latlng: this._cloneLatLng(latlng),
     });
-
-    this._updateEditableRange(index);
-    this._rebuildEditableMarkers();
   }
 
   _handleNewPointDelete() {
